@@ -21,6 +21,7 @@ pub struct EntryRow {
     pub last_connected_at: Option<String>,
     pub pve_node: Option<String>,
     pub pve_vmid: Option<i32>,
+    pub jump_host_id: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -44,6 +45,7 @@ pub struct Entry {
     pub last_connected_at: Option<String>,
     pub pve_node: Option<String>,
     pub pve_vmid: Option<i32>,
+    pub jump_host_id: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     #[serde(default)]
@@ -70,6 +72,7 @@ impl EntryRow {
             last_connected_at: self.last_connected_at,
             pve_node: self.pve_node,
             pve_vmid: self.pve_vmid,
+            jump_host_id: self.jump_host_id,
             created_at: self.created_at,
             updated_at: self.updated_at,
             identity_ids,
@@ -90,6 +93,7 @@ pub struct CreateEntryRequest {
     pub color: Option<String>,
     pub identity_ids: Option<Vec<String>>,
     pub tag_ids: Option<Vec<String>>,
+    pub jump_host_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,6 +109,7 @@ pub struct UpdateEntryRequest {
     pub sort_order: Option<i32>,
     pub identity_ids: Option<Vec<String>>,
     pub tag_ids: Option<Vec<String>>,
+    pub jump_host_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

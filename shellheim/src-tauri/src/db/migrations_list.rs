@@ -287,5 +287,17 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 15,
+            description: "add_jump_host_support",
+            sql: r#"
+                -- Add jump_host_id column to entries for bastion/jump host support
+                ALTER TABLE entries ADD COLUMN jump_host_id TEXT REFERENCES entries(id) ON DELETE SET NULL;
+                
+                -- Index for efficient jump host lookups
+                CREATE INDEX IF NOT EXISTS idx_entries_jump_host ON entries(jump_host_id);
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

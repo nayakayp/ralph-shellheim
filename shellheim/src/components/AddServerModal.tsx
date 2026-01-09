@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { X } from "@phosphor-icons/react";
-import type { CreateEntryRequest, Protocol } from "../types/entry";
+import type { Entry, CreateEntryRequest, Protocol } from "../types/entry";
 import type { Identity } from "../types/identity";
 import type { Folder } from "../types/folder";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
-import { listIdentities } from "../lib/api";
+import { listIdentities, listEntries } from "../lib/api";
 import { TagSelector } from "./TagSelector";
 import "./AddServerModal.css";
 
@@ -24,7 +24,9 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
   const [selectedIdentityId, setSelectedIdentityId] = useState<string>("");
   const [folderId, setFolderId] = useState<string>(selectedFolderId || "");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [jumpHostId, setJumpHostId] = useState<string>("");
   const [identities, setIdentities] = useState<Identity[]>([]);
+  const [sshEntries, setSshEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,6 +34,17 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
     // Load identities for the dropdown
     listIdentities()
       .then(setIdentities)
+      .catch(console.error);
+    
+    // Load SSH entries for jump host selection
+    listEntries()
+      .then((entries) => {
+        // Filter to only SSH-compatible entries (ssh protocol or no protocol)
+        const sshOnly = entries.filter(
+          (e) => !e.protocol || e.protocol === 'ssh'
+        );
+        setSshEntries(sshOnly);
+      })
       .catch(console.error);
   }, []);
 
@@ -70,6 +83,7 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
         identity_ids: selectedIdentityId ? [selectedIdentityId] : undefined,
         folder_id: folderId || undefined,
         tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+        jump_host_id: jumpHostId || undefined,
       });
       onClose();
     } catch (err) {
@@ -177,6 +191,29 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
               <span className="form-hint">No identities yet. Create one in the Identities panel.</span>
             )}
           </div>
+
+          {(protocol === 'ssh' || protocol === 'sftp') && (
+            <div className="form-group">
+              <label htmlFor="jumpHost">Jump Host / Bastion (optional)</label>
+              <select
+                id="jumpHost"
+                value={jumpHostId}
+                onChange={(e) => setJumpHostId(e.target.value)}
+              >
+                <option value="">Direct connection</option>
+                {sshEntries.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.name} ({entry.host}:{entry.port || 22})
+                  </option>
+                ))}
+              </select>
+              {jumpHostId && (
+                <span className="form-hint">
+                  🔗 Connection will tunnel through the selected jump host.
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="description">Description (optional)</label>

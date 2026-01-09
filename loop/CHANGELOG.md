@@ -4,6 +4,47 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 34 - 2026-01-10
+
+### Completed
+- **Added Jump Host/Bastion Support (Database & UI)** - Infrastructure for multi-hop SSH connections:
+  - Added `jump_host_id` column to entries table (migration 15)
+  - Updated Entry model with jump_host_id field in Rust and TypeScript
+  - Added jump host selector to AddServerModal and EditServerModal
+  - Jump host dropdown shows all SSH-compatible servers
+  - Visual indicator when jump host is selected ("🔗 Connection will tunnel...")
+  - Only visible for SSH/SFTP protocols (not Telnet)
+
+- **Backend Infrastructure**:
+  - Created `JumpHostConfig` struct for jump host connection parameters
+  - Added `connect_via_jump()` function framework in SSH client
+  - Function successfully connects to jump host, authenticates, and opens direct-tcpip tunnel
+  - Exports new types via `ssh/mod.rs`
+
+- **Updated Entry API**:
+  - `create_entry` now accepts and stores `jump_host_id`
+  - `update_entry` handles jump host changes
+  - `move_entry` preserves jump_host_id
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Known Limitations
+- **Jump host connection is infrastructure-only this session**: The tunnel to target host opens successfully, but running nested SSH protocol over the tunnel channel requires implementing AsyncRead+AsyncWrite wrapper around russh channels. This is planned for the next session.
+- Current behavior: Selecting a jump host will be stored but connection will show an error explaining the limitation.
+
+### Next
+1. **Complete nested SSH over tunnel** - Implement stream wrapper for russh channel
+2. **RDP/VNC support** - Remote desktop protocols
+3. **OIDC/LDAP authentication** - Enterprise SSO
+
+### Tech Notes
+- russh's `connect()` expects TCP address, not streams - need custom wrapper
+- Jump host tunnel uses `channel_open_direct_tcpip()` for port forwarding
+- Jump host must be verified/trusted before use (host key check)
+- Circular jump hosts prevented by excluding current entry from dropdown
+
+---
+
 ## Session 33 - 2026-01-10
 
 ### Completed

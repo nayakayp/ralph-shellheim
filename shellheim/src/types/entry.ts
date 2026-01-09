@@ -17,6 +17,7 @@ export interface Entry {
   last_connected_at?: string;
   pve_node?: string;
   pve_vmid?: number;
+  jump_host_id?: string;
   created_at: string;
   updated_at: string;
   identity_ids: string[];
@@ -34,6 +35,7 @@ export interface CreateEntryRequest {
   color?: string;
   identity_ids?: string[];
   tag_ids?: string[];
+  jump_host_id?: string;
 }
 
 export interface UpdateEntryRequest {
@@ -48,6 +50,7 @@ export interface UpdateEntryRequest {
   sort_order?: number;
   identity_ids?: string[];
   tag_ids?: string[];
+  jump_host_id?: string;
 }
 
 export type Protocol = 'ssh' | 'sftp' | 'rdp' | 'vnc' | 'telnet';

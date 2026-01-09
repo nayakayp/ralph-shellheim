@@ -4,7 +4,7 @@ import type { Entry, UpdateEntryRequest, Protocol } from "../types/entry";
 import type { Identity } from "../types/identity";
 import type { Folder } from "../types/folder";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
-import { listIdentities, getEntryTags } from "../lib/api";
+import { listIdentities, listEntries, getEntryTags } from "../lib/api";
 import { TagSelector } from "./TagSelector";
 import "./AddServerModal.css"; // Reuse same modal styles
 
@@ -26,7 +26,9 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
   );
   const [folderId, setFolderId] = useState<string>(entry.folder_id || "");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [jumpHostId, setJumpHostId] = useState<string>(entry.jump_host_id || "");
   const [identities, setIdentities] = useState<Identity[]>([]);
+  const [sshEntries, setSshEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,6 +41,17 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
     // Load existing tags for this entry
     getEntryTags(entry.id)
       .then((tags) => setSelectedTagIds(tags.map((t) => t.id)))
+      .catch(console.error);
+    
+    // Load SSH entries for jump host selection
+    listEntries()
+      .then((entries) => {
+        // Filter to only SSH-compatible entries, excluding the current entry
+        const sshOnly = entries.filter(
+          (e) => e.id !== entry.id && (!e.protocol || e.protocol === 'ssh')
+        );
+        setSshEntries(sshOnly);
+      })
       .catch(console.error);
   }, [entry.id]);
 
@@ -75,6 +88,7 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
         identity_ids: selectedIdentityId ? [selectedIdentityId] : [],
         folder_id: folderId || undefined,
         tag_ids: selectedTagIds,
+        jump_host_id: jumpHostId || undefined,
       });
       onClose();
     } catch (err) {
@@ -179,6 +193,29 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
               ))}
             </select>
           </div>
+
+          {(protocol === 'ssh' || protocol === 'sftp') && (
+            <div className="form-group">
+              <label htmlFor="jumpHost">Jump Host / Bastion</label>
+              <select
+                id="jumpHost"
+                value={jumpHostId}
+                onChange={(e) => setJumpHostId(e.target.value)}
+              >
+                <option value="">Direct connection</option>
+                {sshEntries.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.name} ({entry.host}:{entry.port || 22})
+                  </option>
+                ))}
+              </select>
+              {jumpHostId && (
+                <span className="form-hint">
+                  🔗 Connection will tunnel through the selected jump host.
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="description">Description (optional)</label>
