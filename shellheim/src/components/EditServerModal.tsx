@@ -4,7 +4,8 @@ import type { Entry, UpdateEntryRequest, Protocol } from "../types/entry";
 import type { Identity } from "../types/identity";
 import type { Folder } from "../types/folder";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
-import { listIdentities } from "../lib/api";
+import { listIdentities, getEntryTags } from "../lib/api";
+import { TagSelector } from "./TagSelector";
 import "./AddServerModal.css"; // Reuse same modal styles
 
 interface EditServerModalProps {
@@ -24,6 +25,7 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
     entry.identity_ids?.[0] || ""
   );
   const [folderId, setFolderId] = useState<string>(entry.folder_id || "");
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +35,12 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
     listIdentities()
       .then(setIdentities)
       .catch(console.error);
-  }, []);
+    
+    // Load existing tags for this entry
+    getEntryTags(entry.id)
+      .then((tags) => setSelectedTagIds(tags.map((t) => t.id)))
+      .catch(console.error);
+  }, [entry.id]);
 
   const handleProtocolChange = (newProtocol: Protocol) => {
     setProtocol(newProtocol);
@@ -67,6 +74,7 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
         description: description.trim() || undefined,
         identity_ids: selectedIdentityId ? [selectedIdentityId] : [],
         folder_id: folderId || undefined,
+        tag_ids: selectedTagIds,
       });
       onClose();
     } catch (err) {
@@ -180,6 +188,14 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Production web server..."
               rows={2}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Tags</label>
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onChange={setSelectedTagIds}
             />
           </div>
 

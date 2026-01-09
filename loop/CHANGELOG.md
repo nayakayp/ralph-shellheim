@@ -4,6 +4,58 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 25 - 2026-01-10
+
+### Completed
+- **Added Tags to Server Modals** - Assign tags when creating/editing servers:
+  - TagSelector component with multi-select chips
+  - Inline tag creation with color picker
+  - Auto-select newly created tags
+  - Loads existing tags when editing servers
+
+- **Built TagSelector Component** (`src/components/TagSelector.tsx`):
+  - Multi-select tag chips with remove button
+  - Available tags list with color indicators
+  - Inline create form with name + color picker
+  - Uses existing tag API functions
+
+- **Added TagSelector Styles** (`src/components/TagSelector.css`):
+  - Selected tags as colored chips
+  - Available tags as clickable buttons
+  - Color picker grid matching TagsPanel
+  - Create form with cancel/submit actions
+
+- **Updated AddServerModal**:
+  - Added TagSelector below description field
+  - Sends `tag_ids` in CreateEntryRequest
+  - Optional field (empty array if no tags)
+
+- **Updated EditServerModal**:
+  - Loads existing entry tags via `getEntryTags` API
+  - Pre-selects current tags in TagSelector
+  - Sends `tag_ids` in UpdateEntryRequest
+
+- **Enhanced Backend Entry API** (`src-tauri/src/api/entries.rs`):
+  - Added `sync_entry_tags()` helper function
+  - `create_entry` now syncs tags after creation
+  - `update_entry` now syncs tags when provided
+  - Tag ownership verified before linking
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Monitoring service** - Server health monitoring
+2. **Integrate audit logging** - Add logging to existing operations
+3. **Display tags on ServerList cards** - Show assigned tags visually
+
+### Tech Notes
+- Tags synced via junction table `entry_tags` (existing schema)
+- Tag ownership verified during sync to prevent cross-account linking
+- EditServerModal fetches entry tags on mount via `getEntryTags(entry.id)`
+- TagSelector auto-selects newly created tags for convenience
+
+---
+
 ## Session 24 - 2026-01-10
 
 ### Completed

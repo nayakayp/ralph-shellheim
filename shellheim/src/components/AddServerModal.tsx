@@ -5,6 +5,7 @@ import type { Identity } from "../types/identity";
 import type { Folder } from "../types/folder";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
 import { listIdentities } from "../lib/api";
+import { TagSelector } from "./TagSelector";
 import "./AddServerModal.css";
 
 interface AddServerModalProps {
@@ -22,6 +23,7 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
   const [description, setDescription] = useState("");
   const [selectedIdentityId, setSelectedIdentityId] = useState<string>("");
   const [folderId, setFolderId] = useState<string>(selectedFolderId || "");
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -67,6 +69,7 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
         entry_type: "server",
         identity_ids: selectedIdentityId ? [selectedIdentityId] : undefined,
         folder_id: folderId || undefined,
+        tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
       });
       onClose();
     } catch (err) {
@@ -183,6 +186,14 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Production web server..."
               rows={2}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Tags (optional)</label>
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onChange={setSelectedTagIds}
             />
           </div>
 

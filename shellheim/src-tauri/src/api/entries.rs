@@ -69,6 +69,43 @@ async fn sync_entry_identities(entry_id: &str, identity_ids: &[String]) -> Resul
     Ok(())
 }
 
+/// Helper to sync tag_ids for an entry
+async fn sync_entry_tags(entry_id: &str, tag_ids: &[String], account_id: &str) -> Result<(), String> {
+    let pool = db::pool();
+    
+    // Delete existing links
+    sqlx::query("DELETE FROM entry_tags WHERE entry_id = ?")
+        .bind(entry_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to clear tags: {}", e))?;
+    
+    // Insert new links (only for tags owned by this account)
+    for tag_id in tag_ids {
+        // Verify tag belongs to account
+        let tag_exists: Option<(i32,)> =
+            sqlx::query_as("SELECT 1 FROM tags WHERE id = ? AND account_id = ?")
+                .bind(tag_id)
+                .bind(account_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| format!("Database error: {}", e))?;
+        
+        if tag_exists.is_none() {
+            continue;
+        }
+        
+        sqlx::query("INSERT INTO entry_tags (entry_id, tag_id) VALUES (?, ?)")
+            .bind(entry_id)
+            .bind(tag_id)
+            .execute(pool)
+            .await
+            .map_err(|e| format!("Failed to link tag: {}", e))?;
+    }
+    
+    Ok(())
+}
+
 #[command]
 pub async fn list_entries(token: String, folder_id: Option<String>) -> Result<Vec<Entry>, String> {
     let account_id = get_account_id_from_token(&token).await?;
@@ -183,6 +220,12 @@ pub async fn create_entry(token: String, request: CreateEntryRequest) -> Result<
         sync_entry_identities(&id, &identity_ids).await?;
     }
     
+    // Link tags if provided
+    let tag_ids = request.tag_ids.clone().unwrap_or_default();
+    if !tag_ids.is_empty() {
+        sync_entry_tags(&id, &tag_ids, &account_id).await?;
+    }
+    
     info!("Entry created successfully: {}", id);
     
     Ok(Entry {
@@ -272,6 +315,11 @@ pub async fn update_entry(
     } else {
         get_identity_ids_for_entry(&entry_id).await?
     };
+    
+    // Update tags if provided
+    if let Some(tag_ids) = request.tag_ids {
+        sync_entry_tags(&entry_id, &tag_ids, &account_id).await?;
+    }
     
     info!("Entry updated successfully: {}", entry_id);
     
