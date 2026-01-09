@@ -1,30 +1,37 @@
-/* Folder Tree Component */
+/* =============================================================================
+   FOLDER TREE
+   Sidebar navigation with folder hierarchy
+   ============================================================================= */
+
 .folder-tree {
   display: flex;
   flex-direction: column;
-  width: 240px;
-  min-width: 240px;
-  background: rgba(15, 15, 25, 0.6);
-  border-right: 1px solid rgba(124, 58, 237, 0.2);
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border-default);
   height: 100%;
   overflow-y: auto;
 }
 
+/* ---------------------------------------------------------------------------
+   HEADER
+   --------------------------------------------------------------------------- */
 .folder-tree-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 12px 12px;
-  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+  padding: var(--space-3) var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .folder-tree-header h3 {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: var(--tracking-wider);
+  color: var(--fg-muted);
 }
 
 .folder-add-btn {
@@ -33,43 +40,50 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: rgba(124, 58, 237, 0.2);
-  border: 1px solid rgba(124, 58, 237, 0.3);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .folder-add-btn:hover {
-  background: rgba(124, 58, 237, 0.4);
-  color: white;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
+/* ---------------------------------------------------------------------------
+   FOLDER LIST
+   --------------------------------------------------------------------------- */
 .folder-list {
   flex: 1;
-  padding: 8px 0;
+  padding: var(--space-2) 0;
 }
 
-/* Folder items */
+/* ---------------------------------------------------------------------------
+   FOLDER ITEM
+   --------------------------------------------------------------------------- */
 .folder-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.15s ease;
+  color: var(--fg-secondary);
+  transition: all var(--transition-fast);
   position: relative;
 }
 
 .folder-item:hover {
-  background: rgba(124, 58, 237, 0.15);
+  background: var(--bg-surface-raised);
+  color: var(--fg-primary);
 }
 
 .folder-item.selected {
-  background: rgba(124, 58, 237, 0.25);
-  color: white;
+  background: var(--accent-subtle);
+  color: var(--fg-primary);
 }
 
 .folder-item.selected::before {
@@ -78,18 +92,17 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, #7c3aed, #a855f7);
-  border-radius: 0 3px 3px 0;
+  width: 2px;
+  background: var(--accent);
 }
 
 .folder-item.root {
-  padding-left: 12px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
-  padding-bottom: 12px;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
+/* Expand button */
 .folder-expand-btn {
   display: flex;
   align-items: center;
@@ -98,18 +111,18 @@
   height: 16px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--fg-faint);
   cursor: pointer;
   padding: 0;
-  transition: color 0.15s;
+  transition: color var(--transition-fast);
 }
 
 .folder-expand-btn:hover {
-  color: white;
+  color: var(--fg-primary);
 }
 
 .folder-expand-btn svg {
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-base);
 }
 
 .folder-expand-placeholder {
@@ -117,33 +130,43 @@
   height: 16px;
 }
 
+/* Folder icon */
 .folder-icon {
   flex-shrink: 0;
-  opacity: 0.8;
+  color: var(--fg-muted);
 }
 
+.folder-item.selected .folder-icon {
+  color: var(--accent);
+}
+
+/* Folder name */
 .folder-name {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--text-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Folder count */
 .folder-count {
-  font-size: 11px;
-  padding: 2px 6px;
-  background: rgba(124, 58, 237, 0.3);
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  padding: 1px var(--space-2);
+  background: var(--bg-surface-raised);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
   min-width: 18px;
   text-align: center;
 }
 
-/* Folder actions (show on hover) */
+/* ---------------------------------------------------------------------------
+   FOLDER ACTIONS
+   --------------------------------------------------------------------------- */
 .folder-actions {
   display: none;
-  gap: 4px;
+  gap: var(--space-1);
   margin-left: auto;
 }
 
@@ -161,102 +184,100 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   border: none;
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .folder-action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--bg-surface-raised);
+  color: var(--fg-primary);
 }
 
 .folder-action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: var(--error-muted);
+  color: var(--error-fg);
 }
 
-/* Folder children */
-.folder-children {
-  /* Children are indented via inline style */
-}
-
-/* Create folder overlay */
+/* ---------------------------------------------------------------------------
+   CREATE FOLDER OVERLAY
+   --------------------------------------------------------------------------- */
 .folder-create-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
+  animation: fadeIn 150ms ease-out;
 }
 
 .folder-create-form {
-  background: rgba(20, 20, 35, 0.95);
-  border: 1px solid rgba(124, 58, 237, 0.3);
-  border-radius: 12px;
-  padding: 20px;
-  min-width: 300px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  min-width: 320px;
+  box-shadow: var(--shadow-overlay);
+  animation: slideUp 200ms ease-out;
 }
 
 .folder-create-form input {
   width: 100%;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
-  outline: none;
-  margin-bottom: 16px;
-  box-sizing: border-box;
+  padding: var(--space-3);
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-primary);
+  font-size: var(--text-md);
+  margin-bottom: var(--space-4);
 }
 
 .folder-create-form input:focus {
-  border-color: rgba(124, 58, 237, 0.6);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-muted);
 }
 
 .folder-create-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: flex-end;
 }
 
 .folder-create-actions button {
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .folder-create-actions button:first-child {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--fg-secondary);
 }
 
 .folder-create-actions button:first-child:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-surface-raised);
+  color: var(--fg-primary);
 }
 
 .folder-create-actions button.primary {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: var(--accent);
   border: none;
   color: white;
 }
 
 .folder-create-actions button.primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: var(--accent-hover);
 }
 
 .folder-create-actions button.primary:disabled {
@@ -264,20 +285,22 @@
   cursor: not-allowed;
 }
 
-/* Drag and drop states */
+/* ---------------------------------------------------------------------------
+   DRAG & DROP
+   --------------------------------------------------------------------------- */
 .folder-item.dragging {
-  opacity: 0.5;
-  background: rgba(124, 58, 237, 0.1);
+  opacity: 0.4;
+  background: var(--accent-subtle);
 }
 
 .folder-item.drop-target {
-  background: rgba(124, 58, 237, 0.35);
-  outline: 2px dashed rgba(124, 58, 237, 0.8);
+  background: var(--accent-subtle);
+  outline: 2px dashed var(--accent);
   outline-offset: -2px;
 }
 
 .folder-item.drop-target .folder-icon {
-  color: #a855f7;
+  color: var(--accent);
 }
 
 .folder-item[draggable="true"] {
@@ -286,4 +309,23 @@
 
 .folder-item[draggable="true"]:active {
   cursor: grabbing;
+}
+
+/* ---------------------------------------------------------------------------
+   ANIMATIONS
+   --------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

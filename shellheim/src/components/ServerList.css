@@ -1,132 +1,33 @@
+/* =============================================================================
+   SERVER LIST
+   List of server cards with drag-and-drop reordering
+   ============================================================================= */
+
 .server-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px;
+  gap: var(--space-2);
 }
 
+/* ---------------------------------------------------------------------------
+   SERVER CARD
+   --------------------------------------------------------------------------- */
 .server-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 16px 20px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
+  user-select: none;
 }
 
 .server-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(99, 102, 241, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.server-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: rgba(99, 102, 241, 0.1);
-  border-radius: 10px;
-  flex-shrink: 0;
-}
-
-.server-status {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid #151820;
-}
-
-.server-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.server-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.server-host {
-  font-size: 0.85rem;
-  color: #8b8b9e;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.server-protocol {
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-.server-description {
-  font-size: 0.8rem;
-  color: #5a5a6e;
-  margin-top: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.server-actions {
-  display: flex;
-  gap: 8px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.server-card:hover .server-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #8b8b9e;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.action-btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #f87171;
-}
-
-.action-btn-sftp:hover {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.3);
-  color: #22c55e;
+  background: var(--bg-surface-raised);
+  border-color: var(--border-strong);
 }
 
 /* Drag handle */
@@ -134,34 +35,145 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  color: rgba(255, 255, 255, 0.25);
+  width: 16px;
+  color: var(--fg-faint);
   cursor: grab;
-  transition: color 0.15s;
+  transition: color var(--transition-fast);
   flex-shrink: 0;
-  margin-left: -8px;
+  margin-left: calc(-1 * var(--space-2));
 }
 
 .server-card:hover .server-drag-handle {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--fg-muted);
 }
 
 .server-drag-handle:active {
   cursor: grabbing;
 }
 
-/* Drag and drop states */
+/* Server icon */
+.server-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.server-status {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+}
+
+/* Server info */
+.server-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-name {
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--fg-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.server-host {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+}
+
+.server-protocol {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wider);
+  font-family: var(--font-sans);
+}
+
+.server-description {
+  font-size: var(--text-xs);
+  color: var(--fg-faint);
+  margin-top: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Server actions */
+.server-actions {
+  display: flex;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.server-card:hover .server-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+  background: var(--bg-surface-raised);
+  color: var(--fg-primary);
+  border-color: var(--border-strong);
+}
+
+.action-btn-danger:hover {
+  background: var(--error-muted);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--error-fg);
+}
+
+.action-btn-sftp:hover {
+  background: var(--success-muted);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: var(--success);
+}
+
+/* ---------------------------------------------------------------------------
+   DRAG & DROP STATES
+   --------------------------------------------------------------------------- */
 .server-card.dragging {
-  opacity: 0.5;
-  background: rgba(99, 102, 241, 0.1);
+  opacity: 0.4;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
 }
 
 .server-card.drop-target {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
-}
-
-.server-card[draggable="true"] {
-  user-select: none;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-muted);
 }
