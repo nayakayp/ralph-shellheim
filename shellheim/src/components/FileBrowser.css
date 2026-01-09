@@ -201,6 +201,12 @@
   color: #3b82f6;
 }
 
+.fb-action-btn.fb-action-edit:hover:not(:disabled) {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+}
+
 .fb-action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

@@ -4,6 +4,57 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 22 - 2026-01-09
+
+### Completed
+- **Implemented File Editor** - Edit remote files with Monaco Editor syntax highlighting:
+  - Full-featured code editor with 100+ language support
+  - Automatic language detection based on file extension
+  - Edit button in FileBrowser toolbar for selected files
+  - Double-click editable files to open in editor
+
+- **Built FileEditor Component** (`src/components/FileEditor.tsx`):
+  - Monaco Editor with VS Code-style dark theme
+  - Draggable and resizable floating window
+  - Maximize/minimize support
+  - Save indicator (●) for unsaved changes
+  - Ctrl/Cmd+S keyboard shortcut for saving
+  - Auto-close warning for unsaved changes
+  - Status bar showing language, encoding, modified state
+
+- **Added FileEditor Styles** (`src/components/FileEditor.css`):
+  - Glassmorphism design consistent with Tokyo Night theme
+  - Header with file name, path, and action buttons
+  - Resize handle for window resizing
+  - Monaco editor theme overrides
+
+- **Integrated with FileBrowser**:
+  - Edit button (pencil icon) enabled when editable file selected
+  - Double-click on text files opens editor
+  - isEditableFile() detects text-based files (code, config, docs)
+  - Multiple editors can be open simultaneously
+  - Each editor has unique z-index for proper layering
+
+- **File Type Detection**:
+  - Supports 80+ file extensions (code, web, data, config, shell, docs)
+  - Pattern matching for hidden files (.bashrc, .gitignore)
+  - Special filename handling (Dockerfile, Makefile)
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Monitoring service** - Server health monitoring
+2. **Audit logging** - Track user actions
+3. **Tags and search** - Filter servers by tags
+
+### Tech Notes
+- Monaco Editor automatically provides syntax highlighting via language detection
+- File content transferred as byte array, decoded/encoded with TextDecoder/TextEncoder
+- Editors tracked in openEditors state array with unique IDs
+- Uses existing sftp_read_file and sftp_write_file backend APIs
+
+---
+
 ## Session 21 - 2026-01-09
 
 ### Completed

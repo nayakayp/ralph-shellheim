@@ -11,6 +11,7 @@ import {
   List,
   SquaresFour,
   MagnifyingGlass,
+  PencilSimple,
 } from '@phosphor-icons/react';
 import type { FileEntry, SftpSessionInfo } from '../types/sftp';
 import { formatFileSize, formatPermissions, getFileIcon } from '../types/sftp';
@@ -27,7 +28,50 @@ import {
 } from '../lib/api';
 import { TransferProgress, useTransferProgress } from './TransferProgress';
 import { SearchPanel } from './SearchPanel';
+import { FileEditor } from './FileEditor';
 import './FileBrowser.css';
+
+// Check if file is editable (text-based)
+function isEditableFile(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const editableExtensions = new Set([
+    // Code
+    'js', 'jsx', 'ts', 'tsx', 'mjs', 'cjs',
+    'py', 'rb', 'php', 'java', 'kt', 'swift', 'go', 'rs', 'c', 'cpp', 'h', 'hpp', 'cs',
+    'lua', 'pl', 'ex', 'exs', 'erl', 'hs', 'clj', 'scala', 'r',
+    // Web
+    'html', 'htm', 'css', 'scss', 'sass', 'less',
+    // Data
+    'json', 'xml', 'yaml', 'yml', 'toml', 'csv', 'tsv',
+    // Config
+    'conf', 'cfg', 'ini', 'env', 'properties',
+    // Shell
+    'sh', 'bash', 'zsh', 'fish', 'bat', 'ps1', 'psm1',
+    // Docs
+    'md', 'markdown', 'txt', 'rst', 'org', 'tex',
+    // Database
+    'sql',
+    // Other
+    'dockerfile', 'makefile', 'gitignore', 'gitattributes', 'editorconfig',
+    'log', 'lock', 'npmrc', 'nvmrc', 'babelrc', 'eslintrc', 'prettierrc',
+  ]);
+  
+  // Check extension
+  if (editableExtensions.has(ext)) return true;
+  
+  // Check filename patterns
+  const name = filename.toLowerCase();
+  if (name.startsWith('.')) return true; // Hidden config files like .bashrc, .zshrc
+  if (name === 'dockerfile' || name === 'makefile') return true;
+  if (name.endsWith('rc')) return true; // bashrc, vimrc, etc.
+  
+  return false;
+}
+
+interface OpenEditor {
+  id: string;
+  filePath: string;
+}
 
 interface FileBrowserProps {
   session: SftpSessionInfo;
@@ -46,6 +90,7 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renamingValue, setRenamingValue] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [openEditors, setOpenEditors] = useState<OpenEditor[]>([]);
   
   // Transfer progress tracking
   const { transfers, addTransfer, clearTransfer, clearCompleted } = useTransferProgress();
@@ -75,11 +120,32 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
     loadDirectory(currentPath);
   }, []);
 
-  // Navigate to a directory
+  // Navigate to a directory or open file
   const handleNavigate = (entry: FileEntry) => {
     if (entry.is_dir) {
       loadDirectory(entry.path);
+    } else if (isEditableFile(entry.name)) {
+      handleOpenEditor(entry.path);
     }
+  };
+
+  // Open file in editor
+  const handleOpenEditor = (filePath: string) => {
+    // Check if already open
+    if (openEditors.some(e => e.filePath === filePath)) {
+      return; // Already open
+    }
+    
+    const newEditor: OpenEditor = {
+      id: `${session.session_id}-${filePath}-${Date.now()}`,
+      filePath,
+    };
+    setOpenEditors(prev => [...prev, newEditor]);
+  };
+
+  // Close file editor
+  const handleCloseEditor = (editorId: string) => {
+    setOpenEditors(prev => prev.filter(e => e.id !== editorId));
   };
 
   // Go up one directory
@@ -376,6 +442,20 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
             <UploadSimple size={16} />
           </button>
           <button 
+            onClick={() => {
+              // Get selected file (first one if multiple)
+              const selectedEntry = entries.find(e => selectedItems.has(e.path) && !e.is_dir && isEditableFile(e.name));
+              if (selectedEntry) {
+                handleOpenEditor(selectedEntry.path);
+              }
+            }}
+            disabled={!entries.some(e => selectedItems.has(e.path) && !e.is_dir && isEditableFile(e.name))}
+            title="Edit selected file"
+            className="fb-action-btn fb-action-edit"
+          >
+            <PencilSimple size={16} />
+          </button>
+          <button 
             onClick={handleDownload} 
             disabled={selectedItems.size === 0}
             title="Download selected"
@@ -558,6 +638,17 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
           onClose={() => setShowSearch(false)}
         />
       )}
+
+      {/* File editors */}
+      {openEditors.map((editor, index) => (
+        <FileEditor
+          key={editor.id}
+          sessionId={session.session_id}
+          filePath={editor.filePath}
+          onClose={() => handleCloseEditor(editor.id)}
+          zIndex={10000 + index}
+        />
+      ))}
     </div>
   );
 }

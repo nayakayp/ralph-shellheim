@@ -1,0 +1,251 @@
+/* =============================================================================
+   FILE EDITOR
+   Monaco-based remote file editor component
+   ============================================================================= */
+
+.file-editor {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  min-width: 400px;
+  min-height: 300px;
+}
+
+.file-editor.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   HEADER
+   --------------------------------------------------------------------------- */
+.fe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  user-select: none;
+}
+
+.fe-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.fe-unsaved-indicator {
+  color: var(--warning-fg);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.fe-filename {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--fg-primary);
+  white-space: nowrap;
+}
+
+.fe-filepath {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: var(--space-2);
+}
+
+.fe-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.fe-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fe-action-btn:hover {
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+}
+
+.fe-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fe-action-btn.save-btn {
+  background: var(--accent-muted);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: var(--accent-fg);
+}
+
+.fe-action-btn.save-btn:hover:not(:disabled) {
+  background: rgba(129, 140, 248, 0.25);
+}
+
+.fe-action-btn.save-btn:disabled {
+  background: transparent;
+  border-color: var(--border-default);
+  color: var(--fg-muted);
+}
+
+.fe-action-btn.close-btn:hover {
+  background: var(--error-muted);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--error-fg);
+}
+
+/* ---------------------------------------------------------------------------
+   BODY
+   --------------------------------------------------------------------------- */
+.fe-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.fe-loading,
+.fe-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-3);
+  color: var(--fg-muted);
+}
+
+.fe-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent-fg);
+  border-radius: 50%;
+  animation: fe-spin 1s linear infinite;
+}
+
+@keyframes fe-spin {
+  to { transform: rotate(360deg); }
+}
+
+.fe-error {
+  color: var(--error-fg);
+}
+
+.fe-error button {
+  padding: var(--space-2) var(--space-3);
+  background: var(--error-muted);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  color: var(--error-fg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fe-error button:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* ---------------------------------------------------------------------------
+   STATUS BAR
+   --------------------------------------------------------------------------- */
+.fe-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.fe-status-left,
+.fe-status-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fe-language {
+  text-transform: capitalize;
+  padding: 2px 6px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+}
+
+.fe-modified {
+  color: var(--warning-fg);
+}
+
+/* ---------------------------------------------------------------------------
+   RESIZE HANDLE
+   --------------------------------------------------------------------------- */
+.fe-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 50%,
+    var(--border-default) 50%,
+    var(--border-default) 100%
+  );
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.fe-resize-handle:hover {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   MONACO OVERRIDES
+   --------------------------------------------------------------------------- */
+.file-editor .monaco-editor {
+  padding-top: 0;
+}
+
+.file-editor .monaco-editor .margin {
+  background: var(--bg-base) !important;
+}
+
+.file-editor .monaco-editor,
+.file-editor .monaco-editor .monaco-scrollable-element,
+.file-editor .monaco-editor .monaco-scrollable-element > .monaco-scrollable-element {
+  border-radius: 0;
+}
