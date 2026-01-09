@@ -12,3 +12,4 @@ pub mod snippets;
 pub mod ssh;
 pub mod tags;
 pub mod tunnel;
+pub mod monitoring;

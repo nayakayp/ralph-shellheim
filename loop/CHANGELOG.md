@@ -4,6 +4,66 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 27 - 2026-01-10
+
+### Completed
+- **Implemented Monitoring Service** - Server health checks with TCP port connectivity:
+  - Check individual or all servers with configurable timeout
+  - Parallel health checks for performance
+  - In-memory cache for instant status display
+  - Aggregated stats (online/offline/error/unknown counts)
+
+- **Built Monitoring Backend** (`src-tauri/src/api/monitoring.rs`):
+  - `check_entry_health`: Single server TCP port check with timeout
+  - `check_entries_health`: Parallel batch checks for all servers
+  - `get_cached_health`: Retrieve cached results without network calls
+  - `get_monitoring_stats`: Aggregated status counts
+  - `clear_health_cache`: Reset cached health data
+  - DNS resolution and proper error categorization (offline vs error)
+
+- **Created Monitoring Model** (`src-tauri/src/models/monitoring.rs`):
+  - `HealthStatus` enum: online, offline, checking, error, unknown
+  - `HealthCheckResult`: Entry ID, status, response time, error, timestamps
+  - `MonitoringStats`: Aggregated counts for dashboard display
+
+- **Added Frontend Types** (`src/types/monitoring.ts`):
+  - TypeScript interfaces matching Rust models
+  - `STATUS_COLORS` and `STATUS_LABELS` for visual display
+  - Helper functions: `formatResponseTime()`, `formatRelativeTime()`
+
+- **Built MonitoringPanel Component** (`src/components/MonitoringPanel.tsx`):
+  - Slide-in panel with Tokyo Night glassmorphism design
+  - Stats bar showing online/offline/error/unknown counts
+  - Server list with status badges, response times, and check timestamps
+  - Refresh button to trigger health checks for all servers
+  - Loading and empty states
+
+- **Added MonitoringPanel Styles** (`src/components/MonitoringPanel.css`):
+  - Glassmorphism design consistent with app theme
+  - Stats grid with color-coded values
+  - Status badges matching status colors
+  - Smooth animations for checking state
+
+- **Integrated with Dashboard**:
+  - Added "Monitor" button to toolbar with Heartbeat icon
+  - MonitoringPanel accessible from main dashboard
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Integrate audit logging** - Add logging to existing operations
+2. **RDP/VNC support** - Remote desktop protocols
+3. **Auto-refresh monitoring** - Periodic background health checks
+
+### Tech Notes
+- TCP port check uses `TcpStream::connect_timeout` for precise timeout control
+- DNS resolution handled separately for clearer error messages
+- Health cache is global (in-memory HashMap) for fast access
+- Parallel checks via `tokio::spawn` for efficient batch operations
+- Response time measured from before DNS resolution to connection success
+
+---
+
 ## Session 26 - 2026-01-10
 
 ### Completed

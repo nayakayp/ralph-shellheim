@@ -165,6 +165,13 @@ pub fn run() {
             api::tags::get_entry_tags,
             api::tags::list_entries_by_tag,
             api::tags::get_tag_counts,
+            
+            // Monitoring commands
+            api::monitoring::check_entry_health,
+            api::monitoring::check_entries_health,
+            api::monitoring::get_cached_health,
+            api::monitoring::get_monitoring_stats,
+            api::monitoring::clear_health_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

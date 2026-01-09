@@ -601,3 +601,47 @@ export async function getTagCounts(): Promise<Map<string, number>> {
   const counts = await invoke<[string, number][]>("get_tag_counts", { token });
   return new Map(counts);
 }
+
+// ============ Monitoring API ============
+import type { HealthCheckResult, MonitoringStats } from "../types/monitoring";
+
+export async function checkEntryHealth(entryId: string, timeoutMs?: number): Promise<HealthCheckResult> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HealthCheckResult>("check_entry_health", { 
+    token, 
+    entryId, 
+    timeoutMs: timeoutMs ?? null 
+  });
+}
+
+export async function checkEntriesHealth(entryIds?: string[], timeoutMs?: number): Promise<HealthCheckResult[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HealthCheckResult[]>("check_entries_health", { 
+    token, 
+    entryIds: entryIds ?? null, 
+    timeoutMs: timeoutMs ?? null 
+  });
+}
+
+export async function getCachedHealth(entryIds?: string[]): Promise<HealthCheckResult[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HealthCheckResult[]>("get_cached_health", { 
+    token, 
+    entryIds: entryIds ?? null 
+  });
+}
+
+export async function getMonitoringStats(): Promise<MonitoringStats> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<MonitoringStats>("get_monitoring_stats", { token });
+}
+
+export async function clearHealthCache(entryIds?: string[]): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("clear_health_cache", { token, entryIds: entryIds ?? null });
+}
