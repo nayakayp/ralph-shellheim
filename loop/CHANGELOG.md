@@ -4,6 +4,58 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 15 - 2026-01-09
+
+### Completed
+- **Implemented Folder & Entry Drag-and-Drop** - Full drag-and-drop support for organizing servers:
+  - Drag folders to move them into other folders or to root level
+  - Drag entries (servers) to reorder within the same folder
+  - Drag entries to folders in the sidebar to move between folders
+  - Visual feedback with drop-target highlighting and drag previews
+  - Circular reference prevention (can't drop folder into its own descendant)
+
+- **Added Backend Reorder/Move APIs** (`src-tauri/src/api/folders.rs`):
+  - `reorder_folders`: Batch update sort_order for folders within a parent
+  - `move_folder`: Move folder to new parent with circular reference validation
+
+- **Added Backend Entry APIs** (`src-tauri/src/api/entries.rs`):
+  - `reorder_entries`: Batch update sort_order for entries within a folder
+  - `move_entry`: Move entry to different folder with folder existence validation
+
+- **Updated FolderTree Component** with HTML5 drag-and-drop:
+  - Folder items are draggable
+  - Drop targets show dashed purple outline
+  - Supports receiving both folder and entry drags
+  - Root "All Servers" accepts drops to move to top level
+
+- **Updated ServerList Component** with drag handles:
+  - Six-dot drag handle visible on hover
+  - Entry reordering within folder via drag-and-drop
+  - Visual feedback for dragging and drop target states
+
+- **Added Frontend API Functions** (`src/lib/api.ts`):
+  - `reorderFolders`, `moveFolder`, `reorderEntries`, `moveEntry`
+
+- **CSS Styling** for drag states:
+  - `.dragging`: Semi-transparent while being dragged
+  - `.drop-target`: Purple outline highlight
+  - Drag handles with grab cursor
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Port forwarding** - SSH tunnel support
+2. **Directory download** - Download folders as ZIP
+3. **Snippets and scripts** - Command automation
+
+### Tech Notes
+- Uses HTML5 Drag and Drop API with custom MIME types (`application/x-folder`, `application/x-entry`)
+- Circular reference check walks parent chain to prevent invalid folder nesting
+- Entry reorder only works within same folder (cross-folder moves entries to end)
+- Folder counts automatically updated when entries are moved
+
+---
+
 ## Session 14 - 2026-01-09
 
 ### Completed

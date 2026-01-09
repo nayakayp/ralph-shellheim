@@ -117,6 +117,18 @@ export async function deleteEntry(entryId: string): Promise<void> {
   return invoke<void>("delete_entry", { token, entryId });
 }
 
+export async function reorderEntries(entryIds: string[], folderId: string | null): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("reorder_entries", { token, entryIds, folderId });
+}
+
+export async function moveEntry(entryId: string, folderId: string | null): Promise<Entry> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Entry>("move_entry", { token, entryId, folderId });
+}
+
 // Identity API
 export async function listIdentities(): Promise<Identity[]> {
   const token = getStoredToken();
@@ -171,6 +183,18 @@ export async function deleteFolder(folderId: string): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<void>("delete_folder", { token, folderId });
+}
+
+export async function reorderFolders(folderIds: string[], parentId: string | null): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("reorder_folders", { token, folderIds, parentId });
+}
+
+export async function moveFolder(folderId: string, newParentId: string | null): Promise<Folder> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Folder>("move_folder", { token, folderId, newParentId });
 }
 
 export async function getFolderCounts(): Promise<Map<string, number>> {

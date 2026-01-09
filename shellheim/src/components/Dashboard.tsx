@@ -6,7 +6,7 @@ import type { SftpSessionInfo } from "../types/sftp";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries } from "../lib/api";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
@@ -279,6 +279,33 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     }
   };
 
+  const handleMoveFolder = async (folderId: string, newParentId: string | null) => {
+    const updated = await moveFolder(folderId, newParentId);
+    setFolders((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+  };
+
+  const handleReorderFolders = async (folderIds: string[], parentId: string | null) => {
+    await reorderFolders(folderIds, parentId);
+    // Refetch folders to get updated sort_order values
+    const updatedFolders = await listFolders();
+    setFolders(updatedFolders);
+  };
+
+  const handleMoveEntryToFolder = async (entryId: string, folderId: string | null) => {
+    const updated = await moveEntry(entryId, folderId);
+    setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    // Update folder counts
+    const counts = await getFolderCounts();
+    setFolderCounts(counts);
+  };
+
+  const handleReorderEntries = async (entryIds: string[], folderId: string | null) => {
+    await reorderEntries(entryIds, folderId);
+    // Refetch entries to get updated sort_order values
+    const updatedEntries = await listEntries();
+    setEntries(updatedEntries);
+  };
+
   const handleSelectTab = (sessionId: string, tabType: "ssh" | "sftp") => {
     setActiveSessionId(sessionId);
     setActiveTabType(tabType);
@@ -471,6 +498,8 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                     onConnectSftp={handleConnectSftp}
                     onEdit={(entry) => { setShowServerPanel(false); handleEdit(entry); }}
                     onDelete={handleDelete}
+                    onReorderEntries={handleReorderEntries}
+                    currentFolderId={null}
                   />
                 )}
               </div>
@@ -558,6 +587,9 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           onSelectFolder={setSelectedFolderId}
           onCreateFolder={handleCreateFolder}
           onDeleteFolder={handleDeleteFolder}
+          onMoveFolder={handleMoveFolder}
+          onReorderFolders={handleReorderFolders}
+          onMoveEntryToFolder={handleMoveEntryToFolder}
           rootEntryCount={rootEntryCount}
         />
 
@@ -635,6 +667,8 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 onConnectSftp={handleConnectSftp}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onReorderEntries={handleReorderEntries}
+                currentFolderId={selectedFolderId}
               />
             )}
           </main>

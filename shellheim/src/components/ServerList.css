@@ -128,3 +128,40 @@
   border-color: rgba(34, 197, 94, 0.3);
   color: #22c55e;
 }
+
+/* Drag handle */
+.server-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: grab;
+  transition: color 0.15s;
+  flex-shrink: 0;
+  margin-left: -8px;
+}
+
+.server-card:hover .server-drag-handle {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.server-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Drag and drop states */
+.server-card.dragging {
+  opacity: 0.5;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.server-card.drop-target {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.server-card[draggable="true"] {
+  user-select: none;
+}

@@ -263,3 +263,27 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Drag and drop states */
+.folder-item.dragging {
+  opacity: 0.5;
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.folder-item.drop-target {
+  background: rgba(124, 58, 237, 0.35);
+  outline: 2px dashed rgba(124, 58, 237, 0.8);
+  outline-offset: -2px;
+}
+
+.folder-item.drop-target .folder-icon {
+  color: #a855f7;
+}
+
+.folder-item[draggable="true"] {
+  cursor: grab;
+}
+
+.folder-item[draggable="true"]:active {
+  cursor: grabbing;
+}

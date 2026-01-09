@@ -341,6 +341,137 @@ pub async fn get_entry(token: String, entry_id: String) -> Result<Entry, String>
     Ok(row.with_identities(identity_ids))
 }
 
+/// Reorder entries (batch update sort_order values)
+#[command]
+pub async fn reorder_entries(
+    token: String,
+    entry_ids: Vec<String>,
+    folder_id: Option<String>,
+) -> Result<(), String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    info!("Reordering {} entries for account: {}", entry_ids.len(), account_id);
+    
+    let pool = db::pool();
+    
+    // Update sort_order for each entry
+    for (index, entry_id) in entry_ids.iter().enumerate() {
+        let result = sqlx::query(
+            r#"
+            UPDATE entries SET sort_order = ?, folder_id = ?, updated_at = ?
+            WHERE id = ? AND account_id = ?
+            "#,
+        )
+        .bind(index as i32)
+        .bind(&folder_id)
+        .bind(chrono::Utc::now().to_rfc3339())
+        .bind(entry_id)
+        .bind(&account_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to update entry order: {}", e))?;
+        
+        if result.rows_affected() == 0 {
+            return Err(format!("Entry not found: {}", entry_id));
+        }
+    }
+    
+    info!("Entries reordered successfully");
+    Ok(())
+}
+
+/// Move an entry to a new folder
+#[command]
+pub async fn move_entry(
+    token: String,
+    entry_id: String,
+    folder_id: Option<String>,
+) -> Result<Entry, String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    info!("Moving entry {} to folder {:?}", entry_id, folder_id);
+    
+    let pool = db::pool();
+    
+    // Verify entry exists and belongs to account
+    let existing: Option<EntryRow> = sqlx::query_as(
+        "SELECT * FROM entries WHERE id = ? AND account_id = ?"
+    )
+    .bind(&entry_id)
+    .bind(&account_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
+    
+    let entry = existing.ok_or_else(|| "Entry not found".to_string())?;
+    
+    // If target folder specified, verify it exists
+    if let Some(ref fid) = folder_id {
+        let folder_exists: Option<(i32,)> = sqlx::query_as(
+            "SELECT 1 FROM folders WHERE id = ? AND account_id = ?"
+        )
+        .bind(fid)
+        .bind(&account_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| format!("Database error: {}", e))?;
+        
+        if folder_exists.is_none() {
+            return Err("Target folder not found".to_string());
+        }
+    }
+    
+    // Get max sort_order in target folder
+    let max_order: (i32,) = sqlx::query_as(
+        r#"
+        SELECT COALESCE(MAX(sort_order), 0) FROM entries
+        WHERE account_id = ? AND folder_id IS ?
+        "#,
+    )
+    .bind(&account_id)
+    .bind(&folder_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to get sort order: {}", e))?;
+    
+    let new_sort_order = max_order.0 + 1;
+    let now = chrono::Utc::now().to_rfc3339();
+    
+    sqlx::query(
+        r#"
+        UPDATE entries SET folder_id = ?, sort_order = ?, updated_at = ?
+        WHERE id = ? AND account_id = ?
+        "#,
+    )
+    .bind(&folder_id)
+    .bind(new_sort_order)
+    .bind(&now)
+    .bind(&entry_id)
+    .bind(&account_id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to move entry: {}", e))?;
+    
+    let identity_ids = get_identity_ids_for_entry(&entry_id).await?;
+    
+    Ok(Entry {
+        id: entry_id,
+        account_id,
+        folder_id,
+        entry_type: entry.entry_type,
+        name: entry.name,
+        host: entry.host,
+        port: entry.port,
+        protocol: entry.protocol,
+        description: entry.description,
+        icon: entry.icon,
+        color: entry.color,
+        sort_order: new_sort_order,
+        last_connected_at: entry.last_connected_at,
+        created_at: entry.created_at,
+        updated_at: now,
+        identity_ids,
+    })
+}
+
 /// Get linked identities for an entry (returns IDs only, for connection use)
 #[command]
 pub async fn get_entry_identities(token: String, entry_id: String) -> Result<Vec<String>, String> {

@@ -64,6 +64,8 @@ pub fn run() {
             api::entries::update_entry,
             api::entries::delete_entry,
             api::entries::get_entry_identities,
+            api::entries::reorder_entries,
+            api::entries::move_entry,
             
             // Identity commands
             api::identities::list_identities,
@@ -90,6 +92,8 @@ pub fn run() {
             api::folders::update_folder,
             api::folders::delete_folder,
             api::folders::get_folder_counts,
+            api::folders::reorder_folders,
+            api::folders::move_folder,
             
             // Known hosts commands
             api::known_hosts::list_known_hosts,

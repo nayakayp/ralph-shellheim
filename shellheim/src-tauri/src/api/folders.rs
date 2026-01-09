@@ -223,6 +223,116 @@ pub async fn update_folder(
     })
 }
 
+/// Reorder folders (batch update sort_order values)
+#[command]
+pub async fn reorder_folders(
+    token: String,
+    folder_ids: Vec<String>,
+    parent_id: Option<String>,
+) -> Result<(), String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    info!("Reordering {} folders for account: {}", folder_ids.len(), account_id);
+    
+    let pool = db::pool();
+    
+    // Update sort_order for each folder
+    for (index, folder_id) in folder_ids.iter().enumerate() {
+        let result = sqlx::query(
+            r#"
+            UPDATE folders SET sort_order = ?, parent_id = ?, updated_at = ?
+            WHERE id = ? AND account_id = ?
+            "#,
+        )
+        .bind(index as i32)
+        .bind(&parent_id)
+        .bind(chrono::Utc::now().to_rfc3339())
+        .bind(folder_id)
+        .bind(&account_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to update folder order: {}", e))?;
+        
+        if result.rows_affected() == 0 {
+            return Err(format!("Folder not found: {}", folder_id));
+        }
+    }
+    
+    info!("Folders reordered successfully");
+    Ok(())
+}
+
+/// Move a folder to a new parent
+#[command]
+pub async fn move_folder(
+    token: String,
+    folder_id: String,
+    new_parent_id: Option<String>,
+) -> Result<Folder, String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    info!("Moving folder {} to parent {:?}", folder_id, new_parent_id);
+    
+    let pool = db::pool();
+    
+    // Prevent folder from being its own parent
+    if let Some(ref parent) = new_parent_id {
+        if parent == &folder_id {
+            return Err("Folder cannot be its own parent".to_string());
+        }
+        
+        // Prevent circular reference (folder can't be moved into its own descendant)
+        let mut check_id = Some(parent.clone());
+        while let Some(ref pid) = check_id {
+            if pid == &folder_id {
+                return Err("Cannot move folder into its own descendant".to_string());
+            }
+            let row: Option<(Option<String>,)> = sqlx::query_as(
+                "SELECT parent_id FROM folders WHERE id = ? AND account_id = ?"
+            )
+            .bind(pid)
+            .bind(&account_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("Database error: {}", e))?;
+            
+            check_id = row.and_then(|r| r.0);
+        }
+    }
+    
+    // Get max sort_order in target parent
+    let max_order: (i32,) = sqlx::query_as(
+        r#"
+        SELECT COALESCE(MAX(sort_order), 0) FROM folders
+        WHERE account_id = ? AND parent_id IS ?
+        "#,
+    )
+    .bind(&account_id)
+    .bind(&new_parent_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("Failed to get sort order: {}", e))?;
+    
+    let new_sort_order = max_order.0 + 1;
+    let now = chrono::Utc::now().to_rfc3339();
+    
+    sqlx::query(
+        r#"
+        UPDATE folders SET parent_id = ?, sort_order = ?, updated_at = ?
+        WHERE id = ? AND account_id = ?
+        "#,
+    )
+    .bind(&new_parent_id)
+    .bind(new_sort_order)
+    .bind(&now)
+    .bind(&folder_id)
+    .bind(&account_id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to move folder: {}", e))?;
+    
+    // Return updated folder
+    get_folder(token, folder_id).await
+}
+
 #[command]
 pub async fn delete_folder(token: String, folder_id: String) -> Result<(), String> {
     let account_id = get_account_id_from_token(&token).await?;

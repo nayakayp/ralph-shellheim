@@ -1,3 +1,4 @@
+import { useCallback, useState } from "react";
 import type { Entry } from "../types/entry";
 import "./ServerList.css";
 
@@ -7,9 +8,22 @@ interface ServerListProps {
   onConnectSftp?: (entry: Entry) => void;
   onEdit: (entry: Entry) => void;
   onDelete: (entry: Entry) => void;
+  onReorderEntries?: (entryIds: string[], folderId: string | null) => Promise<void>;
+  currentFolderId: string | null;
 }
 
-export function ServerList({ entries, onConnect, onConnectSftp, onEdit, onDelete }: ServerListProps) {
+export function ServerList({ 
+  entries, 
+  onConnect, 
+  onConnectSftp, 
+  onEdit, 
+  onDelete,
+  onReorderEntries,
+  currentFolderId,
+}: ServerListProps) {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+
   const getProtocolIcon = (protocol?: string) => {
     switch (protocol) {
       case "ssh":
@@ -44,10 +58,84 @@ export function ServerList({ entries, onConnect, onConnectSftp, onEdit, onDelete
     return entry.last_connected_at ? "#22c55e" : "#6b7280";
   };
 
+  // Drag handlers for reordering
+  const handleDragStart = useCallback((e: React.DragEvent, index: number, entry: Entry) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("application/x-entry", entry.id);
+    e.dataTransfer.setData("text/plain", entry.name);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (!e.dataTransfer.types.includes("application/x-entry")) return;
+    e.dataTransfer.dropEffect = "move";
+    setDropTargetIndex(index);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear if we're leaving to an element outside the card
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setDropTargetIndex(null);
+    }
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    setDropTargetIndex(null);
+    
+    if (draggedIndex === null || draggedIndex === dropIndex || !onReorderEntries) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    // Create new order
+    const newOrder = [...entries];
+    const [draggedItem] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(dropIndex, 0, draggedItem);
+    
+    const entryIds = newOrder.map(e => e.id);
+    
+    try {
+      await onReorderEntries(entryIds, currentFolderId);
+    } catch (err) {
+      console.error("Failed to reorder entries:", err);
+    }
+    
+    setDraggedIndex(null);
+  }, [draggedIndex, entries, onReorderEntries, currentFolderId]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIndex(null);
+    setDropTargetIndex(null);
+  }, []);
+
   return (
     <div className="server-list">
-      {entries.map((entry) => (
-        <div key={entry.id} className="server-card" onClick={() => onConnect(entry)}>
+      {entries.map((entry, index) => (
+        <div 
+          key={entry.id} 
+          className={`server-card ${draggedIndex === index ? "dragging" : ""} ${dropTargetIndex === index ? "drop-target" : ""}`}
+          onClick={() => onConnect(entry)}
+          draggable
+          onDragStart={(e) => handleDragStart(e, index, entry)}
+          onDragOver={(e) => handleDragOver(e, index)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, index)}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="server-drag-handle" onClick={(e) => e.stopPropagation()}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="8" cy="6" r="2" />
+              <circle cx="16" cy="6" r="2" />
+              <circle cx="8" cy="12" r="2" />
+              <circle cx="16" cy="12" r="2" />
+              <circle cx="8" cy="18" r="2" />
+              <circle cx="16" cy="18" r="2" />
+            </svg>
+          </div>
+          
           <div className="server-icon" style={{ color: entry.color || "#6366f1" }}>
             {getProtocolIcon(entry.protocol)}
             <span 
