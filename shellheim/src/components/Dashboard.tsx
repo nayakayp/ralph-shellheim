@@ -27,6 +27,7 @@ import { MonitoringPanel } from "./MonitoringPanel";
 import { BackupPanel } from "./BackupPanel";
 import { IntegrationPanel } from "./IntegrationPanel";
 import { ServerStatsPanel } from "./ServerStatsPanel";
+import { DockerPanel } from "./DockerPanel";
 import { CommandPalette } from "./CommandPalette";
 import { AiPanel } from "./AiPanel";
 import KeybindsPanel from "./KeybindsPanel";
@@ -65,6 +66,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [statsEntry, setStatsEntry] = useState<Entry | null>(null);
+  const [dockerEntry, setDockerEntry] = useState<Entry | null>(null);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [tagFilteredEntryIds, setTagFilteredEntryIds] = useState<Set<string> | null>(null);
   const [error, setError] = useState("");
@@ -942,6 +944,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                     onConnect={handleConnect}
                     onConnectSftp={handleConnectSftp}
                     onViewStats={(entry) => { setShowServerPanel(false); setStatsEntry(entry); }}
+                    onViewDocker={(entry) => { setShowServerPanel(false); setDockerEntry(entry); }}
                     onEdit={(entry) => { setShowServerPanel(false); handleEdit(entry); }}
                     onDelete={handleDelete}
                     onReorderEntries={handleReorderEntries}
@@ -1144,6 +1147,8 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 entries={filteredEntries}
                 onConnect={handleConnect}
                 onConnectSftp={handleConnectSftp}
+                onViewStats={setStatsEntry}
+                onViewDocker={setDockerEntry}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onReorderEntries={handleReorderEntries}
@@ -1214,6 +1219,14 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           entry={statsEntry}
           isOpen={true}
           onClose={() => setStatsEntry(null)}
+        />
+      )}
+
+      {dockerEntry && (
+        <DockerPanel
+          entry={dockerEntry}
+          isOpen={true}
+          onClose={() => setDockerEntry(null)}
         />
       )}
 

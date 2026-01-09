@@ -4,6 +4,70 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 38 - 2026-01-10
+
+### Completed
+- **Implemented Docker Container Management** - Full Docker integration via SSH:
+  - List containers (running or all)
+  - Start, stop, restart containers
+  - View container logs with tail option
+  - Get real-time container stats (CPU, memory, network, block I/O)
+  - Remove containers (with force option)
+  - List Docker images
+  - Pull new images
+  - Check Docker availability on servers
+
+- **Built Docker Backend API** (`src-tauri/src/api/docker.rs`):
+  - `list_docker_containers`: List containers with format parsing
+  - `get_container_stats`: Real-time CPU/memory/network stats
+  - `start_docker_container`, `stop_docker_container`, `restart_docker_container`
+  - `get_docker_logs`: Tail container logs
+  - `list_docker_images`: List available images
+  - `remove_docker_container`: Remove with optional force
+  - `pull_docker_image`: Pull images from registry
+  - `check_docker_available`: Verify Docker is installed
+
+- **Created Docker Types** (`src/types/docker.ts`):
+  - `Container`: ID, name, image, status, state, ports, created
+  - `ContainerStats`: CPU percent, memory usage/limit, net I/O, block I/O
+  - `DockerImage`: Repository, tag, size, created
+
+- **Built DockerPanel Component** (`src/components/DockerPanel.tsx`):
+  - Tabbed interface for Containers and Images
+  - Container cards with state indicator (color-coded)
+  - Action buttons: Start/Stop, Restart, Logs, Stats, Remove
+  - Show all containers toggle
+  - Logs modal with scrollable pre-formatted output
+  - Stats popup with real-time metrics
+  - Loading states and error handling
+  - Tokyo Night themed glassmorphism design
+
+- **Integrated into Dashboard and ServerList**:
+  - Added 📦 Docker button to server entries
+  - Only visible for SSH-compatible entries
+  - Opens DockerPanel modal for selected server
+
+- **Added Frontend API Functions** (`src/lib/api.ts`):
+  - All Docker operations exposed as typed API calls
+  - Proper error handling and token management
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Technical Notes
+- Docker commands executed via SSH (no Docker API socket required)
+- Uses `docker ps --format` for structured output parsing
+- Stats collected via `docker stats --no-stream`
+- Logs support stderr redirect (`2>&1`) for complete output
+- Uses same credential loading pattern as monitoring module
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation or guacd)
+2. **OIDC/LDAP authentication** - Enterprise SSO
+3. **Organizations/Teams** - Multi-tenant user/server separation
+4. **Real-time monitoring with WebSocket** - Live stats streaming
+
+---
+
 ## Session 37 - 2026-01-10
 
 ### Completed

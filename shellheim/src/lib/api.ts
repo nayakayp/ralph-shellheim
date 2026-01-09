@@ -891,3 +891,66 @@ export async function generateCommand(request: GenerateCommandRequest): Promise<
   if (!token) throw new Error("Not authenticated");
   return invoke<GenerateCommandResponse>("generate_command", { token, request });
 }
+
+// ============ Docker API ============
+import type { Container, ContainerStats, DockerImage } from "../types/docker";
+
+export async function listDockerContainers(entryId: string, all = false): Promise<Container[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Container[]>("list_docker_containers", { token, entryId, all });
+}
+
+export async function getContainerStats(entryId: string, containerId: string): Promise<ContainerStats> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ContainerStats>("get_container_stats", { token, entryId, containerId });
+}
+
+export async function startDockerContainer(entryId: string, containerId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("start_docker_container", { token, entryId, containerId });
+}
+
+export async function stopDockerContainer(entryId: string, containerId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("stop_docker_container", { token, entryId, containerId });
+}
+
+export async function restartDockerContainer(entryId: string, containerId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("restart_docker_container", { token, entryId, containerId });
+}
+
+export async function getDockerLogs(entryId: string, containerId: string, tail?: number): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("get_docker_logs", { token, entryId, containerId, tail });
+}
+
+export async function listDockerImages(entryId: string): Promise<DockerImage[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<DockerImage[]>("list_docker_images", { token, entryId });
+}
+
+export async function removeDockerContainer(entryId: string, containerId: string, force = false): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("remove_docker_container", { token, entryId, containerId, force });
+}
+
+export async function pullDockerImage(entryId: string, image: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("pull_docker_image", { token, entryId, image });
+}
+
+export async function checkDockerAvailable(entryId: string): Promise<boolean> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<boolean>("check_docker_available", { token, entryId });
+}

@@ -18,3 +18,4 @@ pub mod tags;
 pub mod telnet;
 pub mod tunnel;
 pub mod integrations;
+pub mod docker;

@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
-import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash, ChartLine } from "@phosphor-icons/react";
+import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash, ChartLine, Package } from "@phosphor-icons/react";
 import type { Entry } from "../types/entry";
 import type { Tag } from "../types/tag";
 import { getContrastColor } from "../types/tag";
@@ -11,6 +11,7 @@ interface ServerListProps {
   onConnect: (entry: Entry) => void;
   onConnectSftp?: (entry: Entry) => void;
   onViewStats?: (entry: Entry) => void;
+  onViewDocker?: (entry: Entry) => void;
   onEdit: (entry: Entry) => void;
   onDelete: (entry: Entry) => void;
   onReorderEntries?: (entryIds: string[], folderId: string | null) => Promise<void>;
@@ -22,6 +23,7 @@ export function ServerList({
   onConnect, 
   onConnectSftp, 
   onViewStats,
+  onViewDocker,
   onEdit, 
   onDelete,
   onReorderEntries,
@@ -188,6 +190,15 @@ export function ServerList({
                 title="View Stats"
               >
                 <ChartLine size={16} weight="regular" />
+              </button>
+            )}
+            {onViewDocker && (entry.protocol === "ssh" || !entry.protocol) && (
+              <button 
+                className="action-btn action-btn-docker" 
+                onClick={() => onViewDocker(entry)}
+                title="Docker"
+              >
+                <Package size={16} weight="regular" />
               </button>
             )}
             {onConnectSftp && (

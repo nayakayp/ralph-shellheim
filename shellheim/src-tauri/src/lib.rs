@@ -218,6 +218,18 @@ pub fn run() {
             api::ai::update_ai_settings,
             api::ai::test_ai_connection,
             api::ai::generate_command,
+            
+            // Docker commands
+            api::docker::list_docker_containers,
+            api::docker::get_container_stats,
+            api::docker::start_docker_container,
+            api::docker::stop_docker_container,
+            api::docker::restart_docker_container,
+            api::docker::get_docker_logs,
+            api::docker::list_docker_images,
+            api::docker::remove_docker_container,
+            api::docker::pull_docker_image,
+            api::docker::check_docker_available,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
