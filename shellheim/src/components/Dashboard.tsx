@@ -26,6 +26,7 @@ import { TagsPanel } from "./TagsPanel";
 import { MonitoringPanel } from "./MonitoringPanel";
 import { BackupPanel } from "./BackupPanel";
 import { IntegrationPanel } from "./IntegrationPanel";
+import { ServerStatsPanel } from "./ServerStatsPanel";
 import { CommandPalette } from "./CommandPalette";
 import KeybindsPanel from "./KeybindsPanel";
 import { useKeymaps } from "../hooks/useKeymaps";
@@ -61,6 +62,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [showKeybinds, setShowKeybinds] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [statsEntry, setStatsEntry] = useState<Entry | null>(null);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [tagFilteredEntryIds, setTagFilteredEntryIds] = useState<Set<string> | null>(null);
   const [error, setError] = useState("");
@@ -937,6 +939,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                     entries={entries}
                     onConnect={handleConnect}
                     onConnectSftp={handleConnectSftp}
+                    onViewStats={(entry) => { setShowServerPanel(false); setStatsEntry(entry); }}
                     onEdit={(entry) => { setShowServerPanel(false); handleEdit(entry); }}
                     onDelete={handleDelete}
                     onReorderEntries={handleReorderEntries}
@@ -1199,6 +1202,14 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showMonitoring}
         onClose={() => setShowMonitoring(false)}
       />
+
+      {statsEntry && (
+        <ServerStatsPanel
+          entry={statsEntry}
+          isOpen={true}
+          onClose={() => setStatsEntry(null)}
+        />
+      )}
 
       <BackupPanel
         isOpen={showBackup}

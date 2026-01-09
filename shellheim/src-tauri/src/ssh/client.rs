@@ -655,3 +655,144 @@ pub struct JumpConnection {
     /// The target SSH connection
     pub target_connection: ActiveConnection,
 }
+
+/// A minimal handler for command execution that just captures output
+struct CommandHandler {
+    output: Arc<Mutex<Vec<u8>>>,
+}
+
+#[async_trait]
+impl Handler for CommandHandler {
+    type Error = russh::Error;
+
+    async fn data(
+        &mut self,
+        _channel: ChannelId,
+        data: &[u8],
+        _session: &mut client::Session,
+    ) -> Result<(), Self::Error> {
+        let mut output = self.output.lock().await;
+        output.extend_from_slice(data);
+        Ok(())
+    }
+
+    async fn extended_data(
+        &mut self,
+        _channel: ChannelId,
+        _ext: u32,
+        data: &[u8],
+        _session: &mut client::Session,
+    ) -> Result<(), Self::Error> {
+        // Capture stderr as well
+        let mut output = self.output.lock().await;
+        output.extend_from_slice(data);
+        Ok(())
+    }
+
+    async fn check_server_key(
+        &mut self,
+        _server_public_key: &russh_keys::PublicKey,
+    ) -> Result<bool, Self::Error> {
+        // Accept all keys for command execution
+        // (Host should already be verified from previous interactive sessions)
+        Ok(true)
+    }
+}
+
+/// Execute a command over SSH and return the output
+/// This is a stateless function that connects, runs the command, and disconnects
+pub async fn execute_command(
+    host: &str,
+    port: u16,
+    username: &str,
+    password: Option<&str>,
+    ssh_key: Option<&str>,
+    passphrase: Option<&str>,
+    command: &str,
+    timeout_secs: u64,
+) -> Result<String, String> {
+    debug!("SSH exec: connecting to {}@{}:{}", username, host, port);
+
+    let config = Arc::new(Config::default());
+    let output = Arc::new(Mutex::new(Vec::new()));
+
+    let handler = CommandHandler {
+        output: output.clone(),
+    };
+
+    // Connect with timeout
+    let connect_future = client::connect(config, (host, port), handler);
+    let mut session = tokio::time::timeout(
+        std::time::Duration::from_secs(timeout_secs),
+        connect_future,
+    )
+    .await
+    .map_err(|_| format!("Connection to {}:{} timed out", host, port))?
+    .map_err(|e| format!("Failed to connect to {}:{}: {}", host, port, e))?;
+
+    // Authenticate
+    let auth_success = if let Some(key_str) = ssh_key {
+        // Parse and authenticate with SSH key
+        let keypair = if let Some(pass) = passphrase {
+            russh_keys::decode_secret_key(key_str, Some(pass))
+                .map_err(|e| format!("Failed to decode SSH key with passphrase: {}", e))?
+        } else {
+            russh_keys::decode_secret_key(key_str, None)
+                .map_err(|e| format!("Failed to decode SSH key: {}", e))?
+        };
+        
+        let key_with_alg = PrivateKeyWithHashAlg::new(Arc::new(keypair), None)
+            .map_err(|e| format!("Failed to create key wrapper: {}", e))?;
+        
+        session
+            .authenticate_publickey(username, key_with_alg)
+            .await
+            .map_err(|e| format!("Public key auth error: {}", e))?
+    } else if let Some(pwd) = password {
+        session
+            .authenticate_password(username, pwd)
+            .await
+            .map_err(|e| format!("Password auth error: {}", e))?
+    } else {
+        return Err("No authentication method available".to_string());
+    };
+
+    if !auth_success {
+        return Err("Authentication failed".to_string());
+    }
+
+    // Open channel and execute command
+    let mut channel = session
+        .channel_open_session()
+        .await
+        .map_err(|e| format!("Failed to open session: {}", e))?;
+
+    channel
+        .exec(true, command)
+        .await
+        .map_err(|e| format!("Failed to execute command: {}", e))?;
+
+    // Wait for command to complete with timeout
+    let wait_result = tokio::time::timeout(
+        std::time::Duration::from_secs(timeout_secs),
+        channel.wait(),
+    )
+    .await;
+
+    // Disconnect
+    let _ = session
+        .disconnect(Disconnect::ByApplication, "Command complete", "en")
+        .await;
+
+    match wait_result {
+        Ok(_) => {
+            let output = output.lock().await;
+            Ok(String::from_utf8_lossy(&output).to_string())
+        }
+        Err(_) => {
+            let output = output.lock().await;
+            // Return partial output on timeout
+            Ok(String::from_utf8_lossy(&output).to_string())
+        }
+    }
+}

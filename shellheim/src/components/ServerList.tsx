@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
-import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash } from "@phosphor-icons/react";
+import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash, ChartLine } from "@phosphor-icons/react";
 import type { Entry } from "../types/entry";
 import type { Tag } from "../types/tag";
 import { getContrastColor } from "../types/tag";
@@ -10,6 +10,7 @@ interface ServerListProps {
   entries: Entry[];
   onConnect: (entry: Entry) => void;
   onConnectSftp?: (entry: Entry) => void;
+  onViewStats?: (entry: Entry) => void;
   onEdit: (entry: Entry) => void;
   onDelete: (entry: Entry) => void;
   onReorderEntries?: (entryIds: string[], folderId: string | null) => Promise<void>;
@@ -20,6 +21,7 @@ export function ServerList({
   entries, 
   onConnect, 
   onConnectSftp, 
+  onViewStats,
   onEdit, 
   onDelete,
   onReorderEntries,
@@ -179,6 +181,15 @@ export function ServerList({
           </div>
           
           <div className="server-actions" onClick={(e) => e.stopPropagation()}>
+            {onViewStats && (entry.protocol === "ssh" || !entry.protocol) && (
+              <button 
+                className="action-btn action-btn-stats" 
+                onClick={() => onViewStats(entry)}
+                title="View Stats"
+              >
+                <ChartLine size={16} weight="regular" />
+              </button>
+            )}
             {onConnectSftp && (
               <button 
                 className="action-btn action-btn-sftp" 

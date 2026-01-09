@@ -6,7 +6,7 @@ mod recording;
 mod session_manager;
 pub mod tunnel;
 
-pub use client::{connect, connect_via_jump, ActiveConnection, ConnectResult, HostKeyInfo, JumpHostConfig, JumpConnectResult, JumpConnection, SshDataEvent, SshCloseEvent};
+pub use client::{connect, connect_via_jump, execute_command, ActiveConnection, ConnectResult, HostKeyInfo, JumpHostConfig, JumpConnectResult, JumpConnection, SshDataEvent, SshCloseEvent};
 pub use connection::*;
 pub use recording::RecordingManager;
 pub use session_manager::SessionManager;

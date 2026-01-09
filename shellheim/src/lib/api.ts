@@ -603,7 +603,7 @@ export async function getTagCounts(): Promise<Map<string, number>> {
 }
 
 // ============ Monitoring API ============
-import type { HealthCheckResult, MonitoringStats } from "../types/monitoring";
+import type { HealthCheckResult, MonitoringStats, ServerStats, StatsHistory } from "../types/monitoring";
 
 export async function checkEntryHealth(entryId: string, timeoutMs?: number): Promise<HealthCheckResult> {
   const token = getStoredToken();
@@ -644,6 +644,40 @@ export async function clearHealthCache(entryIds?: string[]): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<void>("clear_health_cache", { token, entryIds: entryIds ?? null });
+}
+
+// Server Resource Statistics API
+export async function collectServerStats(entryId: string): Promise<ServerStats> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ServerStats>("collect_server_stats", { token, entryId });
+}
+
+export async function getLatestServerStats(entryId: string): Promise<ServerStats | null> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ServerStats | null>("get_latest_server_stats", { token, entryId });
+}
+
+export async function getServerStatsHistory(
+  entryId: string, 
+  timeframe?: string, 
+  limit?: number
+): Promise<StatsHistory> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<StatsHistory>("get_server_stats_history", { 
+    token, 
+    entryId, 
+    timeframe: timeframe ?? null, 
+    limit: limit ?? null 
+  });
+}
+
+export async function cleanupServerStats(retentionHours?: number): Promise<number> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<number>("cleanup_server_stats", { token, retentionHours: retentionHours ?? null });
 }
 
 // Backup/Export API

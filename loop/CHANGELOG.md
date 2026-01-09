@@ -4,6 +4,76 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 36 - 2026-01-10
+
+### Completed
+- **Implemented Real-Time Server Resource Monitoring** - SSH-based system stats collection:
+  - CPU usage percentage, cores, and load averages
+  - Memory usage (total, used, free, cached) with percentage
+  - Swap usage statistics
+  - Disk usage for root partition
+  - Network I/O bytes (RX/TX)
+  - System info: hostname, OS name, kernel version, uptime
+
+- **Created Server Stats Database Schema** (migration 16):
+  - `server_stats` table stores all collected metrics
+  - Time-series data with `collected_at` timestamp
+  - Indexed for efficient history queries
+  - Added `monitoring_enabled` and `monitoring_interval` columns to entries
+
+- **Built Stats Collection Backend**:
+  - `stats_collector.rs` module with shell script for Linux stat collection
+  - Parses `/proc/stat`, `/proc/meminfo`, `/proc/loadavg`, `df`, `/proc/net/dev`
+  - Single SSH command execution for efficiency
+  - `execute_command()` function for stateless SSH command execution
+
+- **Added Monitoring API Endpoints** (`src-tauri/src/api/monitoring.rs`):
+  - `collect_server_stats`: Connect via SSH, run stats script, parse and store
+  - `get_latest_server_stats`: Retrieve most recent stats for an entry
+  - `get_server_stats_history`: Time-series data (1h, 6h, 24h timeframes)
+  - `cleanup_server_stats`: Retention management for old data
+
+- **Created ServerStatsPanel Component** (`src/components/ServerStatsPanel.tsx`):
+  - Modal panel showing real-time server metrics
+  - Visual progress bars for CPU, memory, and disk usage
+  - Network I/O display with RX/TX breakdown
+  - System info bar (hostname, OS, uptime)
+  - Mini history chart showing CPU usage over time
+  - Auto-refresh option (1 minute interval)
+  - Timeframe selector for history (1h, 6h, 24h)
+  - Tokyo Night theme with glassmorphism design
+
+- **Integrated into Dashboard**:
+  - Added stats button (📊) to ServerList entries
+  - Only visible for SSH-compatible entries
+  - Opens ServerStatsPanel with entry details
+
+- **Added Frontend Types and API** (`src/types/monitoring.ts`, `src/lib/api.ts`):
+  - `ServerStats`, `MemoryStats`, `DiskStats`, `NetworkStats` interfaces
+  - `StatsHistory` for time-series data
+  - Helper functions: `formatBytes`, `formatUptime`, `formatPercent`
+  - API functions for stats collection and retrieval
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Technical Notes
+- Stats collection uses a single shell script to minimize SSH overhead
+- Parses standard Linux `/proc` filesystem entries
+- Works on any Linux server (Ubuntu, CentOS, Debian, etc.)
+- CPU usage calculated from /proc/stat (user + nice + system vs total)
+- Memory stats from /proc/meminfo converted from kB to bytes
+- Disk stats from `df -B1 /` in bytes
+- Network stats from /proc/net/dev (cumulative since boot)
+- Stats are stored per-entry with timestamps for history
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation or guacd)
+2. **OIDC/LDAP authentication** - Enterprise SSO
+3. **AI-powered command suggestions** - LLM integration
+4. **Real-time monitoring with WebSocket** - Live stats streaming
+
+---
+
 ## Session 35 - 2026-01-10
 
 ### Completed

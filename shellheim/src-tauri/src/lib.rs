@@ -174,6 +174,10 @@ pub fn run() {
             api::monitoring::get_cached_health,
             api::monitoring::get_monitoring_stats,
             api::monitoring::clear_health_cache,
+            api::monitoring::collect_server_stats,
+            api::monitoring::get_latest_server_stats,
+            api::monitoring::get_server_stats_history,
+            api::monitoring::cleanup_server_stats,
             
             // Backup/Export commands
             api::backup::export_config,

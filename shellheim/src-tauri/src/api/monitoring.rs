@@ -1,7 +1,9 @@
-//! Monitoring API handlers for server health checks
+//! Monitoring API handlers for server health checks and resource statistics
 
 use crate::db;
-use crate::models::{EntryRow, HealthCheckResult, HealthStatus, MonitoringStats};
+use crate::models::{EntryRow, HealthCheckResult, HealthStatus, MonitoringStats, ServerStats, ServerStatsRow, StatsHistory};
+use crate::services::{parse_stats_output, STATS_COLLECTION_SCRIPT};
+use crate::ssh::execute_command;
 use std::collections::HashMap;
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::sync::Mutex;
@@ -342,4 +344,264 @@ pub async fn clear_health_cache(
     }
     
     Ok(())
+}
+
+// ============================================================
+// Server Resource Statistics API
+// ============================================================
+
+/// Helper to get credentials for an entry
+async fn get_entry_credentials(entry: &EntryRow, account_id: &str) -> Result<(String, Option<String>, Option<String>, Option<String>), String> {
+    let pool = db::pool();
+    
+    // Get identity linked to this entry
+    let identity: Option<(String, Option<String>, Option<String>, Option<String>)> = sqlx::query_as(
+        r#"
+        SELECT i.username, i.password_encrypted, i.ssh_key_encrypted, i.passphrase_encrypted
+        FROM identities i
+        JOIN entry_identities ei ON i.id = ei.identity_id
+        WHERE ei.entry_id = ? AND i.account_id = ?
+        ORDER BY ei.priority DESC
+        LIMIT 1
+        "#
+    )
+    .bind(&entry.id)
+    .bind(account_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    
+    if let Some((username, password, ssh_key, passphrase)) = identity {
+        Ok((username, password, ssh_key, passphrase))
+    } else {
+        Err("No credentials found for entry".to_string())
+    }
+}
+
+/// Collect server stats for a single entry
+#[tauri::command]
+pub async fn collect_server_stats(
+    token: String,
+    entry_id: String,
+) -> Result<ServerStats, String> {
+    let account_id = get_account_id(&token).await?;
+    let pool = db::pool();
+    
+    // Fetch entry
+    let entry: EntryRow = sqlx::query_as(
+        "SELECT * FROM entries WHERE id = ? AND account_id = ?"
+    )
+    .bind(&entry_id)
+    .bind(&account_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| e.to_string())?
+    .ok_or_else(|| "Entry not found".to_string())?;
+    
+    let host = entry.host.as_ref().ok_or("Entry has no host")?;
+    let port = entry.port.unwrap_or(22) as u16;
+    
+    // Get credentials
+    let (username, password, ssh_key, passphrase) = get_entry_credentials(&entry, &account_id).await?;
+    
+    // Execute stats collection command
+    info!("Collecting stats for {} ({}:{})", entry.name, host, port);
+    
+    let output = execute_command(
+        host,
+        port,
+        &username,
+        password.as_deref(),
+        ssh_key.as_deref(),
+        passphrase.as_deref(),
+        STATS_COLLECTION_SCRIPT,
+        30, // 30 second timeout
+    ).await?;
+    
+    // Parse output
+    let raw_stats = parse_stats_output(&output);
+    
+    // Generate ID and timestamp
+    let id = uuid::Uuid::new_v4().to_string();
+    let collected_at = chrono::Utc::now().to_rfc3339();
+    
+    // Save to database
+    sqlx::query(
+        r#"
+        INSERT INTO server_stats (
+            id, account_id, entry_id,
+            cpu_usage_percent, cpu_cores, load_avg_1, load_avg_5, load_avg_15,
+            memory_total, memory_used, memory_free, memory_cached, swap_total, swap_used,
+            disk_total, disk_used, disk_free, disk_path,
+            net_rx_bytes, net_tx_bytes, net_interface,
+            uptime_seconds, os_name, kernel_version, hostname,
+            collected_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        "#
+    )
+    .bind(&id)
+    .bind(&account_id)
+    .bind(&entry_id)
+    .bind(raw_stats.cpu_usage_percent)
+    .bind(raw_stats.cpu_cores)
+    .bind(raw_stats.load_avg_1)
+    .bind(raw_stats.load_avg_5)
+    .bind(raw_stats.load_avg_15)
+    .bind(raw_stats.memory_total)
+    .bind(raw_stats.memory_used)
+    .bind(raw_stats.memory_free)
+    .bind(raw_stats.memory_cached)
+    .bind(raw_stats.swap_total)
+    .bind(raw_stats.swap_used)
+    .bind(raw_stats.disk_total)
+    .bind(raw_stats.disk_used)
+    .bind(raw_stats.disk_free)
+    .bind(&raw_stats.disk_path)
+    .bind(raw_stats.net_rx_bytes)
+    .bind(raw_stats.net_tx_bytes)
+    .bind(&raw_stats.net_interface)
+    .bind(raw_stats.uptime_seconds)
+    .bind(&raw_stats.os_name)
+    .bind(&raw_stats.kernel_version)
+    .bind(&raw_stats.hostname)
+    .bind(&collected_at)
+    .execute(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    
+    info!("Stats collected for {} and saved", entry.name);
+    
+    // Convert to API response
+    let row = ServerStatsRow {
+        id,
+        account_id,
+        entry_id,
+        cpu_usage_percent: raw_stats.cpu_usage_percent,
+        cpu_cores: raw_stats.cpu_cores,
+        load_avg_1: raw_stats.load_avg_1,
+        load_avg_5: raw_stats.load_avg_5,
+        load_avg_15: raw_stats.load_avg_15,
+        memory_total: raw_stats.memory_total,
+        memory_used: raw_stats.memory_used,
+        memory_free: raw_stats.memory_free,
+        memory_cached: raw_stats.memory_cached,
+        swap_total: raw_stats.swap_total,
+        swap_used: raw_stats.swap_used,
+        disk_total: raw_stats.disk_total,
+        disk_used: raw_stats.disk_used,
+        disk_free: raw_stats.disk_free,
+        disk_path: Some(raw_stats.disk_path),
+        net_rx_bytes: raw_stats.net_rx_bytes,
+        net_tx_bytes: raw_stats.net_tx_bytes,
+        net_interface: Some(raw_stats.net_interface),
+        uptime_seconds: raw_stats.uptime_seconds,
+        os_name: raw_stats.os_name,
+        kernel_version: raw_stats.kernel_version,
+        hostname: raw_stats.hostname,
+        collected_at,
+    };
+    
+    Ok(ServerStats::from(row))
+}
+
+/// Get latest stats for an entry
+#[tauri::command]
+pub async fn get_latest_server_stats(
+    token: String,
+    entry_id: String,
+) -> Result<Option<ServerStats>, String> {
+    let account_id = get_account_id(&token).await?;
+    let pool = db::pool();
+    
+    let row: Option<ServerStatsRow> = sqlx::query_as(
+        r#"
+        SELECT * FROM server_stats 
+        WHERE entry_id = ? AND account_id = ?
+        ORDER BY collected_at DESC
+        LIMIT 1
+        "#
+    )
+    .bind(&entry_id)
+    .bind(&account_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    
+    Ok(row.map(ServerStats::from))
+}
+
+/// Get stats history for an entry
+#[tauri::command]
+pub async fn get_server_stats_history(
+    token: String,
+    entry_id: String,
+    timeframe: Option<String>,
+    limit: Option<i32>,
+) -> Result<StatsHistory, String> {
+    let account_id = get_account_id(&token).await?;
+    let pool = db::pool();
+    
+    let timeframe_str = timeframe.clone().unwrap_or_else(|| "1h".to_string());
+    let max_items = limit.unwrap_or(60).min(1000);
+    
+    // Calculate time threshold based on timeframe
+    let hours = match timeframe_str.as_str() {
+        "1h" => 1,
+        "6h" => 6,
+        "24h" => 24,
+        _ => 1,
+    };
+    
+    let threshold = chrono::Utc::now() - chrono::Duration::hours(hours);
+    let threshold_str = threshold.to_rfc3339();
+    
+    let rows: Vec<ServerStatsRow> = sqlx::query_as(
+        r#"
+        SELECT * FROM server_stats 
+        WHERE entry_id = ? AND account_id = ? AND collected_at >= ?
+        ORDER BY collected_at ASC
+        LIMIT ?
+        "#
+    )
+    .bind(&entry_id)
+    .bind(&account_id)
+    .bind(&threshold_str)
+    .bind(max_items)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    
+    Ok(StatsHistory {
+        entry_id,
+        timeframe: timeframe_str,
+        data_points: rows.into_iter().map(ServerStats::from).collect(),
+    })
+}
+
+/// Delete old stats (retention cleanup)
+#[tauri::command]
+pub async fn cleanup_server_stats(
+    token: String,
+    retention_hours: Option<i32>,
+) -> Result<u64, String> {
+    let account_id = get_account_id(&token).await?;
+    let pool = db::pool();
+    
+    let hours = retention_hours.unwrap_or(24);
+    let threshold = chrono::Utc::now() - chrono::Duration::hours(hours.into());
+    let threshold_str = threshold.to_rfc3339();
+    
+    let result = sqlx::query(
+        "DELETE FROM server_stats WHERE account_id = ? AND collected_at < ?"
+    )
+    .bind(&account_id)
+    .bind(&threshold_str)
+    .execute(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    
+    let deleted = result.rows_affected();
+    info!("Cleaned up {} old stats records", deleted);
+    
+    Ok(deleted)
 }

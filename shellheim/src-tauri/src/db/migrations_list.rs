@@ -299,5 +299,58 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 16,
+            description: "create_server_stats_table",
+            sql: r#"
+                -- Server resource statistics collected via SSH
+                CREATE TABLE IF NOT EXISTS server_stats (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL,
+                    entry_id TEXT NOT NULL,
+                    -- CPU metrics
+                    cpu_usage_percent REAL,
+                    cpu_cores INTEGER,
+                    load_avg_1 REAL,
+                    load_avg_5 REAL,
+                    load_avg_15 REAL,
+                    -- Memory metrics (in bytes)
+                    memory_total INTEGER,
+                    memory_used INTEGER,
+                    memory_free INTEGER,
+                    memory_cached INTEGER,
+                    swap_total INTEGER,
+                    swap_used INTEGER,
+                    -- Disk metrics (in bytes)
+                    disk_total INTEGER,
+                    disk_used INTEGER,
+                    disk_free INTEGER,
+                    disk_path TEXT DEFAULT '/',
+                    -- Network metrics (bytes since boot)
+                    net_rx_bytes INTEGER,
+                    net_tx_bytes INTEGER,
+                    net_interface TEXT,
+                    -- System info
+                    uptime_seconds INTEGER,
+                    os_name TEXT,
+                    kernel_version TEXT,
+                    hostname TEXT,
+                    -- Timestamps
+                    collected_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+                    FOREIGN KEY (entry_id) REFERENCES entries(id) ON DELETE CASCADE
+                );
+                
+                -- Indexes for efficient querying
+                CREATE INDEX IF NOT EXISTS idx_server_stats_entry ON server_stats(entry_id);
+                CREATE INDEX IF NOT EXISTS idx_server_stats_account ON server_stats(account_id);
+                CREATE INDEX IF NOT EXISTS idx_server_stats_time ON server_stats(entry_id, collected_at);
+                
+                -- Add monitoring_enabled flag to entries
+                ALTER TABLE entries ADD COLUMN monitoring_enabled INTEGER DEFAULT 0;
+                ALTER TABLE entries ADD COLUMN monitoring_interval INTEGER DEFAULT 60;
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }
