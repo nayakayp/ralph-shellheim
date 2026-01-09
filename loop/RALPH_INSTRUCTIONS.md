@@ -9,7 +9,7 @@ Rewrite [Nexterm](https://github.com/gnmyt/Nexterm) — a web-based SSH/server m
 
 ### 1. **Resume Context**
    - Read `loop/CHANGELOG.md` to understand completed work and pending tasks.
-   - If first run (empty changelog), analyze [Nexterm](https://github.com/gnmyt/Nexterm) using Librarian.
+   - Analyze [Nexterm](https://github.com/gnmyt/Nexterm) using Librarian.
 
 ### 2. **Plan**
    - Compare Nexterm's features against `CHANGELOG.md` progress.

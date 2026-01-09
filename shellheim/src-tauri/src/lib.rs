@@ -54,6 +54,7 @@ pub fn run() {
             api::account::login,
             api::account::logout,
             api::account::get_current_user,
+            api::account::has_accounts,
             
             // Entry/Server commands
             api::entries::list_entries,

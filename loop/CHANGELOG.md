@@ -4,6 +4,47 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 2 - 2025-01-09
+
+### Completed
+- **Implemented account authentication system**:
+  - `create_account`: bcrypt password hashing, username validation, uniqueness check
+  - `login`: password verification, session token generation (7-day expiry), TOTP support stub
+  - `logout`: session invalidation
+  - `get_current_user`: token-based user lookup with expiry check
+  - `has_accounts`: first-run detection for UI routing
+
+- **Built React auth UI with modern design**:
+  - Login/Register forms with validation
+  - Glassmorphism card design with gradient backgrounds
+  - Loading states and error handling
+  - Auto-switch between login/register based on existing accounts
+
+- **Created Dashboard shell**:
+  - Header with user avatar and logout button
+  - Empty state with "Add Server" placeholder
+  - Dark theme consistent with auth pages
+
+- **Set up frontend architecture**:
+  - `/src/types/auth.ts` - TypeScript types for Account, LoginRequest, etc.
+  - `/src/lib/api.ts` - Tauri invoke wrappers with localStorage token storage
+  - `/src/hooks/useAuth.ts` - Auth state management hook
+  - `/src/components/` - AuthPage and Dashboard components
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Implement Entry CRUD** - Create/Read/Update/Delete server entries
+2. **Build Server List UI** - Display servers in dashboard with folder organization
+3. **Add server form modal** - Form to add SSH server connections
+
+### Tech Notes
+- Session tokens stored in SQLite (sessions table) with 7-day expiry
+- Frontend uses localStorage for token persistence between app restarts
+- Password hashing uses bcrypt with DEFAULT_COST (12 rounds)
+
+---
+
 ## Session 1 - 2025-01-09
 
 ### Completed
