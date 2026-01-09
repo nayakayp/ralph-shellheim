@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -18,6 +18,7 @@ import { HostKeyDialog } from "./HostKeyDialog";
 import { KnownHostsPanel } from "./KnownHostsPanel";
 import { TunnelPanel } from "./TunnelPanel";
 import { SnippetsPanel } from "./SnippetsPanel";
+import { RecordingsPanel } from "./RecordingsPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -40,6 +41,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showKnownHosts, setShowKnownHosts] = useState(false);
   const [showTunnels, setShowTunnels] = useState(false);
   const [showSnippets, setShowSnippets] = useState(false);
+  const [showRecordings, setShowRecordings] = useState(false);
   const [error, setError] = useState("");
   
   // Multiple SSH sessions state
@@ -572,6 +574,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           onExecute={handleExecuteSnippet}
         />
 
+        <RecordingsPanel
+          isOpen={showRecordings}
+          onClose={() => setShowRecordings(false)}
+        />
+
         {hostKeyVerification && (
           <HostKeyDialog
             host={hostKeyVerification.host}
@@ -629,6 +636,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               <span className="server-count">{filteredEntries.length}</span>
             </div>
             <div className="toolbar-right">
+              <button className="toolbar-btn" onClick={() => setShowRecordings(true)} title="View Session Recordings">
+                <VideoCamera size={18} />
+                Recordings
+              </button>
               <button className="toolbar-btn" onClick={() => setShowSnippets(true)} title="Manage Command Snippets">
                 <TerminalIcon size={18} />
                 Snippets
@@ -734,6 +745,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showSnippets}
         onClose={() => setShowSnippets(false)}
         onExecute={handleExecuteSnippet}
+      />
+
+      <RecordingsPanel
+        isOpen={showRecordings}
+        onClose={() => setShowRecordings(false)}
       />
 
       {hostKeyVerification && (

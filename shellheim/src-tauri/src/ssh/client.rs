@@ -2,6 +2,8 @@
 //!
 //! Handles SSH connections, authentication, and PTY sessions.
 
+use super::recording::RecordingManager;
+use super::session_manager::SessionManager;
 use async_trait::async_trait;
 use russh::client::{self, Config, Handle, Handler};
 use russh::{Channel, ChannelId, Disconnect};
@@ -51,6 +53,14 @@ impl Handler for SshClientHandler {
             data.len()
         );
 
+        // Append to terminal buffer for hibernation support
+        if let Some(session) = SessionManager::instance().get_session(&self.session_id) {
+            session.append_to_buffer(&text);
+        }
+
+        // Record if session has active recording
+        RecordingManager::instance().record_output(&self.session_id, &text);
+
         // Emit data to frontend
         if let Err(e) = self.app_handle.emit(
             &format!("ssh-data-{}", self.session_id),
@@ -81,6 +91,14 @@ impl Handler for SshClientHandler {
             ext,
             data.len()
         );
+
+        // Append to terminal buffer for hibernation support
+        if let Some(session) = SessionManager::instance().get_session(&self.session_id) {
+            session.append_to_buffer(&text);
+        }
+
+        // Record if session has active recording
+        RecordingManager::instance().record_output(&self.session_id, &text);
 
         // Emit extended data (stderr) to frontend
         if let Err(e) = self.app_handle.emit(

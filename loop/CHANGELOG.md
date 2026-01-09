@@ -4,6 +4,84 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 19 - 2026-01-09
+
+### Completed
+- **Implemented Session Recording** - Record terminal sessions in asciinema v2 format:
+  - Start/stop recording for any active SSH session
+  - Recordings stored in app data directory with SQLite metadata
+  - Output data automatically captured during SSH sessions
+  - Duration and file size tracked on stop
+
+- **Built Recording Backend** (`src-tauri/src/ssh/recording.rs`):
+  - `RecordingManager` singleton tracks active recordings
+  - Writes asciinema v2 header (version, width, height, timestamp)
+  - Event format: `[timestamp, "o", data]` for output
+  - Incremental file writes with buffered I/O
+  - Finalization flushes buffer and returns stats
+
+- **Added Recordings API** (`src-tauri/src/api/recordings.rs`):
+  - `start_recording`: Begin recording for SSH session
+  - `stop_recording`: Finalize and save recording stats
+  - `list_recordings`: Fetch all user recordings
+  - `list_entry_recordings`: Recordings for specific server
+  - `get_recording`: Single recording metadata
+  - `get_recording_content`: File content for playback
+  - `update_recording`: Rename/update description
+  - `delete_recording`: Remove recording and file
+  - `is_session_recording`: Check if session has active recording
+
+- **Created Database Migration** (`20250112_recordings.sql`):
+  - `recordings` table with full metadata
+  - Tracks account, entry, session, dimensions, duration, file path
+
+- **Built Frontend Types** (`src/types/recording.ts`):
+  - `Recording`, `StartRecordingRequest`, `StopRecordingRequest` interfaces
+  - `formatDuration()` and `formatFileSize()` helpers
+
+- **Added Frontend API Functions** (`src/lib/api.ts`):
+  - All CRUD operations for recordings
+
+- **Created RecordingsPanel** (`src/components/RecordingsPanel.tsx`):
+  - Slide-in panel with recording list
+  - Shows name, date, duration, file size, dimensions
+  - Inline rename editing
+  - Play and delete actions
+  - Active recording indicator
+
+- **Created RecordingPlayer** (`src/components/RecordingPlayer.tsx`):
+  - Custom asciinema v2 parser
+  - Play/pause/stop controls
+  - Seek via progress slider
+  - Playback speed control (0.5x-4x)
+  - Rewind/fast-forward buttons
+  - Terminal-style output display
+
+- **Integrated with Dashboard**:
+  - Added "Recordings" button to toolbar
+  - RecordingsPanel accessible from both views
+  - Recording data captured in SSH client handler
+
+- **Integrated with SSH Client** (`src-tauri/src/ssh/client.rs`):
+  - Output automatically written to active recording
+  - Terminal buffer also populated for hibernation support
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Add record button to terminal toolbar** - Start/stop recording from terminal
+2. **Search files** - Search within SFTP directory tree
+3. **Monitoring service** - Server health monitoring
+
+### Tech Notes
+- Recordings use asciinema v2 format (JSON lines)
+- Files stored in `{app_data}/recordings/{account_id}/{id}.cast`
+- Custom player avoids npm dependency on asciinema-player
+- Playback reconstructs terminal state by replaying events up to seek time
+- Recording capture happens in SSH handler data callback
+
+---
+
 ## Session 18 - 2026-01-09
 
 ### Completed

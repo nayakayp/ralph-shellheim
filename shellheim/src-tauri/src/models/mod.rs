@@ -7,6 +7,7 @@ mod folder;
 mod hibernated_session;
 mod known_host;
 mod session;
+mod recording;
 mod snippet;
 mod tag;
 
@@ -16,6 +17,7 @@ pub use identity::*;
 pub use folder::*;
 pub use hibernated_session::*;
 pub use known_host::*;
+pub use recording::*;
 pub use session::*;
 pub use snippet::*;
 pub use tag::*;

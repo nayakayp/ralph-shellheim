@@ -25,6 +25,7 @@ import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse
 import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest } from "../types/sftp";
 import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
 import type { Snippet, CreateSnippetRequest, UpdateSnippetRequest } from "../types/snippet";
+import type { Recording, StartRecordingRequest, StartRecordingResponse, StopRecordingRequest, StopRecordingResponse, UpdateRecordingRequest } from "../types/recording";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -435,4 +436,59 @@ export async function searchSnippets(query: string): Promise<Snippet[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<Snippet[]>("search_snippets", { token, query });
+}
+
+// Recording API
+export async function startRecording(request: StartRecordingRequest): Promise<StartRecordingResponse> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<StartRecordingResponse>("start_recording", { token, request });
+}
+
+export async function stopRecording(request: StopRecordingRequest): Promise<StopRecordingResponse> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<StopRecordingResponse>("stop_recording", { token, request });
+}
+
+export async function listRecordings(): Promise<Recording[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Recording[]>("list_recordings", { token });
+}
+
+export async function listEntryRecordings(entryId: string): Promise<Recording[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Recording[]>("list_entry_recordings", { token, entryId });
+}
+
+export async function getRecording(recordingId: string): Promise<Recording> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Recording>("get_recording", { token, recordingId });
+}
+
+export async function getRecordingContent(recordingId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("get_recording_content", { token, recordingId });
+}
+
+export async function updateRecording(recordingId: string, request: UpdateRecordingRequest): Promise<Recording> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Recording>("update_recording", { token, recordingId, request });
+}
+
+export async function deleteRecording(recordingId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_recording", { token, recordingId });
+}
+
+export async function isSessionRecording(sessionId: string): Promise<string | null> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string | null>("is_session_recording", { token, sessionId });
 }

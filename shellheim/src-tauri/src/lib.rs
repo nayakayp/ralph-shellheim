@@ -133,6 +133,17 @@ pub fn run() {
             api::snippets::list_snippets_by_category,
             api::snippets::list_snippet_categories,
             api::snippets::search_snippets,
+            
+            // Recording commands
+            api::recordings::start_recording,
+            api::recordings::stop_recording,
+            api::recordings::list_recordings,
+            api::recordings::list_entry_recordings,
+            api::recordings::get_recording,
+            api::recordings::get_recording_content,
+            api::recordings::update_recording,
+            api::recordings::delete_recording,
+            api::recordings::is_session_recording,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -154,6 +165,9 @@ async fn initialize_app(app: &tauri::AppHandle) -> anyhow::Result<()> {
     
     // Initialize SSH tunnel manager
     ssh::TunnelManager::init();
+    
+    // Initialize recording manager
+    ssh::RecordingManager::init(app_data.clone());
     
     // Initialize SFTP session manager
     sftp::SftpSessionManager::init();

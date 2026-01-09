@@ -5,6 +5,7 @@ pub mod entries;
 pub mod folders;
 pub mod identities;
 pub mod known_hosts;
+pub mod recordings;
 pub mod sftp;
 pub mod snippets;
 pub mod ssh;
