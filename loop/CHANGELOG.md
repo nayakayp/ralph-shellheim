@@ -4,6 +4,72 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 24 - 2026-01-10
+
+### Completed
+- **Implemented Tags System** - Organize and filter servers by custom tags:
+  - Create, edit, and delete tags with custom colors
+  - 10-color palette for visual differentiation
+  - Tag usage counts displayed in list
+  - Filter servers by one or more tags (union filter)
+
+- **Built Tags Backend** (`src-tauri/src/api/tags.rs`):
+  - `list_tags`: Fetch all tags for user
+  - `get_tag`: Single tag by ID with ownership check
+  - `create_tag`: Create with duplicate name prevention
+  - `update_tag`: Partial updates for name/color
+  - `delete_tag`: Remove tag and clear entry associations
+  - `add_entry_tags`: Add tags to an entry
+  - `remove_entry_tags`: Remove specific tags from entry
+  - `set_entry_tags`: Replace all tags on an entry
+  - `get_entry_tags`: Get tags assigned to an entry
+  - `list_entries_by_tag`: Get entry IDs with specific tag
+  - `get_tag_counts`: Usage counts per tag
+
+- **Created Frontend Types** (`src/types/tag.ts`):
+  - `Tag`, `CreateTagRequest`, `UpdateTagRequest` interfaces
+  - `TagWithCount` for list display
+  - `TAG_COLORS` palette with 10 Tokyo Night-compatible colors
+  - `getContrastColor()` for readable text on colored backgrounds
+  - `getDefaultTagColor()` cycles through unused colors
+
+- **Built TagsPanel Component** (`src/components/TagsPanel.tsx`):
+  - Dual-mode: "manage" for CRUD, "filter" for server filtering
+  - Inline tag creation with color picker dropdown
+  - Edit mode with name/color modification
+  - Tag list with usage counts and hover actions
+  - Filter mode with clickable tag chips
+  - Active filter indicator with clear button
+
+- **Added TagsPanel Styles** (`src/components/TagsPanel.css`):
+  - Glassmorphism design consistent with app theme
+  - Color picker with grid layout
+  - Tag items with color indicators
+  - Filter chips with active state styling
+  - Edit form with inline controls
+
+- **Integrated with Dashboard**:
+  - Added "Tags" button to toolbar with TagIcon
+  - Button shows filter count when active (e.g., "Tags (2)")
+  - TagsPanel accessible in filter mode
+  - Tag filtering works alongside folder filtering
+  - Entry filtering via `listEntriesByTag` API
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Add tags to server edit modal** - Assign tags when creating/editing servers
+2. **Monitoring service** - Server health monitoring
+3. **Integrate audit logging** - Add logging to existing operations
+
+### Tech Notes
+- Tags table and entry_tags junction table already existed in initial schema
+- Tag filtering uses union logic (any selected tag matches)
+- Tag-filtered entry IDs loaded asynchronously on filter change
+- Both folder and tag filters apply simultaneously
+
+---
+
 ## Session 23 - 2026-01-10
 
 ### Completed
@@ -1292,7 +1358,7 @@ shellheim/
 - [x] Snippets and scripts
 - [ ] Monitoring service
 - [x] Audit logging
-- [ ] Tags and search
+- [x] Tags and search
 - [x] Session recording
 - [ ] RDP/VNC (requires Guacamole bundling)
 - [ ] Proxmox integration

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -7,7 +7,7 @@ import type { SftpSessionInfo } from "../types/sftp";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData, startRecording, stopRecording, isSessionRecording } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData, startRecording, stopRecording, isSessionRecording, listEntriesByTag } from "../lib/api";
 import type { Snippet } from "../types/snippet";
 import { formatDuration } from "../types/recording";
 import { ServerList } from "./ServerList";
@@ -21,6 +21,7 @@ import { TunnelPanel } from "./TunnelPanel";
 import { SnippetsPanel } from "./SnippetsPanel";
 import { RecordingsPanel } from "./RecordingsPanel";
 import { AuditPanel } from "./AuditPanel";
+import { TagsPanel } from "./TagsPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -45,6 +46,9 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showSnippets, setShowSnippets] = useState(false);
   const [showRecordings, setShowRecordings] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
+  const [showTags, setShowTags] = useState(false);
+  const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
+  const [tagFilteredEntryIds, setTagFilteredEntryIds] = useState<Set<string> | null>(null);
   const [error, setError] = useState("");
   
   // Multiple SSH sessions state
@@ -78,13 +82,48 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   // Build folder tree from flat list
   const folderTree = useMemo(() => buildFolderTree(folders, folderCounts), [folders, folderCounts]);
   
-  // Filter entries by selected folder
-  const filteredEntries = useMemo(() => {
-    if (selectedFolderId === null) {
-      return entries; // Show all
+  // Load entry IDs that match selected tags
+  useEffect(() => {
+    async function loadTagFilteredEntries() {
+      if (filterTagIds.length === 0) {
+        setTagFilteredEntryIds(null);
+        return;
+      }
+      
+      try {
+        // Get entries matching ANY of the selected tags (union)
+        const allEntryIds = new Set<string>();
+        await Promise.all(
+          filterTagIds.map(async (tagId) => {
+            const entryIds = await listEntriesByTag(tagId);
+            entryIds.forEach((id) => allEntryIds.add(id));
+          })
+        );
+        setTagFilteredEntryIds(allEntryIds);
+      } catch (err) {
+        console.error("Failed to load tag-filtered entries:", err);
+        setTagFilteredEntryIds(null);
+      }
     }
-    return entries.filter((e) => e.folder_id === selectedFolderId);
-  }, [entries, selectedFolderId]);
+    loadTagFilteredEntries();
+  }, [filterTagIds]);
+  
+  // Filter entries by selected folder and tags
+  const filteredEntries = useMemo(() => {
+    let result = entries;
+    
+    // Filter by folder
+    if (selectedFolderId !== null) {
+      result = result.filter((e) => e.folder_id === selectedFolderId);
+    }
+    
+    // Filter by tags
+    if (tagFilteredEntryIds !== null) {
+      result = result.filter((e) => tagFilteredEntryIds.has(e.id));
+    }
+    
+    return result;
+  }, [entries, selectedFolderId, tagFilteredEntryIds]);
 
   // Count entries at root (no folder)
   const rootEntryCount = useMemo(() => entries.length, [entries]);
@@ -807,6 +846,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 <Key size={18} />
                 Identities
               </button>
+              <button className={`toolbar-btn ${filterTagIds.length > 0 ? 'active' : ''}`} onClick={() => setShowTags(true)} title="Filter by Tags">
+                <TagIcon size={18} />
+                Tags{filterTagIds.length > 0 && ` (${filterTagIds.length})`}
+              </button>
               <button className="toolbar-btn" onClick={() => setShowAudit(true)} title="View Audit Log">
                 <ClipboardText size={18} />
                 Audit
@@ -911,6 +954,17 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showAudit}
         onClose={() => setShowAudit(false)}
       />
+
+      {showTags && (
+        <div className="panel-overlay">
+          <TagsPanel
+            onClose={() => setShowTags(false)}
+            onFilterChange={setFilterTagIds}
+            selectedTagIds={filterTagIds}
+            mode="filter"
+          />
+        </div>
+      )}
 
       {hostKeyVerification && (
         <HostKeyDialog

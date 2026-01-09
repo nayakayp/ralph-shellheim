@@ -152,6 +152,19 @@ pub fn run() {
             api::audit::get_audit_action_types,
             api::audit::delete_old_audit_logs,
             api::audit::clear_audit_logs,
+            
+            // Tag commands
+            api::tags::list_tags,
+            api::tags::get_tag,
+            api::tags::create_tag,
+            api::tags::update_tag,
+            api::tags::delete_tag,
+            api::tags::add_entry_tags,
+            api::tags::remove_entry_tags,
+            api::tags::set_entry_tags,
+            api::tags::get_entry_tags,
+            api::tags::list_entries_by_tag,
+            api::tags::get_tag_counts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

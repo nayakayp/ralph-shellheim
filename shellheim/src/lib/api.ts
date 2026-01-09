@@ -531,3 +531,73 @@ export async function clearAuditLogs(): Promise<number> {
   if (!token) throw new Error("Not authenticated");
   return invoke<number>("clear_audit_logs", { token });
 }
+
+// Tag API
+import type { Tag, CreateTagRequest, UpdateTagRequest } from "../types/tag";
+
+export async function listTags(): Promise<Tag[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tag[]>("list_tags", { token });
+}
+
+export async function getTag(tagId: string): Promise<Tag> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tag>("get_tag", { token, tagId });
+}
+
+export async function createTag(request: CreateTagRequest): Promise<Tag> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tag>("create_tag", { token, request });
+}
+
+export async function updateTag(tagId: string, request: UpdateTagRequest): Promise<Tag> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tag>("update_tag", { token, tagId, request });
+}
+
+export async function deleteTag(tagId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_tag", { token, tagId });
+}
+
+export async function addEntryTags(entryId: string, tagIds: string[]): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("add_entry_tags", { token, entryId, tagIds });
+}
+
+export async function removeEntryTags(entryId: string, tagIds: string[]): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("remove_entry_tags", { token, entryId, tagIds });
+}
+
+export async function setEntryTags(entryId: string, tagIds: string[]): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("set_entry_tags", { token, entryId, tagIds });
+}
+
+export async function getEntryTags(entryId: string): Promise<Tag[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tag[]>("get_entry_tags", { token, entryId });
+}
+
+export async function listEntriesByTag(tagId: string): Promise<string[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string[]>("list_entries_by_tag", { token, tagId });
+}
+
+export async function getTagCounts(): Promise<Map<string, number>> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  const counts = await invoke<[string, number][]>("get_tag_counts", { token });
+  return new Map(counts);
+}
