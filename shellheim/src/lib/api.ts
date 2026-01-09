@@ -4,6 +4,7 @@ import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from 
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
 import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest } from "../types/ssh";
+import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -158,4 +159,41 @@ export async function listSshSessions(): Promise<SshSessionInfo[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<SshSessionInfo[]>("list_ssh_sessions", { token });
+}
+
+// Folder API
+export async function listFolders(): Promise<Folder[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Folder[]>("list_folders", { token });
+}
+
+export async function getFolder(folderId: string): Promise<Folder> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Folder>("get_folder", { token, folderId });
+}
+
+export async function createFolder(request: CreateFolderRequest): Promise<Folder> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Folder>("create_folder", { token, request });
+}
+
+export async function updateFolder(folderId: string, request: UpdateFolderRequest): Promise<Folder> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Folder>("update_folder", { token, folderId, request });
+}
+
+export async function deleteFolder(folderId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_folder", { token, folderId });
+}
+
+export async function getFolderCounts(): Promise<Array<[string, number]>> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Array<[string, number]>>("get_folder_counts", { token });
 }

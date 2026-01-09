@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import type { Entry, UpdateEntryRequest, Protocol } from "../types/entry";
 import type { Identity } from "../types/identity";
+import type { Folder } from "../types/folder";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
 import { listIdentities } from "../lib/api";
 import "./AddServerModal.css"; // Reuse same modal styles
 
 interface EditServerModalProps {
   entry: Entry;
+  folders: Folder[];
   onClose: () => void;
   onSubmit: (request: UpdateEntryRequest) => Promise<void>;
 }
 
-export function EditServerModal({ entry, onClose, onSubmit }: EditServerModalProps) {
+export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServerModalProps) {
   const [name, setName] = useState(entry.name);
   const [host, setHost] = useState(entry.host || "");
   const [port, setPort] = useState(entry.port || 22);
@@ -20,6 +22,7 @@ export function EditServerModal({ entry, onClose, onSubmit }: EditServerModalPro
   const [selectedIdentityId, setSelectedIdentityId] = useState<string>(
     entry.identity_ids?.[0] || ""
   );
+  const [folderId, setFolderId] = useState<string>(entry.folder_id || "");
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,6 +65,7 @@ export function EditServerModal({ entry, onClose, onSubmit }: EditServerModalPro
         protocol,
         description: description.trim() || undefined,
         identity_ids: selectedIdentityId ? [selectedIdentityId] : [],
+        folder_id: folderId || undefined,
       });
       onClose();
     } catch (err) {
@@ -135,6 +139,22 @@ export function EditServerModal({ entry, onClose, onSubmit }: EditServerModalPro
                 max="65535"
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="folder">Folder</label>
+            <select
+              id="folder"
+              value={folderId}
+              onChange={(e) => setFolderId(e.target.value)}
+            >
+              <option value="">No folder</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

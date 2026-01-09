@@ -4,6 +4,71 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 8 - 2025-01-09
+
+### Completed
+- **Implemented Folder Management** - Full folder CRUD and sidebar navigation:
+  - Implemented `folders.rs` backend with full CRUD operations
+  - `list_folders`, `get_folder`, `create_folder`, `update_folder`, `delete_folder`
+  - `get_folder_counts` for entry count per folder
+  - Ownership validation and parent folder verification
+  - Prevents deletion of folders with children or entries
+
+- **Created Frontend Folder Types** (`src/types/folder.ts`):
+  - `Folder`, `CreateFolderRequest`, `UpdateFolderRequest` interfaces
+  - `FolderNode` extended type with children, entryCount, isExpanded
+  - `buildFolderTree()` helper to construct tree from flat list
+
+- **Added Folder API Functions** (`src/lib/api.ts`):
+  - listFolders, getFolder, createFolder, updateFolder, deleteFolder, getFolderCounts
+
+- **Built FolderTree Component**:
+  - Collapsible tree navigation in sidebar
+  - "All Servers" root option to show all entries
+  - Expand/collapse chevrons with smooth rotation
+  - Folder icons with optional custom colors
+  - Entry count badges per folder
+  - Hover actions: add subfolder, delete folder
+  - Inline folder creation form with modal overlay
+  - Tokyo Night theme styling
+
+- **Updated Dashboard with Sidebar Layout**:
+  - New `with-sidebar` layout class
+  - FolderTree integrated in left sidebar
+  - `selectedFolderId` state for folder filtering
+  - `filteredEntries` memo filters entries by folder
+  - Dynamic title shows selected folder name
+  - Folder counts update on entry add/delete
+
+- **Updated AddServerModal**:
+  - Added `folders` and `selectedFolderId` props
+  - Folder selector dropdown
+  - Pre-selects current folder when adding
+
+- **Updated EditServerModal**:
+  - Added `folders` prop
+  - Folder selector to move entries between folders
+
+- **New CSS Components**:
+  - `FolderTree.css` with glassmorphism sidebar design
+  - Dashboard sidebar layout styles
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Add host key verification** - Known hosts support for security
+2. **Session hibernation** - Save and restore SSH sessions
+3. **SFTP file management** - File browser and transfers
+4. **Folder drag-and-drop** - Reorder folders and move entries
+
+### Tech Notes
+- Folders are hierarchical with parent_id for nesting
+- FolderTree uses expandedIds Set for collapse state
+- Entry counts fetched separately via getFolderCounts for efficiency
+- Folder delete blocked if has children or entries
+
+---
+
 ## Session 7 - 2025-01-09
 
 ### Completed
@@ -383,7 +448,7 @@ shellheim/
 - [x] Entry/server CRUD
 - [x] Identity management with encryption
 - [x] Identity-Entry linking
-- [ ] Folder organization
+- [x] Folder organization
 - [x] Basic React UI shell
 
 ### Phase 2: SSH Core (Target: Session 6-15)

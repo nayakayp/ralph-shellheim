@@ -1,0 +1,265 @@
+/* Folder Tree Component */
+.folder-tree {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  min-width: 240px;
+  background: rgba(15, 15, 25, 0.6);
+  border-right: 1px solid rgba(124, 58, 237, 0.2);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.folder-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 12px 12px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.folder-tree-header h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.folder-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.folder-add-btn:hover {
+  background: rgba(124, 58, 237, 0.4);
+  color: white;
+}
+
+.folder-list {
+  flex: 1;
+  padding: 8px 0;
+}
+
+/* Folder items */
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.folder-item:hover {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.folder-item.selected {
+  background: rgba(124, 58, 237, 0.25);
+  color: white;
+}
+
+.folder-item.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #7c3aed, #a855f7);
+  border-radius: 0 3px 3px 0;
+}
+
+.folder-item.root {
+  padding-left: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+  padding-bottom: 12px;
+}
+
+.folder-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.folder-expand-btn:hover {
+  color: white;
+}
+
+.folder-expand-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.folder-expand-placeholder {
+  width: 16px;
+  height: 16px;
+}
+
+.folder-icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.folder-name {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-count {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: rgba(124, 58, 237, 0.3);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Folder actions (show on hover) */
+.folder-actions {
+  display: none;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.folder-item:hover .folder-actions {
+  display: flex;
+}
+
+.folder-item:hover .folder-count {
+  display: none;
+}
+
+.folder-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.folder-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.folder-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* Folder children */
+.folder-children {
+  /* Children are indented via inline style */
+}
+
+/* Create folder overlay */
+.folder-create-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.folder-create-form {
+  background: rgba(20, 20, 35, 0.95);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 300px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.folder-create-form input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.folder-create-form input:focus {
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.folder-create-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.folder-create-actions button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.folder-create-actions button:first-child {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.folder-create-actions button:first-child:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.folder-create-actions button.primary {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: none;
+  color: white;
+}
+
+.folder-create-actions button.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.folder-create-actions button.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

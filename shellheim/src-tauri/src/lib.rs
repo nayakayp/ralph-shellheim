@@ -80,9 +80,11 @@ pub fn run() {
             
             // Folder commands
             api::folders::list_folders,
+            api::folders::get_folder,
             api::folders::create_folder,
             api::folders::update_folder,
             api::folders::delete_folder,
+            api::folders::get_folder_counts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

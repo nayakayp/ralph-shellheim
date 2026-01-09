@@ -1,22 +1,26 @@
 import { useState, useEffect } from "react";
 import type { CreateEntryRequest, Protocol } from "../types/entry";
 import type { Identity } from "../types/identity";
+import type { Folder } from "../types/folder";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
 import { listIdentities } from "../lib/api";
 import "./AddServerModal.css";
 
 interface AddServerModalProps {
+  folders: Folder[];
+  selectedFolderId: string | null;
   onClose: () => void;
   onSubmit: (request: CreateEntryRequest) => Promise<void>;
 }
 
-export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
+export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }: AddServerModalProps) {
   const [name, setName] = useState("");
   const [host, setHost] = useState("");
   const [port, setPort] = useState(22);
   const [protocol, setProtocol] = useState<Protocol>("ssh");
   const [description, setDescription] = useState("");
   const [selectedIdentityId, setSelectedIdentityId] = useState<string>("");
+  const [folderId, setFolderId] = useState<string>(selectedFolderId || "");
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,6 +31,11 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
       .then(setIdentities)
       .catch(console.error);
   }, []);
+
+  // Update folder when selectedFolderId prop changes
+  useEffect(() => {
+    setFolderId(selectedFolderId || "");
+  }, [selectedFolderId]);
 
   const handleProtocolChange = (newProtocol: Protocol) => {
     setProtocol(newProtocol);
@@ -56,6 +65,7 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
         description: description.trim() || undefined,
         entry_type: "server",
         identity_ids: selectedIdentityId ? [selectedIdentityId] : undefined,
+        folder_id: folderId || undefined,
       });
       onClose();
     } catch (err) {
@@ -129,6 +139,22 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
                 max="65535"
               />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="folder">Folder (optional)</label>
+            <select
+              id="folder"
+              value={folderId}
+              onChange={(e) => setFolderId(e.target.value)}
+            >
+              <option value="">No folder</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

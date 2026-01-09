@@ -429,3 +429,39 @@
   font-size: 1rem;
   margin: 0;
 }
+
+/* Dashboard with sidebar layout */
+.dashboard.with-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.dashboard.with-sidebar .dashboard-header {
+  flex-shrink: 0;
+}
+
+.dashboard-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dashboard-content .dashboard-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.dashboard-content .dashboard-main:has(.server-list) {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
