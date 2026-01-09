@@ -12,18 +12,18 @@ echo "   Press Ctrl+C to stop"
 echo ""
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "📍 Iteration $i of $MAX_ITERATIONS"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
-    cat loop/RALPH_INSTRUCTIONS.md | amp
-    
-    # Check for completion signal
-    if grep -q "PROJECT COMPLETE" loop/CHANGELOG.md 2>/dev/null; then
-        echo ""
-        echo "✅ Project complete! Stopping loop."
-        exit 0
-    fi
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "📍 Iteration $i of $MAX_ITERATIONS"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  cat loop/RALPH_INSTRUCTIONS.md | amp --dangerously-allow-all -x
+
+  # Check for completion signal
+  if grep -q "PROJECT COMPLETE" loop/CHANGELOG.md 2>/dev/null; then
+    echo ""
+    echo "✅ Project complete! Stopping loop."
+    exit 0
+  fi
 done
 
 echo ""
