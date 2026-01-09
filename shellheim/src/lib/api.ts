@@ -498,3 +498,36 @@ export async function isSessionRecording(sessionId: string): Promise<string | nu
   if (!token) throw new Error("Not authenticated");
   return invoke<string | null>("is_session_recording", { token, sessionId });
 }
+
+// Audit Log API
+import type { AuditLog, AuditLogFilter } from "../types/audit";
+
+export async function listAuditLogs(filter?: AuditLogFilter): Promise<AuditLog[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<AuditLog[]>("list_audit_logs", { token, filter });
+}
+
+export async function getAuditLogCount(filter?: AuditLogFilter): Promise<number> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<number>("get_audit_log_count", { token, filter });
+}
+
+export async function getAuditActionTypes(): Promise<string[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string[]>("get_audit_action_types", { token });
+}
+
+export async function deleteOldAuditLogs(daysToKeep: number): Promise<number> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<number>("delete_old_audit_logs", { token, daysToKeep });
+}
+
+export async function clearAuditLogs(): Promise<number> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<number>("clear_audit_logs", { token });
+}

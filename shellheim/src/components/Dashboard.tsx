@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -20,6 +20,7 @@ import { KnownHostsPanel } from "./KnownHostsPanel";
 import { TunnelPanel } from "./TunnelPanel";
 import { SnippetsPanel } from "./SnippetsPanel";
 import { RecordingsPanel } from "./RecordingsPanel";
+import { AuditPanel } from "./AuditPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -43,6 +44,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showTunnels, setShowTunnels] = useState(false);
   const [showSnippets, setShowSnippets] = useState(false);
   const [showRecordings, setShowRecordings] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
   const [error, setError] = useState("");
   
   // Multiple SSH sessions state
@@ -805,6 +807,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 <Key size={18} />
                 Identities
               </button>
+              <button className="toolbar-btn" onClick={() => setShowAudit(true)} title="View Audit Log">
+                <ClipboardText size={18} />
+                Audit
+              </button>
               <button className="add-btn" onClick={() => setShowAddModal(true)}>
                 <Plus size={18} />
                 Add Server
@@ -899,6 +905,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       <RecordingsPanel
         isOpen={showRecordings}
         onClose={() => setShowRecordings(false)}
+      />
+
+      <AuditPanel
+        isOpen={showAudit}
+        onClose={() => setShowAudit(false)}
       />
 
       {hostKeyVerification && (

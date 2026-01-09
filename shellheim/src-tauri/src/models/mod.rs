@@ -10,6 +10,7 @@ mod session;
 mod recording;
 mod snippet;
 mod tag;
+mod audit_log;
 
 pub use account::*;
 pub use entry::*;
@@ -21,3 +22,4 @@ pub use recording::*;
 pub use session::*;
 pub use snippet::*;
 pub use tag::*;
+pub use audit_log::*;

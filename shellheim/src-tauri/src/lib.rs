@@ -145,6 +145,13 @@ pub fn run() {
             api::recordings::update_recording,
             api::recordings::delete_recording,
             api::recordings::is_session_recording,
+            
+            // Audit commands
+            api::audit::list_audit_logs,
+            api::audit::get_audit_log_count,
+            api::audit::get_audit_action_types,
+            api::audit::delete_old_audit_logs,
+            api::audit::clear_audit_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -4,6 +4,69 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 23 - 2026-01-10
+
+### Completed
+- **Implemented Audit Logging** - Comprehensive activity tracking for security and compliance:
+  - Track 30+ action types across authentication, servers, files, and connections
+  - Database migration with indexed audit_logs table
+  - Full CRUD backend API with filtering and pagination
+
+- **Built Audit Backend** (`src-tauri/src/api/audit.rs`):
+  - `list_audit_logs`: Fetch logs with filtering by action, resource, date range
+  - `get_audit_log_count`: Total count for pagination
+  - `get_audit_action_types`: Distinct action types for filter dropdown
+  - `delete_old_audit_logs`: Retention policy by days
+  - `clear_audit_logs`: Clear all logs for user
+  - `log_action`: Convenience helper for internal logging
+
+- **Created Audit Model** (`src-tauri/src/models/audit_log.rs`):
+  - `AuditAction` enum with 30+ action types (auth, CRUD, SSH, SFTP, files)
+  - `ResourceType` enum for categorizing resources
+  - `AuditLog` and `AuditLogInfo` structs
+  - `AuditLogFilter` for query filtering
+
+- **Added Frontend Types** (`src/types/audit.ts`):
+  - `AuditLog`, `AuditLogFilter` interfaces
+  - `AuditActionLabels` map for human-readable action names
+  - `ResourceTypeIcons` for visual indicators
+  - `getActionCategory()` for color-coding by category
+  - `formatRelativeTime()` for human-friendly timestamps
+
+- **Created AuditPanel Component** (`src/components/AuditPanel.tsx`):
+  - Slide-in panel with Tokyo Night theme
+  - Filter bar with action, resource, date range selectors
+  - Paginated log list with category-based color coding
+  - Resource icons and action labels
+  - Cleanup buttons (delete old, clear all)
+
+- **Added AuditPanel Styles** (`src/components/AuditPanel.css`):
+  - Glassmorphism design consistent with app theme
+  - Color-coded log items by category (auth, server, file, connection)
+  - Filter bar with styled selects and date inputs
+  - Pagination controls
+
+- **Integrated with Dashboard**:
+  - Added "Audit" button to toolbar with ClipboardText icon
+  - AuditPanel accessible from main dashboard
+  - State management for panel visibility
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Integrate logging calls** - Add audit logging to existing operations
+2. **Tags and search** - Filter servers by tags
+3. **Monitoring service** - Server health monitoring
+
+### Tech Notes
+- Audit logs stored with account_id for user isolation
+- Filters support action, resource_type, date range
+- Pagination with configurable page size (default 50, max 500)
+- Action categories enable visual grouping: auth (green), server (blue), file (orange), connection (purple)
+- Log entries include optional details as JSON for context
+
+---
+
 ## Session 22 - 2026-01-09
 
 ### Completed
@@ -1226,11 +1289,11 @@ shellheim/
 - [x] Port forwarding (local/remote tunnels)
 
 ### Phase 3: Advanced Features (Future)
-- [ ] Snippets and scripts
+- [x] Snippets and scripts
 - [ ] Monitoring service
-- [ ] Audit logging
+- [x] Audit logging
 - [ ] Tags and search
-- [ ] Session recording
+- [x] Session recording
 - [ ] RDP/VNC (requires Guacamole bundling)
 - [ ] Proxmox integration
 - [ ] OIDC/LDAP authentication
