@@ -6,6 +6,7 @@
 pub mod db;
 pub mod ssh;
 pub mod sftp;
+pub mod telnet;
 pub mod api;
 pub mod services;
 pub mod models;
@@ -187,6 +188,13 @@ pub fn run() {
             api::keymaps::reset_keymaps_to_defaults,
             api::keymaps::check_keymap_conflict,
             api::keymaps::get_default_keymaps,
+            
+            // Telnet commands
+            api::telnet::connect_telnet,
+            api::telnet::disconnect_telnet,
+            api::telnet::send_telnet_data,
+            api::telnet::resize_telnet_terminal,
+            api::telnet::list_telnet_sessions,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

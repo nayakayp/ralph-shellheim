@@ -4,10 +4,11 @@ import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
 import type { SftpSessionInfo } from "../types/sftp";
+import type { TelnetSessionInfo } from "../types/telnet";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData, startRecording, stopRecording, isSessionRecording, listEntriesByTag } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData, startRecording, stopRecording, isSessionRecording, listEntriesByTag, connectTelnet, disconnectTelnet } from "../lib/api";
 import type { Snippet } from "../types/snippet";
 import { formatDuration } from "../types/recording";
 import { ServerList } from "./ServerList";
@@ -29,6 +30,7 @@ import KeybindsPanel from "./KeybindsPanel";
 import { useKeymaps } from "../hooks/useKeymaps";
 import type { KeymapAction } from "../types/keymap";
 import Terminal from "./Terminal/Terminal";
+import TelnetTerminal from "./Terminal/TelnetTerminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
 import "./Dashboard.css";
@@ -64,10 +66,13 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   // Multiple SSH sessions state
   const [sessions, setSessions] = useState<SshSessionInfo[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [activeTabType, setActiveTabType] = useState<"ssh" | "sftp">("ssh");
+  const [activeTabType, setActiveTabType] = useState<"ssh" | "sftp" | "telnet">("ssh");
   const [hibernatedSessions, setHibernatedSessions] = useState<HibernatedSession[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showServerPanel, setShowServerPanel] = useState(false);
+  
+  // Telnet sessions state
+  const [telnetSessions, setTelnetSessions] = useState<TelnetSessionInfo[]>([]);
   
   // SFTP sessions state
   const [sftpSessions, setSftpSessions] = useState<SftpSessionInfo[]>([]);
@@ -265,7 +270,21 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const handleConnect = async (entry: Entry) => {
     if (isConnecting) return;
     
-    // Check if entry has an identity
+    // Route based on protocol
+    const protocol = entry.protocol || "ssh";
+    
+    if (protocol === "telnet") {
+      // Telnet doesn't require credentials
+      await handleConnectTelnet(entry);
+      return;
+    }
+    
+    if (protocol === "sftp") {
+      await handleConnectSftp(entry);
+      return;
+    }
+    
+    // SSH connection requires credentials
     if (!entry.identity_ids || entry.identity_ids.length === 0) {
       alert("This server has no credentials configured. Please edit it and add an identity first.");
       setEditingEntry(entry);
@@ -293,6 +312,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         };
         setSessions((prev) => [...prev, session]);
         setActiveSessionId(session.session_id);
+        setActiveTabType("ssh");
         setShowServerPanel(false);
       } else if (response.type === "HostKeyVerification") {
         // Need to verify host key first
@@ -307,6 +327,32 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       const message = err instanceof Error ? err.message : "Failed to connect";
       setError(`Connection failed: ${message}`);
       console.error("SSH connect error:", err);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleConnectTelnet = async (entry: Entry) => {
+    if (isConnecting) return;
+    
+    setIsConnecting(true);
+    setError("");
+    
+    try {
+      const session = await connectTelnet({
+        entry_id: entry.id,
+        cols: 120,
+        rows: 30,
+      });
+      
+      setTelnetSessions((prev) => [...prev, session]);
+      setActiveSessionId(session.session_id);
+      setActiveTabType("telnet");
+      setShowServerPanel(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to connect";
+      setError(`Telnet connection failed: ${message}`);
+      console.error("Telnet connect error:", err);
     } finally {
       setIsConnecting(false);
     }
@@ -360,6 +406,38 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         } else if (sessions.length > 0) {
           setActiveSessionId(sessions[0].session_id);
           setActiveTabType("ssh");
+        } else if (telnetSessions.length > 0) {
+          setActiveSessionId(telnetSessions[0].session_id);
+          setActiveTabType("telnet");
+        } else {
+          setActiveSessionId(null);
+        }
+      }
+      
+      return newSessions;
+    });
+  };
+
+  const handleCloseTelnetTab = async (sessionId: string) => {
+    try {
+      await disconnectTelnet(sessionId);
+    } catch (err) {
+      console.error("Error disconnecting Telnet:", err);
+    }
+    
+    setTelnetSessions((prev) => {
+      const newSessions = prev.filter((s) => s.session_id !== sessionId);
+      
+      // If closing the active tab, switch to another
+      if (activeSessionId === sessionId && activeTabType === "telnet") {
+        if (newSessions.length > 0) {
+          setActiveSessionId(newSessions[0].session_id);
+        } else if (sessions.length > 0) {
+          setActiveSessionId(sessions[0].session_id);
+          setActiveTabType("ssh");
+        } else if (sftpSessions.length > 0) {
+          setActiveSessionId(sftpSessions[0].session_id);
+          setActiveTabType("sftp");
         } else {
           setActiveSessionId(null);
         }
@@ -569,7 +647,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     checkRecording();
   }, [activeSessionId, activeTabType]);
 
-  const handleSelectTab = (sessionId: string, tabType: "ssh" | "sftp") => {
+  const handleSelectTab = (sessionId: string, tabType: "ssh" | "sftp" | "telnet") => {
     setActiveSessionId(sessionId);
     setActiveTabType(tabType);
   };
@@ -687,20 +765,23 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   };
 
   // Terminal mode: show terminals if we have any sessions (or hibernated sessions to show in tabs)
-  if (sessions.length > 0 || hibernatedSessions.length > 0 || sftpSessions.length > 0) {
+  if (sessions.length > 0 || hibernatedSessions.length > 0 || sftpSessions.length > 0 || telnetSessions.length > 0) {
     const activeSession = sessions.find(s => s.session_id === activeSessionId);
+    const activeTelnetSession = telnetSessions.find(s => s.session_id === activeSessionId);
     
     return (
       <div className="dashboard terminal-mode">
         <TerminalTabs
           sessions={sessions}
           sftpSessions={sftpSessions}
+          telnetSessions={telnetSessions}
           activeSessionId={activeSessionId}
           activeTabType={activeTabType}
           hibernatedSessions={hibernatedSessions}
           onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
           onCloseSftpTab={handleCloseSftpTab}
+          onCloseTelnetTab={handleCloseTelnetTab}
           onHibernateTab={handleHibernateTab}
           onResumeSession={handleResumeSession}
           onDeleteHibernated={handleDeleteHibernated}
@@ -765,6 +846,27 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           </div>
         )}
         
+        {/* Telnet terminal toolbar */}
+        {activeSessionId && activeTabType === "telnet" && (
+          <div className="terminal-toolbar">
+            <div className="terminal-toolbar-left">
+              <span className="session-host">
+                {activeTelnetSession?.host}:{activeTelnetSession?.port} (Telnet)
+              </span>
+            </div>
+            <div className="terminal-toolbar-right">
+              <button 
+                className="toolbar-btn"
+                onClick={() => setShowSnippets(true)}
+                title="Command Snippets"
+              >
+                <TerminalIcon size={16} />
+                Snippets
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="terminal-area">
           {sessions.map((session) => (
             <Terminal
@@ -774,6 +876,15 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               isActive={session.session_id === activeSessionId && activeTabType === "ssh"}
               initialBuffer={session.initialBuffer}
               onClose={() => handleTerminalClose(session.session_id)}
+            />
+          ))}
+          {telnetSessions.map((session) => (
+            <TelnetTerminal
+              key={session.session_id}
+              sessionId={session.session_id}
+              host={`${session.host}:${session.port}`}
+              isActive={session.session_id === activeSessionId && activeTabType === "telnet"}
+              onClose={() => handleCloseTelnetTab(session.session_id)}
             />
           ))}
           {sftpSessions.map((session) => (

@@ -4,6 +4,82 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 32 - 2026-01-10
+
+### Completed
+- **Implemented Telnet Connection Support** - Full Telnet protocol for legacy systems:
+  - TCP-based connection with basic Telnet protocol negotiation
+  - IAC command handling (DO, DONT, WILL, WONT, SB/SE)
+  - NAWS (Negotiate About Window Size) for terminal resize
+  - SGA (Suppress Go Ahead) and ECHO negotiation
+  - No authentication required (Telnet handles login via terminal)
+
+- **Built Telnet Backend** (`src-tauri/src/telnet/`):
+  - `client.rs`: Tokio-based async TCP connection with protocol handling
+  - `connection.rs`: Request/response types for Telnet API
+  - `mod.rs`: Module exports
+  - Reader task with shutdown signal handling
+  - Tauri event emission for data (`telnet-data-{session_id}`) and close events
+
+- **Added Telnet API** (`src-tauri/src/api/telnet.rs`):
+  - `connect_telnet`: Connect to Telnet server (entry must have protocol=telnet)
+  - `disconnect_telnet`: Close Telnet connection
+  - `send_telnet_data`: Send data to Telnet session
+  - `resize_telnet_terminal`: Send NAWS resize if negotiated
+  - `list_telnet_sessions`: List active Telnet sessions for user
+  - Session manager for tracking active Telnet connections
+
+- **Added Frontend Types** (`src/types/telnet.ts`):
+  - `TelnetConnectRequest`, `TelnetSessionInfo`
+  - `TelnetSendDataRequest`, `TelnetResizeRequest`
+  - `TelnetDataEvent`, `TelnetCloseEvent`
+
+- **Added Frontend API Functions** (`src/lib/api.ts`):
+  - `connectTelnet`, `disconnectTelnet`
+  - `sendTelnetData`, `resizeTelnetTerminal`
+  - `listTelnetSessions`
+
+- **Built TelnetTerminal Component** (`src/components/Terminal/TelnetTerminal.tsx`):
+  - xterm.js integration for Telnet connections
+  - Tokyo Night theme matching SSH terminal
+  - Tauri event listeners for data/close
+  - Window resize handling with NAWS support
+
+- **Updated TerminalTabs Component**:
+  - Added telnetSessions prop
+  - Added onCloseTelnetTab handler
+  - Telnet tab indicator (📡)
+  - Extended TabSession type for telnet
+
+- **Updated Dashboard Component**:
+  - Protocol-based connection routing (SSH/SFTP/Telnet)
+  - Telnet session state management
+  - handleConnectTelnet and handleCloseTelnetTab handlers
+  - Telnet terminal toolbar with Snippets access
+  - Telnet terminals render alongside SSH/SFTP sessions
+
+- **Protocol Support**:
+  - Entry model already had Protocol::Telnet enum
+  - AddServerModal already had Telnet option in dropdown
+  - Default port 23 for Telnet connections
+  - Telnet doesn't require credentials (authentication via terminal)
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation or guacd)
+2. **Proxmox integration** - VM/container management
+3. **OIDC/LDAP authentication** - Enterprise SSO
+
+### Tech Notes
+- Telnet sessions stored in separate `telnetSessions` state (not mixed with SSH)
+- Telnet protocol negotiation is minimal but handles common server requirements
+- NAWS automatically sends window size after negotiation
+- No hibernation support for Telnet (simpler protocol, no session state)
+- Telnet event names prefixed with `telnet-` to distinguish from SSH
+
+---
+
 ## Session 31 - 2026-01-10
 
 ### Completed

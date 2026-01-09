@@ -724,3 +724,41 @@ export async function checkKeymapConflict(
 export async function getDefaultKeymaps(): Promise<DefaultKeymap[]> {
   return invoke<DefaultKeymap[]>("get_default_keymaps");
 }
+
+// ============ Telnet API ============
+import type { 
+  TelnetConnectRequest, 
+  TelnetSessionInfo, 
+  TelnetSendDataRequest, 
+  TelnetResizeRequest 
+} from "../types/telnet";
+
+export async function connectTelnet(request: TelnetConnectRequest): Promise<TelnetSessionInfo> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<TelnetSessionInfo>("connect_telnet", { token, request });
+}
+
+export async function disconnectTelnet(sessionId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("disconnect_telnet", { token, sessionId });
+}
+
+export async function sendTelnetData(request: TelnetSendDataRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("send_telnet_data", { token, request });
+}
+
+export async function resizeTelnetTerminal(request: TelnetResizeRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("resize_telnet_terminal", { token, request });
+}
+
+export async function listTelnetSessions(): Promise<TelnetSessionInfo[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<TelnetSessionInfo[]>("list_telnet_sessions", { token });
+}

@@ -1,21 +1,25 @@
 import { Plus } from "@phosphor-icons/react";
 import type { SshSessionInfo, HibernatedSession } from "../../types/ssh";
 import type { SftpSessionInfo } from "../../types/sftp";
+import type { TelnetSessionInfo } from "../../types/telnet";
 import "./TerminalTabs.css";
 
 export type TabSession = 
   | { type: "ssh"; session: SshSessionInfo }
-  | { type: "sftp"; session: SftpSessionInfo };
+  | { type: "sftp"; session: SftpSessionInfo }
+  | { type: "telnet"; session: TelnetSessionInfo };
 
 interface TerminalTabsProps {
   sessions: SshSessionInfo[];
   sftpSessions?: SftpSessionInfo[];
+  telnetSessions?: TelnetSessionInfo[];
   activeSessionId: string | null;
-  activeTabType?: "ssh" | "sftp";
+  activeTabType?: "ssh" | "sftp" | "telnet";
   hibernatedSessions?: HibernatedSession[];
-  onSelectTab: (sessionId: string, tabType: "ssh" | "sftp") => void;
+  onSelectTab: (sessionId: string, tabType: "ssh" | "sftp" | "telnet") => void;
   onCloseTab: (sessionId: string) => void;
   onCloseSftpTab?: (sessionId: string) => void;
+  onCloseTelnetTab?: (sessionId: string) => void;
   onHibernateTab: (sessionId: string) => void;
   onResumeSession?: (hibernatedSession: HibernatedSession) => void;
   onDeleteHibernated?: (id: string) => void;
@@ -25,12 +29,14 @@ interface TerminalTabsProps {
 export function TerminalTabs({
   sessions,
   sftpSessions = [],
+  telnetSessions = [],
   activeSessionId,
   activeTabType = "ssh",
   hibernatedSessions = [],
   onSelectTab,
   onCloseTab,
   onCloseSftpTab,
+  onCloseTelnetTab,
   onHibernateTab,
   onResumeSession,
   onDeleteHibernated,
@@ -96,6 +102,33 @@ export function TerminalTabs({
                   onCloseSftpTab?.(session.session_id);
                 }}
                 title="Close SFTP"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Telnet sessions */}
+        {telnetSessions.map((session) => (
+          <div
+            key={`telnet-${session.session_id}`}
+            className={`terminal-tab telnet ${session.session_id === activeSessionId && activeTabType === "telnet" ? "active" : ""}`}
+            onClick={() => onSelectTab(session.session_id, "telnet")}
+            role="tab"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && onSelectTab(session.session_id, "telnet")}
+          >
+            <span className="tab-indicator telnet">📡</span>
+            <span className="tab-host">{session.host} (Telnet)</span>
+            <div className="tab-actions">
+              <button
+                className="terminal-tab-action close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseTelnetTab?.(session.session_id);
+                }}
+                title="Close Telnet"
               >
                 ×
               </button>
