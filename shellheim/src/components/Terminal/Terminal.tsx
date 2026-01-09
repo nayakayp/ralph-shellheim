@@ -21,6 +21,8 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const isInitializedRef = useRef(false);
+  const dataUnlistenRef = useRef<UnlistenFn | null>(null);
+  const closeUnlistenRef = useRef<UnlistenFn | null>(null);
 
   const handleDisconnect = useCallback(async () => {
     try {
@@ -33,8 +35,13 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
 
   // Initialize terminal only once
   useEffect(() => {
-    if (!terminalRef.current || isInitializedRef.current) return;
+    console.log(`[Terminal] useEffect running for ${sessionId}, ref:`, !!terminalRef.current, "initialized:", isInitializedRef.current);
+    if (!terminalRef.current || isInitializedRef.current) {
+      console.log(`[Terminal] Skipping init - ref:`, !!terminalRef.current, "already initialized:", isInitializedRef.current);
+      return;
+    }
     isInitializedRef.current = true;
+    console.log(`[Terminal] Initializing xterm for ${sessionId}`);
 
     const xterm = new XTerm({
       cursorBlink: true,
@@ -72,11 +79,20 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
     xterm.loadAddon(fitAddon);
     xterm.loadAddon(webLinksAddon);
 
+    console.log(`[Terminal] About to open xterm, terminalRef.current:`, terminalRef.current);
+    console.log(`[Terminal] terminalRef.current children before open:`, terminalRef.current?.children.length);
+    
     xterm.open(terminalRef.current);
+    
+    console.log(`[Terminal] terminalRef.current children after open:`, terminalRef.current?.children.length);
+    console.log(`[Terminal] xterm.element:`, xterm.element);
+    
     fitAddon.fit();
 
     xtermRef.current = xterm;
     fitAddonRef.current = fitAddon;
+
+    console.log(`[Terminal] Xterm initialized for ${sessionId}, cols=${xterm.cols}, rows=${xterm.rows}`);
 
     // Restore terminal buffer from hibernation (if available)
     if (initialBuffer) {
@@ -86,6 +102,7 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
 
     // Handle terminal input
     xterm.onData((data) => {
+      console.log(`[Terminal] Sending data for session ${sessionId}:`, data.length, "chars");
       sendSshData({ session_id: sessionId, data }).catch((e) => {
         console.error("Failed to send data:", e);
       });
@@ -105,22 +122,33 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
     window.addEventListener("resize", handleResize);
 
     // Listen for SSH data events
-    let dataUnlisten: UnlistenFn;
-    let closeUnlisten: UnlistenFn;
+    // Clean up any existing listeners first (in case of re-mount)
+    if (dataUnlistenRef.current) {
+      dataUnlistenRef.current();
+      dataUnlistenRef.current = null;
+    }
+    if (closeUnlistenRef.current) {
+      closeUnlistenRef.current();
+      closeUnlistenRef.current = null;
+    }
 
     const setupListeners = async () => {
-      dataUnlisten = await listen<SshDataEvent>(`ssh-data-${sessionId}`, (event) => {
+      console.log(`[Terminal] Setting up listeners for session: ${sessionId}`);
+      dataUnlistenRef.current = await listen<SshDataEvent>(`ssh-data-${sessionId}`, (event) => {
+        console.log(`[Terminal] Received data for session ${sessionId}:`, event.payload.data.length, "chars");
         if (xtermRef.current) {
           xtermRef.current.write(event.payload.data);
         }
       });
 
-      closeUnlisten = await listen<SshCloseEvent>(`ssh-close-${sessionId}`, (event) => {
+      closeUnlistenRef.current = await listen<SshCloseEvent>(`ssh-close-${sessionId}`, (event) => {
+        console.log(`[Terminal] Session closed: ${sessionId}`, event.payload.reason);
         if (xtermRef.current) {
           xtermRef.current.write(`\r\n\x1b[31m[Connection closed: ${event.payload.reason}]\x1b[0m\r\n`);
         }
         setTimeout(onClose, 2000);
       });
+      console.log(`[Terminal] Listeners set up for session: ${sessionId}`);
     };
 
     setupListeners();
@@ -137,12 +165,24 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
     xterm.focus();
 
     return () => {
+      console.log(`[Terminal] Cleaning up xterm for ${sessionId}`);
       window.removeEventListener("resize", handleResize);
-      if (dataUnlisten) dataUnlisten();
-      if (closeUnlisten) closeUnlisten();
+      if (dataUnlistenRef.current) {
+        dataUnlistenRef.current();
+        dataUnlistenRef.current = null;
+      }
+      if (closeUnlistenRef.current) {
+        closeUnlistenRef.current();
+        closeUnlistenRef.current = null;
+      }
       xterm.dispose();
+      // Reset refs so StrictMode second pass can re-initialize
+      xtermRef.current = null;
+      fitAddonRef.current = null;
+      isInitializedRef.current = false;
     };
-  }, [sessionId, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]); // Only re-run if sessionId changes, not onClose (which is a new function on every render)
 
   // Handle visibility changes - fit and focus when becoming active
   useEffect(() => {

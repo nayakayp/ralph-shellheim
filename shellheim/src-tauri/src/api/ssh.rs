@@ -120,9 +120,12 @@ pub async fn connect_ssh(
         .username
         .ok_or_else(|| "Identity has no username".to_string())?;
 
-    // 5. Connect via russh with host key verification
+    // 5. Generate session ID upfront so it's consistent for both connect() and session manager
+    let session_id = uuid::Uuid::new_v4().to_string();
+
+    // 6. Connect via russh with host key verification
     let result = ssh::connect(
-        uuid::Uuid::new_v4().to_string(), // temp session id for logging
+        session_id.clone(),
         &host,
         port,
         &username,
@@ -138,9 +141,10 @@ pub async fn connect_ssh(
 
     match result {
         ConnectResult::Connected(connection) => {
-            // 6. Create session in manager
+            // 7. Create session in manager with the same session_id used in connect()
             let manager = SessionManager::instance();
             let session = manager.create_session(
+                session_id,
                 request.entry_id.clone(),
                 account_id,
                 host.clone(),
@@ -227,10 +231,16 @@ pub async fn disconnect_ssh(token: String, session_id: String) -> Result<(), Str
 
 #[command]
 pub async fn send_data(token: String, request: SendDataRequest) -> Result<(), String> {
+    info!("send_data called for session: {}, data len: {}", request.session_id, request.data.len());
+    
     // Verify session ownership
     let manager = SessionManager::instance();
+    info!("send_data: got manager");
+    
     if let Some(session) = manager.get_session(&request.session_id) {
+        info!("send_data: found session, verifying token");
         let account_id = get_account_id_from_token(&token).await?;
+        info!("send_data: got account_id");
         if session.account_id != account_id {
             return Err("Session not found".to_string());
         }
@@ -238,9 +248,18 @@ pub async fn send_data(token: String, request: SendDataRequest) -> Result<(), St
         return Err(format!("Session not found: {}", request.session_id));
     }
 
-    manager
+    info!("send_data: calling manager.send_data");
+    let result = manager
         .send_data(&request.session_id, request.data.as_bytes())
-        .await
+        .await;
+    
+    if let Err(ref e) = result {
+        info!("send_data error: {}", e);
+    } else {
+        info!("send_data success for session: {}", request.session_id);
+    }
+    
+    result
 }
 
 #[command]
@@ -413,9 +432,12 @@ pub async fn resume_session(
         lookup_known_host(&account_id, &hibernated.host, hibernated.port as u16).await?;
     let expected_fingerprint = known_host.map(|(fp, _)| fp);
 
-    // 4. Reconnect via russh
+    // 4. Generate session ID upfront so it's consistent
+    let session_id = uuid::Uuid::new_v4().to_string();
+
+    // 5. Reconnect via russh
     let result = ssh::connect(
-        uuid::Uuid::new_v4().to_string(),
+        session_id.clone(),
         &hibernated.host,
         hibernated.port as u16,
         &hibernated.username,
@@ -431,9 +453,10 @@ pub async fn resume_session(
 
     match result {
         ConnectResult::Connected(connection) => {
-            // 5. Create new session
+            // 6. Create new session with the same session_id used in connect()
             let manager = SessionManager::instance();
             let session = manager.create_session(
+                session_id,
                 hibernated.entry_id.clone(),
                 account_id,
                 hibernated.host.clone(),

@@ -232,15 +232,21 @@ export async function connectSsh(request: ConnectRequest): Promise<ConnectSshRes
 }
 
 export async function disconnectSsh(sessionId: string): Promise<void> {
-  return invoke<void>("disconnect_ssh", { sessionId });
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("disconnect_ssh", { token, sessionId });
 }
 
 export async function sendSshData(request: SendDataRequest): Promise<void> {
-  return invoke<void>("send_ssh_data", { request });
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("send_data", { token, request });
 }
 
 export async function resizeSshTerminal(request: ResizeRequest): Promise<void> {
-  return invoke<void>("resize_ssh_terminal", { request });
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("resize_terminal", { token, request });
 }
 
 // Hibernated Sessions API

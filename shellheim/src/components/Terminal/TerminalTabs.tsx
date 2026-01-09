@@ -40,10 +40,13 @@ export function TerminalTabs({
       <div className="terminal-tabs">
         {/* Active SSH sessions */}
         {sessions.map((session) => (
-          <button
+          <div
             key={`ssh-${session.session_id}`}
             className={`terminal-tab ${session.session_id === activeSessionId && activeTabType === "ssh" ? "active" : ""}`}
             onClick={() => onSelectTab(session.session_id, "ssh")}
+            role="tab"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && onSelectTab(session.session_id, "ssh")}
           >
             <span className="tab-indicator connected">⬤</span>
             <span className="tab-host">{session.host}</span>
@@ -69,15 +72,18 @@ export function TerminalTabs({
                 ×
               </button>
             </div>
-          </button>
+          </div>
         ))}
 
         {/* SFTP sessions */}
         {sftpSessions.map((session) => (
-          <button
+          <div
             key={`sftp-${session.session_id}`}
             className={`terminal-tab sftp ${session.session_id === activeSessionId && activeTabType === "sftp" ? "active" : ""}`}
             onClick={() => onSelectTab(session.session_id, "sftp")}
+            role="tab"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && onSelectTab(session.session_id, "sftp")}
           >
             <span className="tab-indicator sftp">📁</span>
             <span className="tab-host">{session.host} (SFTP)</span>
@@ -93,16 +99,19 @@ export function TerminalTabs({
                 ×
               </button>
             </div>
-          </button>
+          </div>
         ))}
 
         {/* Hibernated sessions */}
         {hibernatedSessions.map((hibernated) => (
-          <button
+          <div
             key={hibernated.id}
             className="terminal-tab hibernated"
             onClick={() => onResumeSession?.(hibernated)}
             title={`Resume ${hibernated.host} (hibernated ${formatHibernatedTime(hibernated.hibernatedAt)})`}
+            role="tab"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && onResumeSession?.(hibernated)}
           >
             <span className="tab-indicator hibernated">⏸</span>
             <span className="tab-host">{hibernated.host}</span>
@@ -128,7 +137,7 @@ export function TerminalTabs({
                 ×
               </button>
             </div>
-          </button>
+          </div>
         ))}
       </div>
       <button className="new-tab-btn" onClick={onNewConnection} title="New connection">

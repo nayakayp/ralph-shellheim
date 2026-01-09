@@ -200,8 +200,8 @@ pub struct SshCloseEvent {
 pub struct ActiveConnection {
     /// The russh client handle (wrapped in Arc for sharing with tunnels)
     handle_inner: Handle<SshClientHandler>,
-    /// The PTY channel
-    pub channel: Channel<client::Msg>,
+    /// The PTY channel (wrapped in Arc<Mutex> for sharing)
+    pub channel: Arc<Mutex<Channel<client::Msg>>>,
     /// Terminal dimensions
     pub cols: u32,
     pub rows: u32,
@@ -209,7 +209,7 @@ pub struct ActiveConnection {
 
 impl ActiveConnection {
     /// Create a new active connection
-    pub fn new(handle: Handle<SshClientHandler>, channel: Channel<client::Msg>, cols: u32, rows: u32) -> Self {
+    pub fn new(handle: Handle<SshClientHandler>, channel: Arc<Mutex<Channel<client::Msg>>>, cols: u32, rows: u32) -> Self {
         Self {
             handle_inner: handle,
             channel,
@@ -239,7 +239,8 @@ impl ActiveConnection {
 
     /// Send data to the SSH channel
     pub async fn send_data(&self, data: &[u8]) -> Result<(), String> {
-        self.channel
+        let channel = self.channel.lock().await;
+        channel
             .data(data)
             .await
             .map_err(|e| format!("Failed to send data: {}", e))
@@ -247,7 +248,8 @@ impl ActiveConnection {
 
     /// Resize the PTY
     pub async fn resize(&self, cols: u32, rows: u32) -> Result<(), String> {
-        self.channel
+        let channel = self.channel.lock().await;
+        channel
             .window_change(cols, rows, 0, 0)
             .await
             .map_err(|e| format!("Failed to resize: {}", e))
@@ -256,8 +258,11 @@ impl ActiveConnection {
     /// Close the connection
     pub async fn close(self) -> Result<(), String> {
         // Close the channel first
-        if let Err(e) = self.channel.close().await {
-            warn!("Error closing channel: {}", e);
+        {
+            let channel = self.channel.lock().await;
+            if let Err(e) = channel.close().await {
+                warn!("Error closing channel: {}", e);
+            }
         }
 
         // Disconnect the session
@@ -385,6 +390,12 @@ pub async fn connect(
         .map_err(|e| format!("Failed to start shell: {}", e))?;
 
     info!("SSH[{}] shell started", session_id);
+
+    // The Handler's data() callback already handles incoming data from the SSH channel
+    // and emits events to the frontend. No need for a separate reader task.
+    // 
+    // The channel is wrapped in Arc<Mutex> so send_data() can access it.
+    let channel = Arc::new(Mutex::new(channel));
 
     Ok(ConnectResult::Connected(ActiveConnection::new(
         session,

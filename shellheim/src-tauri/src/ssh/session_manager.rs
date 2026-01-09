@@ -89,9 +89,10 @@ impl SessionManager {
         &SESSION_MANAGER
     }
 
-    /// Create a new SSH session with connection
+    /// Create a new SSH session with connection using a pre-generated session ID
     pub fn create_session(
         &self,
+        session_id: String,
         entry_id: String,
         account_id: String,
         host: String,
@@ -102,8 +103,6 @@ impl SessionManager {
         terminal_rows: u32,
         connection: ActiveConnection,
     ) -> Arc<SshSession> {
-        let session_id = uuid::Uuid::new_v4().to_string();
-
         let session = Arc::new(SshSession {
             id: session_id.clone(),
             entry_id,

@@ -16,7 +16,7 @@ fn get_encryption_key() -> [u8; 32] {
     // TODO: In production, derive from user password or use system keychain
     // For now, use a fixed key for development
     let mut key = [0u8; 32];
-    key.copy_from_slice(b"shellheim_dev_key_32bytes_long!");
+    key.copy_from_slice(b"shellheim_dev_key_32bytes_long!!");
     key
 }
 
