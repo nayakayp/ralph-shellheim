@@ -22,7 +22,7 @@ import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
 import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
-import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest } from "../types/sftp";
+import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest, SearchFilesRequest, SearchResult } from "../types/sftp";
 import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
 import type { Snippet, CreateSnippetRequest, UpdateSnippetRequest } from "../types/snippet";
 import type { Recording, StartRecordingRequest, StartRecordingResponse, StopRecordingRequest, StopRecordingResponse, UpdateRecordingRequest } from "../types/recording";
@@ -293,6 +293,12 @@ export async function sftpListDir(request: ListDirRequest): Promise<FileEntry[]>
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<FileEntry[]>("sftp_list_dir", { token, request });
+}
+
+export async function sftpSearchFiles(request: SearchFilesRequest): Promise<SearchResult> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<SearchResult>("sftp_search_files", { token, request });
 }
 
 export async function sftpStat(request: FileOpRequest): Promise<FileStats> {

@@ -105,6 +105,7 @@ pub fn run() {
             api::sftp::connect_sftp,
             api::sftp::disconnect_sftp,
             api::sftp::sftp_list_dir,
+            api::sftp::sftp_search_files,
             api::sftp::sftp_stat,
             api::sftp::sftp_read_file,
             api::sftp::sftp_write_file,

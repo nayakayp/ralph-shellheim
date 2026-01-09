@@ -10,6 +10,7 @@ import {
   Trash,
   List,
   SquaresFour,
+  MagnifyingGlass,
 } from '@phosphor-icons/react';
 import type { FileEntry, SftpSessionInfo } from '../types/sftp';
 import { formatFileSize, formatPermissions, getFileIcon } from '../types/sftp';
@@ -25,6 +26,7 @@ import {
   sftpDownloadDirectory,
 } from '../lib/api';
 import { TransferProgress, useTransferProgress } from './TransferProgress';
+import { SearchPanel } from './SearchPanel';
 import './FileBrowser.css';
 
 interface FileBrowserProps {
@@ -43,6 +45,7 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
   const [newFolderName, setNewFolderName] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renamingValue, setRenamingValue] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   
   // Transfer progress tracking
   const { transfers, addTransfer, clearTransfer, clearCompleted } = useTransferProgress();
@@ -359,6 +362,13 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
 
         <div className="fb-actions">
           <button 
+            onClick={() => setShowSearch(true)} 
+            title="Search files"
+            className={`fb-action-btn fb-action-search ${showSearch ? 'active' : ''}`}
+          >
+            <MagnifyingGlass size={16} />
+          </button>
+          <button 
             onClick={handleUpload} 
             title="Upload files"
             className="fb-action-btn fb-action-upload"
@@ -538,6 +548,16 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
         onClear={clearTransfer}
         onClearAll={clearCompleted}
       />
+
+      {/* Search panel */}
+      {showSearch && (
+        <SearchPanel
+          sessionId={session.session_id}
+          currentPath={currentPath}
+          onNavigate={(path) => loadDirectory(path)}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
     </div>
   );
 }

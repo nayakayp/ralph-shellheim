@@ -53,6 +53,20 @@ export interface RenameRequest {
   new_path: string;
 }
 
+export interface SearchFilesRequest {
+  session_id: string;
+  base_path: string;
+  pattern: string;
+  max_results?: number;
+}
+
+export interface SearchResult {
+  entries: FileEntry[];
+  total_found: number;
+  search_path: string;
+  pattern: string;
+}
+
 export interface UploadRequest {
   session_id: string;
   path: string;

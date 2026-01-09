@@ -4,6 +4,59 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 21 - 2026-01-09
+
+### Completed
+- **Implemented SFTP File Search** - Recursive file search within directory tree:
+  - Search bar with live debounced filtering (300ms)
+  - Searches file and folder names recursively
+  - Configurable base path for scoped searches
+  - Max 100 results to prevent overwhelming large directories
+
+- **Built Search Backend** (`src-tauri/src/sftp/client.rs`):
+  - `search_files()` method using iterative stack-based traversal
+  - Case-insensitive pattern matching on file names
+  - Skips unreadable directories gracefully
+  - Configurable max results limit
+
+- **Added Search API** (`src-tauri/src/api/sftp.rs`):
+  - `sftp_search_files` command with session ownership verification
+  - `SearchFilesRequest` with session_id, base_path, pattern, max_results
+  - `SearchResult` response with entries, total_found, search_path, pattern
+
+- **Created SearchPanel Component** (`src/components/SearchPanel.tsx`):
+  - Slide-in panel from right side with Tokyo Night theme
+  - Two input fields: search query + base path
+  - Real-time search with loading indicator
+  - Results show file icon, name, relative path, size
+  - Click result to navigate to file location
+  - Empty states for no results and initial hint
+
+- **Added SearchPanel Styles** (`src/components/SearchPanel.css`):
+  - Glassmorphism design consistent with FileBrowser
+  - Slide-in animation
+  - Highlighted search results on hover
+
+- **Integrated with FileBrowser**:
+  - Search button added to toolbar (magnifying glass icon)
+  - SearchPanel receives current path as default search base
+  - Click on result navigates to parent directory and closes panel
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **File editor** - Edit remote files with syntax highlighting
+2. **Monitoring service** - Server health monitoring
+3. **Audit logging** - Track user actions
+
+### Tech Notes
+- Search uses iterative depth-first traversal (stack-based, not recursive)
+- Pattern matching is case-insensitive substring search
+- Results limited to 100 by default to prevent memory issues on large directories
+- Debounce prevents excessive API calls during typing
+
+---
+
 ## Session 20 - 2026-01-09
 
 ### Completed

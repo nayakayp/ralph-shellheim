@@ -54,6 +54,24 @@ pub struct RenameRequest {
     pub new_path: String,
 }
 
+/// Request for file search
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchFilesRequest {
+    pub session_id: String,
+    pub base_path: String,
+    pub pattern: String,
+    pub max_results: Option<usize>,
+}
+
+/// Search result response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchResult {
+    pub entries: Vec<FileEntry>,
+    pub total_found: usize,
+    pub search_path: String,
+    pub pattern: String,
+}
+
 /// Request for file upload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UploadRequest {
@@ -245,6 +263,54 @@ pub async fn sftp_list_dir(
     session.set_current_path(request.path);
 
     Ok(entries)
+}
+
+/// Search files recursively
+#[command]
+pub async fn sftp_search_files(
+    token: String,
+    request: SearchFilesRequest,
+) -> Result<SearchResult, String> {
+    info!(
+        "SFTP search: pattern='{}' in '{}'",
+        request.pattern, request.base_path
+    );
+
+    let manager = SftpSessionManager::instance();
+
+    // Verify session ownership
+    let session = manager
+        .get_session(&request.session_id)
+        .ok_or_else(|| "Session not found".to_string())?;
+
+    let account_id = get_account_id_from_token(&token).await?;
+    if session.account_id != account_id {
+        return Err("Session not found".to_string());
+    }
+
+    // Default max results to 100
+    let max_results = request.max_results.unwrap_or(100);
+
+    // Get connection and search
+    let conn_guard = session.connection.lock().await;
+    let conn = conn_guard
+        .as_ref()
+        .ok_or_else(|| "Connection not active".to_string())?;
+
+    let entries = conn
+        .search_files(&request.base_path, &request.pattern, max_results)
+        .await?;
+
+    let total = entries.len();
+
+    info!("SFTP search found {} results for '{}'", total, request.pattern);
+
+    Ok(SearchResult {
+        entries,
+        total_found: total,
+        search_path: request.base_path,
+        pattern: request.pattern,
+    })
 }
 
 /// Get file stats

@@ -242,6 +242,51 @@ impl SftpConnection {
             .map_err(|e| format!("Failed to rename '{}' to '{}': {}", old_path, new_path, e))
     }
 
+    /// Search for files matching a pattern recursively
+    /// Returns matching FileEntry items with full paths
+    pub async fn search_files(
+        &self,
+        base_path: &str,
+        pattern: &str,
+        max_results: usize,
+    ) -> Result<Vec<FileEntry>, String> {
+        let pattern_lower = pattern.to_lowercase();
+        let mut results = Vec::new();
+        let mut stack = vec![base_path.to_string()];
+
+        while let Some(current_path) = stack.pop() {
+            if results.len() >= max_results {
+                break;
+            }
+
+            let entries = match self.list_dir(&current_path).await {
+                Ok(e) => e,
+                Err(_) => continue, // Skip directories we can't read
+            };
+
+            for entry in entries {
+                if entry.name == "." || entry.name == ".." {
+                    continue;
+                }
+
+                // Check if name matches pattern
+                if entry.name.to_lowercase().contains(&pattern_lower) {
+                    results.push(entry.clone());
+                    if results.len() >= max_results {
+                        break;
+                    }
+                }
+
+                // Add directories to stack for recursion
+                if entry.is_dir {
+                    stack.push(entry.path.clone());
+                }
+            }
+        }
+
+        Ok(results)
+    }
+
     /// Recursively list all files in a directory
     /// Returns a flat list of (relative_path, size, is_dir) tuples
     pub async fn list_dir_recursive(
