@@ -1,11 +1,22 @@
 // Tauri API bindings
-import { invoke } from "@tauri-apps/api/core";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
+
+// Check if running in Tauri context
+const isTauri = typeof window !== "undefined" && window.__TAURI_INTERNALS__;
+
+// Wrapper that throws helpful error when not in Tauri
+async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  if (!isTauri) {
+    throw new Error(`Tauri not available. Run the app with 'npm run tauri dev' instead of 'npm run dev'.`);
+  }
+  return tauriInvoke<T>(cmd, args);
+}
 import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
-import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
-import type { KnownHost, TrustHostKeyRequest, HostKeyStatus } from "../types/known_host";
+import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
+import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -100,7 +111,7 @@ export async function deleteEntry(entryId: string): Promise<void> {
   return invoke<void>("delete_entry", { token, entryId });
 }
 
-// Identity/Credential API
+// Identity API
 export async function listIdentities(): Promise<Identity[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
@@ -131,73 +142,11 @@ export async function deleteIdentity(identityId: string): Promise<void> {
   return invoke<void>("delete_identity", { token, identityId });
 }
 
-// SSH API
-export async function connectSsh(request: ConnectRequest): Promise<ConnectSshResponse> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<ConnectSshResponse>("connect_ssh", { token, request });
-}
-
-export async function disconnectSsh(sessionId: string): Promise<void> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<void>("disconnect_ssh", { token, sessionId });
-}
-
-export async function sendSshData(request: SendDataRequest): Promise<void> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<void>("send_data", { token, request });
-}
-
-export async function resizeSshTerminal(request: ResizeRequest): Promise<void> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<void>("resize_terminal", { token, request });
-}
-
-export async function listSshSessions(): Promise<SshSessionInfo[]> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<SshSessionInfo[]>("list_ssh_sessions", { token });
-}
-
-// Hibernated Session API
-export async function hibernateSession(request: HibernateSessionRequest): Promise<HibernatedSession> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<HibernatedSession>("hibernate_session", { token, request });
-}
-
-export async function listHibernatedSessions(): Promise<HibernatedSession[]> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<HibernatedSession[]>("list_hibernated_sessions", { token });
-}
-
-export async function resumeSession(request: ResumeSessionRequest): Promise<ResumeSessionResponse> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<ResumeSessionResponse>("resume_session", { token, request });
-}
-
-export async function deleteHibernatedSession(hibernatedSessionId: string): Promise<void> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<void>("delete_hibernated_session", { token, hibernatedSessionId });
-}
-
 // Folder API
 export async function listFolders(): Promise<Folder[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<Folder[]>("list_folders", { token });
-}
-
-export async function getFolder(folderId: string): Promise<Folder> {
-  const token = getStoredToken();
-  if (!token) throw new Error("Not authenticated");
-  return invoke<Folder>("get_folder", { token, folderId });
 }
 
 export async function createFolder(request: CreateFolderRequest): Promise<Folder> {
@@ -218,10 +167,11 @@ export async function deleteFolder(folderId: string): Promise<void> {
   return invoke<void>("delete_folder", { token, folderId });
 }
 
-export async function getFolderCounts(): Promise<Array<[string, number]>> {
+export async function getFolderCounts(): Promise<Map<string, number>> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
-  return invoke<Array<[string, number]>>("get_folder_counts", { token });
+  const counts = await invoke<Record<string, number>>("get_folder_counts", { token });
+  return new Map(Object.entries(counts));
 }
 
 // Known Hosts API
@@ -231,31 +181,58 @@ export async function listKnownHosts(): Promise<KnownHost[]> {
   return invoke<KnownHost[]>("list_known_hosts", { token });
 }
 
-export async function checkHostKey(
-  host: string,
-  port: number,
-  keyType: string,
-  fingerprint: string
-): Promise<HostKeyStatus> {
+export async function trustHostKey(request: TrustHostKeyRequest): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
-  return invoke<HostKeyStatus>("check_host_key", {
-    token,
-    host,
-    port,
-    keyType,
-    fingerprint,
-  });
+  return invoke<void>("trust_host_key", { token, request });
 }
 
-export async function trustHostKey(request: TrustHostKeyRequest): Promise<KnownHost> {
+export async function deleteKnownHost(knownHostId: string): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
-  return invoke<KnownHost>("trust_host_key", { token, request });
+  return invoke<void>("delete_known_host", { token, knownHostId });
 }
 
-export async function deleteKnownHost(id: string): Promise<void> {
+// SSH Session API
+export async function connectSsh(request: ConnectRequest): Promise<ConnectSshResponse> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
-  return invoke<void>("delete_known_host", { token, id });
+  return invoke<ConnectSshResponse>("connect_ssh", { token, request });
+}
+
+export async function disconnectSsh(sessionId: string): Promise<void> {
+  return invoke<void>("disconnect_ssh", { sessionId });
+}
+
+export async function sendSshData(request: SendDataRequest): Promise<void> {
+  return invoke<void>("send_ssh_data", { request });
+}
+
+export async function resizeSshTerminal(request: ResizeRequest): Promise<void> {
+  return invoke<void>("resize_ssh_terminal", { request });
+}
+
+// Hibernated Sessions API
+export async function listHibernatedSessions(): Promise<HibernatedSession[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HibernatedSession[]>("list_hibernated_sessions", { token });
+}
+
+export async function hibernateSession(request: HibernateSessionRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("hibernate_session", { token, request });
+}
+
+export async function resumeSession(request: ResumeSessionRequest): Promise<ResumeSessionResponse> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ResumeSessionResponse>("resume_session", { token, request });
+}
+
+export async function deleteHibernatedSession(hibernatedSessionId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_hibernated_session", { token, hibernatedSessionId });
 }

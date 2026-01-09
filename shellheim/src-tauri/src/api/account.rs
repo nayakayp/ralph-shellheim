@@ -79,17 +79,32 @@ pub async fn create_account(request: CreateAccountRequest) -> Result<Account, St
 #[command]
 pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
     info!("Login attempt for: {}", request.username);
+    info!("Password length: {}", request.password.len());
 
     let pool = db::pool();
 
     // Find account by username
-    let account: Account = sqlx::query_as(
+    let result = sqlx::query_as::<_, Account>(
         "SELECT * FROM accounts WHERE username = ? LIMIT 1"
     )
+    .bind(&request.username)
     .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("Database error: {}", e))?
-    .ok_or_else(|| "Invalid username or password".to_string())?;
+    .await;
+    
+    let account = match result {
+        Ok(Some(acc)) => acc,
+        Ok(None) => {
+            error!("Account not found for username: {}", request.username);
+            return Err("Invalid username or password".to_string());
+        }
+        Err(e) => {
+            error!("Database query error: {:?}", e);
+            return Err(format!("Database error: {}", e));
+        }
+    };
+    
+    info!("Account found, hash prefix: {}...", &account.password_hash[..20]);
+    info!("Verifying password '{}' (len={}) against hash", &request.password[..2], request.password.len());
 
     // Verify password
     let valid = verify(&request.password, &account.password_hash)
@@ -98,7 +113,10 @@ pub async fn login(request: LoginRequest) -> Result<LoginResponse, String> {
             "Invalid username or password".to_string()
         })?;
 
+    info!("Bcrypt verify result: {}", valid);
+    
     if !valid {
+        error!("Password mismatch for user: {}", request.username);
         return Err("Invalid username or password".to_string());
     }
 

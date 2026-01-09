@@ -12,6 +12,7 @@ pub struct Account {
     pub avatar_url: Option<String>,
     #[serde(skip_serializing)]
     pub totp_secret: Option<String>,
+    // SQLite stores this as INTEGER, sqlx can decode to bool directly
     pub totp_enabled: bool,
     pub created_at: String,
     pub updated_at: String,

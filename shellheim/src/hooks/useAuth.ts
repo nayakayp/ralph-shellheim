@@ -43,8 +43,15 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(async (request: LoginRequest) => {
-    const response = await apiLogin(request);
-    setState({ status: "authenticated", account: response.account });
+    console.log("Attempting login for:", request.username);
+    try {
+      const response = await apiLogin(request);
+      console.log("Login successful:", response.account.username);
+      setState({ status: "authenticated", account: response.account });
+    } catch (e) {
+      console.error("Login failed:", e);
+      throw e;
+    }
   }, []);
 
   const register = useCallback(async (request: CreateAccountRequest) => {
