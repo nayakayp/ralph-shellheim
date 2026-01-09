@@ -1,5 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { open, save } from '@tauri-apps/plugin-dialog';
+import {
+  CaretLeft,
+  House,
+  ArrowClockwise,
+  UploadSimple,
+  DownloadSimple,
+  FolderPlus,
+  Trash,
+  List,
+  SquaresFour,
+} from '@phosphor-icons/react';
 import type { FileEntry, SftpSessionInfo } from '../types/sftp';
 import { formatFileSize, formatPermissions, getFileIcon } from '../types/sftp';
 import {
@@ -302,21 +313,13 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
       <div className="fb-toolbar">
         <div className="fb-nav-buttons">
           <button onClick={handleGoUp} title="Go up" disabled={currentPath === '/'}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <CaretLeft size={16} />
           </button>
           <button onClick={handleGoHome} title="Home">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
+            <House size={16} />
           </button>
           <button onClick={handleRefresh} title="Refresh" disabled={loading}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={loading ? 'spinning' : ''}>
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
+            <ArrowClockwise size={16} className={loading ? 'spinning' : ''} />
           </button>
         </div>
 
@@ -346,11 +349,7 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
             title="Upload files"
             className="fb-action-btn fb-action-upload"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+            <UploadSimple size={16} />
           </button>
           <button 
             onClick={handleDownload} 
@@ -358,22 +357,14 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
             title="Download selected"
             className="fb-action-btn fb-action-download"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            <DownloadSimple size={16} />
           </button>
           <button 
             onClick={() => setShowNewFolderInput(true)} 
             title="New folder"
             className="fb-action-btn"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              <line x1="12" y1="11" x2="12" y2="17" />
-              <line x1="9" y1="14" x2="15" y2="14" />
-            </svg>
+            <FolderPlus size={16} />
           </button>
           <button 
             onClick={handleDelete} 
@@ -381,10 +372,7 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
             title="Delete selected"
             className="fb-action-btn fb-action-danger"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
+            <Trash size={16} />
           </button>
           <div className="fb-view-toggle">
             <button 
@@ -392,26 +380,14 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
               onClick={() => setViewMode('list')}
               title="List view"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
+              <List size={16} />
             </button>
             <button 
               className={viewMode === 'grid' ? 'active' : ''} 
               onClick={() => setViewMode('grid')}
               title="Grid view"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
-              </svg>
+              <SquaresFour size={16} />
             </button>
           </div>
         </div>

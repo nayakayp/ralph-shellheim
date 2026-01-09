@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { CaretRight, Folder, FolderOpen, Desktop, Plus, Trash } from "@phosphor-icons/react";
 import type { FolderNode, CreateFolderRequest } from "../types/folder";
 import "./FolderTree.css";
 
@@ -193,37 +194,20 @@ export function FolderTree({
               className="folder-expand-btn"
               onClick={(e) => toggleExpand(node.id, e)}
             >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+              <CaretRight
+                size={12}
                 style={{ transform: isExpanded ? "rotate(90deg)" : "none" }}
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              />
             </button>
           ) : (
             <span className="folder-expand-placeholder" />
           )}
           
-          <svg
-            className="folder-icon"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={node.color || "currentColor"}
-            strokeWidth="2"
-          >
-            {isExpanded ? (
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            ) : (
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v11z" />
-            )}
-          </svg>
+          {isExpanded ? (
+            <FolderOpen className="folder-icon" size={16} color={node.color || "currentColor"} />
+          ) : (
+            <Folder className="folder-icon" size={16} color={node.color || "currentColor"} />
+          )}
           
           <span className="folder-name">{node.name}</span>
           
@@ -237,20 +221,14 @@ export function FolderTree({
               onClick={(e) => startCreating(node.id, e)}
               title="Add subfolder"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <Plus size={12} />
             </button>
             <button
               className="folder-action-btn delete"
               onClick={(e) => handleDelete(node.id, node.name, e)}
               title="Delete folder"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
+              <Trash size={12} />
             </button>
           </div>
         </div>
@@ -273,10 +251,7 @@ export function FolderTree({
           onClick={() => startCreating(null)}
           title="New folder"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+          <Plus size={14} />
         </button>
       </div>
       
@@ -288,19 +263,7 @@ export function FolderTree({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, null)}
       >
-        <svg
-          className="folder-icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-          <line x1="8" y1="21" x2="16" y2="21" />
-          <line x1="12" y1="17" x2="12" y2="21" />
-        </svg>
+        <Desktop className="folder-icon" size={16} />
         <span className="folder-name">All Servers</span>
         {rootEntryCount > 0 && (
           <span className="folder-count">{rootEntryCount}</span>

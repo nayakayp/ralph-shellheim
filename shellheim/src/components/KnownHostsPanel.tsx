@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { CheckCircle, X, Stack, Globe, Lock, Trash } from "@phosphor-icons/react";
 import type { KnownHost } from "../types/known_host";
 import { listKnownHosts, deleteKnownHost } from "../lib/api";
 import "./KnownHostsPanel.css";
@@ -60,30 +61,13 @@ export function KnownHostsPanel({ isOpen, onClose }: KnownHostsPanelProps) {
 
   const getKeyTypeIcon = (keyType: string) => {
     if (keyType.includes("ed25519")) {
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5" />
-          <path d="M2 12l10 5 10-5" />
-        </svg>
-      );
+      return <Stack size={16} />;
     }
     if (keyType.includes("ecdsa")) {
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" />
-          <ellipse cx="12" cy="12" rx="3" ry="10" />
-          <line x1="2" y1="12" x2="22" y2="12" />
-        </svg>
-      );
+      return <Globe size={16} />;
     }
     // RSA
-    return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-      </svg>
-    );
+    return <Lock size={16} />;
   };
 
   const getKeyTypeName = (keyType: string) => {
@@ -102,18 +86,12 @@ export function KnownHostsPanel({ isOpen, onClose }: KnownHostsPanelProps) {
       <div className="known-hosts-panel" onClick={(e) => e.stopPropagation()}>
         <div className="panel-header">
           <div className="panel-title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 12l2 2 4-4" />
-              <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-            </svg>
+            <CheckCircle size={22} />
             <h2>Known Hosts</h2>
             <span className="count-badge">{knownHosts.length}</span>
           </div>
           <button className="panel-close" onClick={onClose}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X size={20} />
           </button>
         </div>
 
@@ -133,10 +111,7 @@ export function KnownHostsPanel({ isOpen, onClose }: KnownHostsPanelProps) {
             </div>
           ) : knownHosts.length === 0 ? (
             <div className="panel-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M9 12l2 2 4-4" />
-                <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-              </svg>
+              <CheckCircle size={48} weight="light" />
               <h3>No trusted hosts yet</h3>
               <p>Host keys will appear here after you connect to SSH servers</p>
             </div>
@@ -178,10 +153,7 @@ export function KnownHostsPanel({ isOpen, onClose }: KnownHostsPanelProps) {
                       {deletingId === host.id ? (
                         <div className="spinner-small" />
                       ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
+                        <Trash size={16} />
                       )}
                     </button>
                   </div>

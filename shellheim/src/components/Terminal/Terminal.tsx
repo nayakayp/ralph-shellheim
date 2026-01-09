@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -16,7 +16,7 @@ interface TerminalProps {
   onClose: () => void;
 }
 
-export default function Terminal({ sessionId, host, isActive, initialBuffer, onClose }: TerminalProps) {
+export default function Terminal({ sessionId, host: _host, isActive, initialBuffer, onClose }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -24,14 +24,8 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
   const dataUnlistenRef = useRef<UnlistenFn | null>(null);
   const closeUnlistenRef = useRef<UnlistenFn | null>(null);
 
-  const handleDisconnect = useCallback(async () => {
-    try {
-      await disconnectSsh(sessionId);
-    } catch (e) {
-      console.error("Disconnect error:", e);
-    }
-    onClose();
-  }, [sessionId, onClose]);
+  // Note: disconnectSsh is available for future use when disconnect button is added
+  void disconnectSsh; // Suppress unused import warning
 
   // Initialize terminal only once
   useEffect(() => {
@@ -224,15 +218,6 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
 
   return (
     <div className={`terminal-container ${isActive ? "active" : "hidden"}`}>
-      <div className="terminal-header">
-        <div className="terminal-title">
-          <span className="terminal-icon">⬤</span>
-          <span>{host}</span>
-        </div>
-        <button className="terminal-close-btn" onClick={handleDisconnect} title="Disconnect">
-          ✕
-        </button>
-      </div>
       <div className="terminal-body" ref={terminalRef} />
     </div>
   );

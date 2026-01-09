@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X, Lock, Key, Eye, EyeSlash, UploadSimple } from "@phosphor-icons/react";
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
 import "./IdentityModal.css";
 
@@ -75,10 +76,7 @@ export function IdentityModal({ identity, onClose, onSubmit }: IdentityModalProp
         <div className="modal-header">
           <h2>{isEditing ? "Edit Identity" : "Add Identity"}</h2>
           <button className="modal-close" onClick={onClose}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X size={20} />
           </button>
         </div>
 
@@ -114,10 +112,7 @@ export function IdentityModal({ identity, onClose, onSubmit }: IdentityModalProp
               className={`tab ${credentialType === "password" ? "active" : ""}`}
               onClick={() => setCredentialType("password")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
+              <Lock size={16} />
               Password
             </button>
             <button
@@ -125,9 +120,7 @@ export function IdentityModal({ identity, onClose, onSubmit }: IdentityModalProp
               className={`tab ${credentialType === "ssh_key" ? "active" : ""}`}
               onClick={() => setCredentialType("ssh_key")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-              </svg>
+              <Key size={16} />
               SSH Key
             </button>
           </div>
@@ -149,15 +142,9 @@ export function IdentityModal({ identity, onClose, onSubmit }: IdentityModalProp
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
+                    <EyeSlash size={18} />
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <Eye size={18} />
                   )}
                 </button>
               </div>
@@ -177,11 +164,7 @@ export function IdentityModal({ identity, onClose, onSubmit }: IdentityModalProp
                     rows={5}
                   />
                   <label className="file-upload-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
+                    <UploadSimple size={16} />
                     Upload
                     <input type="file" accept=".pem,.pub,.key,*" onChange={handleFileUpload} />
                   </label>
@@ -204,15 +187,9 @@ export function IdentityModal({ identity, onClose, onSubmit }: IdentityModalProp
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
+                      <EyeSlash size={18} />
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+                      <Eye size={18} />
                     )}
                   </button>
                 </div>

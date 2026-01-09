@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Stack, X, Plus, CaretDown, Info, Stop } from "@phosphor-icons/react";
 import type { Tunnel, TunnelType, CreateTunnelRequest } from "../../types/tunnel";
 import type { SshSessionInfo } from "../../types/ssh";
 import { useTunnels } from "../../hooks/useTunnels";
@@ -128,19 +129,12 @@ export function TunnelPanel({ isOpen, onClose, sessions }: TunnelPanelProps) {
         {/* Header */}
         <div className="panel-header">
           <div className="panel-title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+            <Stack size={22} />
             <h2>SSH Tunnels</h2>
             <span className="count-badge">{activeTunnels.length}</span>
           </div>
           <button className="panel-close" onClick={onClose}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X size={20} />
           </button>
         </div>
 
@@ -151,15 +145,10 @@ export function TunnelPanel({ isOpen, onClose, sessions }: TunnelPanelProps) {
             onClick={() => setShowForm(!showForm)}
           >
             <span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 8, verticalAlign: "middle" }}>
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <Plus size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />
               Create New Tunnel
             </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
+            <CaretDown size={16} />
           </button>
 
           {showForm && (
@@ -168,11 +157,7 @@ export function TunnelPanel({ isOpen, onClose, sessions }: TunnelPanelProps) {
 
               {sessions.length === 0 && (
                 <div className="no-sessions-warning">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
+                  <Info size={16} />
                   No active SSH sessions. Connect to a server first.
                 </div>
               )}
@@ -260,11 +245,7 @@ export function TunnelPanel({ isOpen, onClose, sessions }: TunnelPanelProps) {
                   </>
                 ) : (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                      <path d="M2 17l10 5 10-5" />
-                      <path d="M2 12l10 5 10-5" />
-                    </svg>
+                    <Stack size={16} />
                     Create Tunnel
                   </>
                 )}
@@ -287,11 +268,7 @@ export function TunnelPanel({ isOpen, onClose, sessions }: TunnelPanelProps) {
             </div>
           ) : activeTunnels.length === 0 ? (
             <div className="tunnels-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
+              <Stack size={48} weight="light" />
               <h3>No active tunnels</h3>
               <p>Create a tunnel to forward ports through your SSH connections</p>
             </div>
@@ -329,9 +306,7 @@ export function TunnelPanel({ isOpen, onClose, sessions }: TunnelPanelProps) {
                       <>Stopping...</>
                     ) : (
                       <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                          <rect x="6" y="6" width="12" height="12" rx="2" />
-                        </svg>
+                        <Stop size={12} weight="fill" />
                         Stop
                       </>
                     )}

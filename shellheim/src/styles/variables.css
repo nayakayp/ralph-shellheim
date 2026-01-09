@@ -27,13 +27,13 @@
   --border-default: rgba(255, 255, 255, 0.08);
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-strong: rgba(255, 255, 255, 0.12);
-  --border-focus: #6366f1;
+  --border-focus: #0ea5e9;
   
-  /* Accent - Indigo (trust, precision) */
-  --accent: #6366f1;
-  --accent-hover: #7c7ef8;
-  --accent-muted: rgba(99, 102, 241, 0.15);
-  --accent-subtle: rgba(99, 102, 241, 0.08);
+  /* Accent - Cyan Blue (future tech) */
+  --accent: #0ea5e9;
+  --accent-hover: #38bdf8;
+  --accent-muted: rgba(14, 165, 233, 0.15);
+  --accent-subtle: rgba(14, 165, 233, 0.08);
   
   /* Semantic colors */
   --success: #22c55e;
