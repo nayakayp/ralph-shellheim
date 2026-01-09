@@ -252,5 +252,40 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 14,
+            description: "create_integrations_table",
+            sql: r#"
+                CREATE TABLE IF NOT EXISTS integrations (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL,
+                    integration_type TEXT NOT NULL DEFAULT 'proxmox',
+                    name TEXT NOT NULL,
+                    host TEXT NOT NULL,
+                    port INTEGER NOT NULL DEFAULT 8006,
+                    username TEXT NOT NULL,
+                    password_encrypted TEXT,
+                    verify_ssl INTEGER NOT NULL DEFAULT 0,
+                    status TEXT NOT NULL DEFAULT 'offline',
+                    last_sync_at TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_integrations_account ON integrations(account_id);
+                CREATE INDEX IF NOT EXISTS idx_integrations_type ON integrations(integration_type);
+                
+                -- Add integration_id column to entries table for PVE entries
+                ALTER TABLE entries ADD COLUMN integration_id TEXT REFERENCES integrations(id) ON DELETE CASCADE;
+                
+                -- Add integration_id column to folders table for auto-created folders
+                ALTER TABLE folders ADD COLUMN integration_id TEXT REFERENCES integrations(id) ON DELETE CASCADE;
+                
+                -- Add pve_node and pve_vmid to entries for Proxmox resources
+                ALTER TABLE entries ADD COLUMN pve_node TEXT;
+                ALTER TABLE entries ADD COLUMN pve_vmid INTEGER;
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

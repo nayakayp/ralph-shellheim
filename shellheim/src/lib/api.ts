@@ -762,3 +762,72 @@ export async function listTelnetSessions(): Promise<TelnetSessionInfo[]> {
   if (!token) throw new Error("Not authenticated");
   return invoke<TelnetSessionInfo[]>("list_telnet_sessions", { token });
 }
+
+// ============ Integration API ============
+import type { 
+  Integration, 
+  CreateIntegrationRequest, 
+  UpdateIntegrationRequest, 
+  SyncResult, 
+  ProxmoxClusterInfo 
+} from "../types/integration";
+
+export async function listIntegrations(): Promise<Integration[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Integration[]>("list_integrations", { token });
+}
+
+export async function getIntegration(integrationId: string): Promise<Integration> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Integration>("get_integration", { token, integrationId });
+}
+
+export async function createIntegration(request: CreateIntegrationRequest): Promise<Integration> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Integration>("create_integration", { token, request });
+}
+
+export async function updateIntegration(integrationId: string, request: UpdateIntegrationRequest): Promise<Integration> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Integration>("update_integration", { token, integrationId, request });
+}
+
+export async function deleteIntegration(integrationId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_integration", { token, integrationId });
+}
+
+export async function syncIntegration(integrationId: string): Promise<SyncResult> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<SyncResult>("sync_integration", { token, integrationId });
+}
+
+export async function getProxmoxClusterInfo(integrationId: string): Promise<ProxmoxClusterInfo> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ProxmoxClusterInfo>("get_proxmox_cluster_info", { token, integrationId });
+}
+
+export async function startPveResource(entryId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("start_pve_resource", { token, entryId });
+}
+
+export async function stopPveResource(entryId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("stop_pve_resource", { token, entryId });
+}
+
+export async function shutdownPveResource(entryId: string): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("shutdown_pve_resource", { token, entryId });
+}

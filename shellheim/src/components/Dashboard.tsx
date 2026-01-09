@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard, Link } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -25,6 +25,7 @@ import { AuditPanel } from "./AuditPanel";
 import { TagsPanel } from "./TagsPanel";
 import { MonitoringPanel } from "./MonitoringPanel";
 import { BackupPanel } from "./BackupPanel";
+import { IntegrationPanel } from "./IntegrationPanel";
 import { CommandPalette } from "./CommandPalette";
 import KeybindsPanel from "./KeybindsPanel";
 import { useKeymaps } from "../hooks/useKeymaps";
@@ -57,6 +58,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showTags, setShowTags] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+  const [showIntegrations, setShowIntegrations] = useState(false);
   const [showKeybinds, setShowKeybinds] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
@@ -1084,6 +1086,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 <Archive size={18} />
                 Backup
               </button>
+              <button className="toolbar-btn" onClick={() => setShowIntegrations(true)} title="Proxmox & Integrations">
+                <Link size={18} />
+                Integrations
+              </button>
               <button className="toolbar-btn" onClick={() => setShowKeybinds(true)} title="Keyboard Shortcuts">
                 <Keyboard size={18} />
                 Keys
@@ -1204,6 +1210,13 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showKeybinds}
         onClose={() => setShowKeybinds(false)}
       />
+
+      {showIntegrations && (
+        <IntegrationPanel
+          onClose={() => setShowIntegrations(false)}
+          onSync={loadData}
+        />
+      )}
 
       {showTags && (
         <div className="panel-overlay">

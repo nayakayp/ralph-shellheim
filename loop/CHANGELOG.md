@@ -4,6 +4,90 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 33 - 2026-01-10
+
+### Completed
+- **Implemented Proxmox VE Integration** - Full cluster management support:
+  - Connect to Proxmox VE clusters via API
+  - Auto-discovery of nodes, VMs (QEMU), and LXC containers
+  - Sync resources to create folder/entry hierarchy automatically
+  - Start/Stop/Shutdown VMs and containers from Shellheim
+  - View cluster info with live resource stats
+
+- **Built Proxmox Client** (`src-tauri/src/proxmox/`):
+  - `client.rs`: reqwest-based async API client
+  - Ticket-based authentication with CSRF token handling
+  - Self-signed SSL certificate support (`verify_ssl` option)
+  - API methods: create_ticket, get_nodes, get_qemu_vms, get_lxc_containers
+  - VM control: start_vm, stop_vm, shutdown_vm
+  - Console access: open_lxc_console, open_vnc_console (for future use)
+
+- **Created Integration Model** (`src-tauri/src/models/integration.rs`):
+  - `Integration`: Database model for external systems
+  - `IntegrationInfo`: API response (password excluded)
+  - `ProxmoxNode`, `ProxmoxVm`, `ProxmoxResource` types
+  - `ProxmoxClusterInfo`: Live cluster statistics
+  - `SyncResult`: Sync operation results
+
+- **Added Database Migration** (version 14):
+  - `integrations` table with encrypted password storage
+  - Added `integration_id`, `pve_node`, `pve_vmid` columns to entries
+  - Added `integration_id` column to folders for auto-created folders
+
+- **Built Integrations API** (`src-tauri/src/api/integrations.rs`):
+  - `list_integrations`, `get_integration`: List and retrieve integrations
+  - `create_integration`: Add new Proxmox cluster (validates credentials)
+  - `update_integration`: Modify integration settings
+  - `delete_integration`: Remove integration and all synced resources
+  - `sync_integration`: Import nodes, VMs, containers as entries
+  - `get_proxmox_cluster_info`: Live cluster stats with node/VM details
+  - `start_pve_resource`, `stop_pve_resource`, `shutdown_pve_resource`: VM/CT control
+
+- **Added Frontend Types** (`src/types/integration.ts`):
+  - `Integration`, `CreateIntegrationRequest`, `UpdateIntegrationRequest`
+  - `ProxmoxNode`, `ProxmoxResource`, `ProxmoxClusterInfo`
+  - Helper functions: `formatBytes`, `formatUptime`, `isPveEntry`, `getPveIcon`
+
+- **Added Frontend API Functions** (`src/lib/api.ts`):
+  - CRUD: `listIntegrations`, `getIntegration`, `createIntegration`, `updateIntegration`, `deleteIntegration`
+  - Sync: `syncIntegration`
+  - Live data: `getProxmoxClusterInfo`
+  - Control: `startPveResource`, `stopPveResource`, `shutdownPveResource`
+
+- **Built IntegrationPanel Component** (`src/components/IntegrationPanel.tsx`):
+  - Modal dialog with Tokyo Night glassmorphism design
+  - Add integration form with host/port/username/password/SSL fields
+  - Integration list with status badges (online/offline)
+  - Sync button to import resources
+  - Cluster info view with node stats and resource grid
+  - Delete integration with confirmation
+
+- **Updated Entry Model**:
+  - Added `integration_id`, `pve_node`, `pve_vmid` fields to EntryRow and Entry
+  - Updated `with_identities()` conversion to include new fields
+
+- **Updated Dashboard**:
+  - Added "Integrations" button to toolbar with Link icon
+  - IntegrationPanel accessible from main dashboard
+  - `onSync` callback refreshes entries after sync
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation or guacd)
+2. **PVE Console Connections** - Connect to LXC/Shell via WebSocket
+3. **OIDC/LDAP authentication** - Enterprise SSO
+
+### Tech Notes
+- Proxmox API uses ticket+CSRF authentication, tickets expire after 2 hours
+- Self-signed certs common in Proxmox; `verify_ssl: false` is the default
+- Synced resources auto-organize: one folder per node, entries for VMs/CTs/Shell
+- Entry types: `pve-qemu` (VNC), `pve-lxc` (terminal), `pve-shell` (terminal)
+- VM control requires re-authentication for each operation (simple stateless design)
+- Resources store `pve_node` and `pve_vmid` for API operations
+
+---
+
 ## Session 32 - 2026-01-10
 
 ### Completed

@@ -14,6 +14,7 @@ mod tag;
 mod audit_log;
 mod monitoring;
 mod backup;
+mod integration;
 
 pub use account::*;
 pub use entry::*;
@@ -29,3 +30,4 @@ pub use tag::*;
 pub use audit_log::*;
 pub use monitoring::*;
 pub use backup::*;
+pub use integration::*;

@@ -4,6 +4,7 @@ export interface Entry {
   id: string;
   account_id: string;
   folder_id?: string;
+  integration_id?: string;
   entry_type: string;
   name: string;
   host?: string;
@@ -14,6 +15,8 @@ export interface Entry {
   color?: string;
   sort_order: number;
   last_connected_at?: string;
+  pve_node?: string;
+  pve_vmid?: number;
   created_at: string;
   updated_at: string;
   identity_ids: string[];

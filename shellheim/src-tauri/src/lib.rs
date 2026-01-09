@@ -7,6 +7,7 @@ pub mod db;
 pub mod ssh;
 pub mod sftp;
 pub mod telnet;
+pub mod proxmox;
 pub mod api;
 pub mod services;
 pub mod models;
@@ -195,6 +196,18 @@ pub fn run() {
             api::telnet::send_telnet_data,
             api::telnet::resize_telnet_terminal,
             api::telnet::list_telnet_sessions,
+            
+            // Integration commands
+            api::integrations::list_integrations,
+            api::integrations::get_integration,
+            api::integrations::create_integration,
+            api::integrations::update_integration,
+            api::integrations::delete_integration,
+            api::integrations::sync_integration,
+            api::integrations::get_proxmox_cluster_info,
+            api::integrations::start_pve_resource,
+            api::integrations::stop_pve_resource,
+            api::integrations::shutdown_pve_resource,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
