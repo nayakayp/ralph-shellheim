@@ -198,8 +198,8 @@ pub struct SshCloseEvent {
 
 /// Active SSH connection with handle and channel
 pub struct ActiveConnection {
-    /// The russh client handle
-    pub handle: Handle<SshClientHandler>,
+    /// The russh client handle (wrapped in Arc for sharing with tunnels)
+    handle_inner: Handle<SshClientHandler>,
     /// The PTY channel
     pub channel: Channel<client::Msg>,
     /// Terminal dimensions
@@ -208,6 +208,35 @@ pub struct ActiveConnection {
 }
 
 impl ActiveConnection {
+    /// Create a new active connection
+    pub fn new(handle: Handle<SshClientHandler>, channel: Channel<client::Msg>, cols: u32, rows: u32) -> Self {
+        Self {
+            handle_inner: handle,
+            channel,
+            cols,
+            rows,
+        }
+    }
+
+    /// Get a reference to the SSH handle for opening additional channels
+    pub fn handle(&self) -> &Handle<SshClientHandler> {
+        &self.handle_inner
+    }
+
+    /// Open a direct-tcpip channel for port forwarding
+    pub async fn open_direct_tcpip(
+        &self,
+        remote_host: &str,
+        remote_port: u32,
+        originator_address: &str,
+        originator_port: u32,
+    ) -> Result<Channel<client::Msg>, String> {
+        self.handle_inner
+            .channel_open_direct_tcpip(remote_host, remote_port, originator_address, originator_port)
+            .await
+            .map_err(|e| format!("Failed to open direct-tcpip channel: {}", e))
+    }
+
     /// Send data to the SSH channel
     pub async fn send_data(&self, data: &[u8]) -> Result<(), String> {
         self.channel
@@ -232,7 +261,7 @@ impl ActiveConnection {
         }
 
         // Disconnect the session
-        self.handle
+        self.handle_inner
             .disconnect(Disconnect::ByApplication, "User disconnected", "en")
             .await
             .map_err(|e| format!("Failed to disconnect: {}", e))
@@ -357,12 +386,12 @@ pub async fn connect(
 
     info!("SSH[{}] shell started", session_id);
 
-    Ok(ConnectResult::Connected(ActiveConnection {
-        handle: session,
+    Ok(ConnectResult::Connected(ActiveConnection::new(
+        session,
         channel,
         cols,
         rows,
-    }))
+    )))
 }
 
 /// Authenticate using SSH key

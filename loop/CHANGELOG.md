@@ -4,6 +4,73 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 16 - 2026-01-09
+
+### Completed
+- **Implemented SSH Port Forwarding** - Full tunnel support for local and remote forwarding:
+  - **Local forwarding**: Listen on local port, forward to remote host:port via SSH tunnel
+  - **Remote forwarding**: Listen on remote port, forward to local host:port
+  - Multiple concurrent connections per tunnel supported
+  - Real-time status events via Tauri event system
+
+- **Built Tunnel Manager Backend** (`src-tauri/src/ssh/tunnel.rs`):
+  - `TunnelManager` singleton tracks all active tunnels
+  - `TunnelInfo` struct with ID, type, ports, status
+  - Async TCP listener for local forwarding with tokio
+  - Uses russh `direct-tcpip` channels for SSH tunneling
+  - Bidirectional data relay between local and remote
+  - Emits `tunnel-status-{id}` and `tunnel-status` events
+
+- **Added Tunnel API Commands** (`src-tauri/src/api/tunnel.rs`):
+  - `create_tunnel`: Create and start local/remote tunnel
+  - `stop_tunnel`: Stop a specific tunnel by ID
+  - `list_tunnels`: List all active tunnels for user
+  - `list_session_tunnels`: List tunnels for a specific SSH session
+  - All commands validate session ownership
+
+- **Extended SSH Client** (`src-tauri/src/ssh/client.rs`):
+  - Added `open_direct_tcpip()` method to `ActiveConnection`
+  - Enables opening direct-tcpip channels for port forwarding
+
+- **Created Frontend Types** (`src/types/tunnel.ts`):
+  - `TunnelType`: 'local' | 'remote'
+  - `Tunnel`, `CreateTunnelRequest`, `TunnelStatusEvent` interfaces
+
+- **Added Frontend API Functions** (`src/lib/api.ts`):
+  - `createTunnel`, `stopTunnel`, `listTunnels`, `listSessionTunnels`
+
+- **Built useTunnels Hook** (`src/hooks/useTunnels.ts`):
+  - Real-time tunnel status via Tauri event listener
+  - Manages tunnel CRUD with loading/error states
+
+- **Created TunnelPanel Component** (`src/components/TunnelPanel/`):
+  - Slide-in panel from right side
+  - Create tunnel form with type selector, port inputs, session dropdown
+  - Active tunnels list with type badges, port mappings, status indicators
+  - Stop button for each tunnel
+  - Tokyo Night theme with glassmorphism design
+
+- **Integrated into Dashboard**:
+  - Added "Tunnels" button to toolbar
+  - Panel slides in from right (same pattern as Identities)
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Directory download** - Download folders as ZIP
+2. **Snippets and scripts** - Command automation
+3. **Session recording** - Record terminal sessions
+
+### Tech Notes
+- Tunnels are runtime-only (not persisted to SQLite, lost on app close)
+- Each tunnel has unique UUID for tracking
+- Local forwarding: TCP listener → SSH direct-tcpip channel → remote endpoint
+- Remote forwarding: SSH channel → local TCP connection
+- Concurrent connections handled via tokio spawn per connection
+- Status colors: green=Local, blue=Remote, animated pulse for active
+
+---
+
 ## Session 15 - 2026-01-09
 
 ### Completed
@@ -817,13 +884,13 @@ shellheim/
 - [x] Folder organization
 - [x] Basic React UI shell
 
-### Phase 2: SSH Core (Target: Session 6-15)
+### Phase 2: SSH Core (Target: Session 6-16)
 - [x] SSH terminal connections via russh
 - [x] Terminal UI with xterm.js
 - [x] Multiple terminal tabs
 - [x] Session management (hibernate, resume)
 - [x] SFTP file management
-- [ ] Port forwarding
+- [x] Port forwarding (local/remote tunnels)
 
 ### Phase 3: Advanced Features (Future)
 - [ ] Snippets and scripts

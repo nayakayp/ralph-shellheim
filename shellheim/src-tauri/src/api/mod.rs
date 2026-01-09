@@ -7,3 +7,4 @@ pub mod folders;
 pub mod known_hosts;
 pub mod sftp;
 pub mod ssh;
+pub mod tunnel;

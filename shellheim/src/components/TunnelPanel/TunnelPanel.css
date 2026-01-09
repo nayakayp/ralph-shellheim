@@ -1,0 +1,511 @@
+/* Tunnel Panel - slides from right */
+.tunnel-panel {
+  width: 460px;
+  max-width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, rgba(30, 30, 46, 0.98) 0%, rgba(22, 22, 42, 0.98) 100%);
+  border-left: 1px solid rgba(122, 162, 247, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: tunnelSlideIn 0.3s ease;
+  backdrop-filter: blur(20px);
+}
+
+@keyframes tunnelSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Header */
+.tunnel-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(122, 162, 247, 0.1);
+  background: rgba(122, 162, 247, 0.03);
+}
+
+.tunnel-panel .panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tunnel-panel .panel-title svg {
+  color: #7aa2f7;
+}
+
+.tunnel-panel .panel-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.tunnel-panel .count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  background: rgba(122, 162, 247, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7aa2f7;
+}
+
+/* Create Tunnel Form Section */
+.tunnel-form-section {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(122, 162, 247, 0.1);
+}
+
+.tunnel-form-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(122, 162, 247, 0.08);
+  border: 1px solid rgba(122, 162, 247, 0.15);
+  border-radius: 10px;
+  color: #7aa2f7;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tunnel-form-toggle:hover {
+  background: rgba(122, 162, 247, 0.12);
+  border-color: rgba(122, 162, 247, 0.25);
+}
+
+.tunnel-form-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.tunnel-form-toggle.expanded svg {
+  transform: rotate(180deg);
+}
+
+/* Tunnel Form */
+.tunnel-form {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(122, 162, 247, 0.1);
+  animation: formExpand 0.25s ease;
+}
+
+@keyframes formExpand {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tunnel-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.tunnel-form .form-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.tunnel-form .form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tunnel-form .form-group input,
+.tunnel-form .form-group select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #fff;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.tunnel-form .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.tunnel-form .form-group input:focus,
+.tunnel-form .form-group select:focus {
+  border-color: #7aa2f7;
+  box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.15);
+}
+
+.tunnel-form .form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237aa2f7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+.tunnel-form .form-group select option {
+  background: #1e1e2e;
+  color: #fff;
+}
+
+.tunnel-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.tunnel-form .form-row .form-group {
+  margin-bottom: 0;
+}
+
+/* Type Selector */
+.type-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.type-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.type-btn.active.local {
+  background: rgba(115, 218, 202, 0.15);
+  border-color: rgba(115, 218, 202, 0.4);
+  color: #73daca;
+}
+
+.type-btn.active.remote {
+  background: rgba(122, 162, 247, 0.15);
+  border-color: rgba(122, 162, 247, 0.4);
+  color: #7aa2f7;
+}
+
+/* Create Button */
+.create-tunnel-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, #7aa2f7, #7dcfff);
+  border: none;
+  border-radius: 8px;
+  color: #1a1b26;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-tunnel-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(122, 162, 247, 0.35);
+}
+
+.create-tunnel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tunnels List Section */
+.tunnels-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+}
+
+.tunnels-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tunnels-section-header h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tunnels-section-header .count {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Tunnel Card */
+.tunnel-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.tunnel-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.tunnel-card:last-child {
+  margin-bottom: 0;
+}
+
+.tunnel-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.tunnel-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tunnel-type-badge.local {
+  background: rgba(115, 218, 202, 0.15);
+  color: #73daca;
+  border: 1px solid rgba(115, 218, 202, 0.3);
+}
+
+.tunnel-type-badge.remote {
+  background: rgba(122, 162, 247, 0.15);
+  color: #7aa2f7;
+  border: 1px solid rgba(122, 162, 247, 0.3);
+}
+
+.tunnel-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.active {
+  background: #9ece6a;
+  box-shadow: 0 0 8px rgba(158, 206, 106, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.status-dot.error {
+  background: #f7768e;
+  box-shadow: 0 0 8px rgba(247, 118, 142, 0.5);
+}
+
+.status-dot.stopped {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tunnel-mapping {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tunnel-mapping .port {
+  color: #bb9af7;
+}
+
+.tunnel-mapping .arrow {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.tunnel-mapping .host {
+  color: #7dcfff;
+}
+
+.tunnel-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tunnel-session {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tunnel-session strong {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.stop-tunnel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(247, 118, 142, 0.1);
+  border: 1px solid rgba(247, 118, 142, 0.25);
+  border-radius: 6px;
+  color: #f7768e;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stop-tunnel-btn:hover {
+  background: rgba(247, 118, 142, 0.2);
+  border-color: rgba(247, 118, 142, 0.4);
+}
+
+.stop-tunnel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error message in tunnel card */
+.tunnel-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(247, 118, 142, 0.1);
+  border: 1px solid rgba(247, 118, 142, 0.2);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #f7768e;
+}
+
+/* Empty State */
+.tunnels-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.tunnels-empty svg {
+  color: rgba(122, 162, 247, 0.3);
+  margin-bottom: 1rem;
+}
+
+.tunnels-empty h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tunnels-empty p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  max-width: 280px;
+}
+
+/* Loading State */
+.tunnels-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tunnels-loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(122, 162, 247, 0.2);
+  border-top-color: #7aa2f7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.tunnels-loading p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* Form Error */
+.tunnel-form-error {
+  padding: 0.75rem 1rem;
+  background: rgba(247, 118, 142, 0.1);
+  border: 1px solid rgba(247, 118, 142, 0.2);
+  border-radius: 8px;
+  color: #f7768e;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* No sessions warning */
+.no-sessions-warning {
+  padding: 0.75rem 1rem;
+  background: rgba(224, 175, 104, 0.1);
+  border: 1px solid rgba(224, 175, 104, 0.2);
+  border-radius: 8px;
+  color: #e0af68;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

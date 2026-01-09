@@ -116,6 +116,12 @@ pub fn run() {
             api::sftp::list_sftp_sessions,
             api::sftp::sftp_download_file,
             api::sftp::sftp_upload_files,
+            
+            // Tunnel commands
+            api::tunnel::create_tunnel,
+            api::tunnel::stop_tunnel,
+            api::tunnel::list_tunnels,
+            api::tunnel::list_session_tunnels,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -134,6 +140,9 @@ async fn initialize_app(app: &tauri::AppHandle) -> anyhow::Result<()> {
     
     // Initialize SSH session manager
     ssh::SessionManager::init();
+    
+    // Initialize SSH tunnel manager
+    ssh::TunnelManager::init();
     
     // Initialize SFTP session manager
     sftp::SftpSessionManager::init();

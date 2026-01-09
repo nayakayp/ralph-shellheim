@@ -23,6 +23,7 @@ import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/
 import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
 import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
 import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest } from "../types/sftp";
+import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -346,4 +347,29 @@ export async function sftpUploadFiles(request: UploadFilesRequest): Promise<stri
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<string>("sftp_upload_files", { token, request });
+}
+
+// Tunnel API
+export async function createTunnel(request: CreateTunnelRequest): Promise<Tunnel> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tunnel>("create_tunnel", { token, request });
+}
+
+export async function stopTunnel(tunnelId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("stop_tunnel", { token, tunnelId });
+}
+
+export async function listTunnels(): Promise<Tunnel[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tunnel[]>("list_tunnels", { token });
+}
+
+export async function listSessionTunnels(sessionId: string): Promise<Tunnel[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Tunnel[]>("list_session_tunnels", { token, sessionId });
 }
