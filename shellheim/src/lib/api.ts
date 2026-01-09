@@ -22,7 +22,7 @@ import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
 import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
-import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest } from "../types/sftp";
+import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest } from "../types/sftp";
 import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
 
 // Storage key for auth token
@@ -353,6 +353,13 @@ export async function sftpUploadFiles(request: UploadFilesRequest): Promise<stri
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<string>("sftp_upload_files", { token, request });
+}
+
+// Download directory as ZIP with progress (returns transfer_id)
+export async function sftpDownloadDirectory(request: DownloadDirRequest): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("sftp_download_directory", { token, request });
 }
 
 // Tunnel API

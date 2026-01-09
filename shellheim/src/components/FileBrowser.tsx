@@ -22,6 +22,7 @@ import {
   disconnectSftp,
   sftpDownloadFile,
   sftpUploadFiles,
+  sftpDownloadDirectory,
 } from '../lib/api';
 import { TransferProgress, useTransferProgress } from './TransferProgress';
 import './FileBrowser.css';
@@ -241,23 +242,37 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
     }
   };
 
-  // Download selected files
+  // Download selected files or directories
   const handleDownload = async () => {
     if (selectedItems.size === 0) return;
 
-    // Get selected file entries (not directories)
-    const filesToDownload = entries.filter(
-      e => selectedItems.has(e.path) && !e.is_dir
-    );
-
-    if (filesToDownload.length === 0) {
-      setError('Select files to download (directories not supported yet)');
-      return;
-    }
+    // Separate files and directories
+    const selectedEntries = entries.filter(e => selectedItems.has(e.path));
+    const filesToDownload = selectedEntries.filter(e => !e.is_dir);
+    const dirsToDownload = selectedEntries.filter(e => e.is_dir);
 
     try {
+      // Download directories as ZIP files
+      for (const dir of dirsToDownload) {
+        const savePath = await save({
+          defaultPath: `${dir.name}.zip`,
+          title: `Save ${dir.name} as ZIP`,
+          filters: [{ name: 'ZIP Archive', extensions: ['zip'] }],
+        });
+
+        if (!savePath) continue; // User cancelled
+
+        const transferId = await sftpDownloadDirectory({
+          session_id: session.session_id,
+          remote_path: dir.path,
+          local_path: savePath,
+        });
+
+        addTransfer(transferId, `${dir.name}.zip`, 'download');
+      }
+
+      // Download individual files
       for (const file of filesToDownload) {
-        // Ask where to save
         const savePath = await save({
           defaultPath: file.name,
           title: `Save ${file.name}`,
@@ -265,7 +280,6 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
 
         if (!savePath) continue; // User cancelled
 
-        // Start download
         const transferId = await sftpDownloadFile({
           session_id: session.session_id,
           remote_path: file.path,

@@ -73,6 +73,13 @@ export interface UploadFilesRequest {
   remote_dir: string;
 }
 
+// Request to download directory as ZIP
+export interface DownloadDirRequest {
+  session_id: string;
+  remote_path: string;
+  local_path: string; // Path for the output .zip file
+}
+
 // Transfer progress event payload
 export interface TransferProgress {
   transfer_id: string;

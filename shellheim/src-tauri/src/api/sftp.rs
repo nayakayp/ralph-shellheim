@@ -469,6 +469,14 @@ pub struct UploadFilesRequest {
     pub remote_dir: String,
 }
 
+/// Request for downloading a directory as ZIP
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadDirRequest {
+    pub session_id: String,
+    pub remote_path: String,
+    pub local_path: String, // Path for the output .zip file
+}
+
 /// Progress event emitted during file transfers
 #[derive(Debug, Clone, Serialize)]
 pub struct TransferProgress {
@@ -741,4 +749,171 @@ pub async fn sftp_upload_files(
     } else {
         Err(format!("Some uploads failed: {}", errors.join("; ")))
     }
+}
+
+/// Download a remote directory as a ZIP file with progress events
+#[command]
+pub async fn sftp_download_directory(
+    app: AppHandle,
+    token: String,
+    request: DownloadDirRequest,
+) -> Result<String, String> {
+    use async_zip::tokio::write::ZipFileWriter;
+    use async_zip::{Compression, ZipEntryBuilder};
+
+    let transfer_id = uuid::Uuid::new_v4().to_string();
+    info!(
+        "SFTP directory download [{}]: {} -> {}",
+        transfer_id, request.remote_path, request.local_path
+    );
+
+    let manager = SftpSessionManager::instance();
+
+    // Verify session ownership
+    let session = manager
+        .get_session(&request.session_id)
+        .ok_or_else(|| "Session not found".to_string())?;
+
+    let account_id = get_account_id_from_token(&token).await?;
+    if session.account_id != account_id {
+        return Err("Session not found".to_string());
+    }
+
+    // Get directory name for ZIP and progress
+    let dir_name = Path::new(&request.remote_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("download")
+        .to_string();
+
+    // Emit initial progress
+    let progress = TransferProgress {
+        transfer_id: transfer_id.clone(),
+        file_name: format!("{}.zip", dir_name),
+        bytes_transferred: 0,
+        total_bytes: 0,
+        percent: 0.0,
+        status: "scanning".to_string(),
+        error: None,
+    };
+    let _ = app.emit("sftp_transfer_progress", &progress);
+
+    // Get recursive file listing
+    let file_list = {
+        let conn_guard = session.connection.lock().await;
+        let conn = conn_guard
+            .as_ref()
+            .ok_or_else(|| "Connection not active".to_string())?;
+        conn.list_dir_recursive(&request.remote_path).await?
+    };
+
+    // Calculate total bytes to transfer
+    let total_bytes: u64 = file_list.iter().map(|(_, size, _)| size).sum();
+    let total_files = file_list.iter().filter(|(_, _, is_dir)| !*is_dir).count();
+
+    info!(
+        "SFTP dir download [{}]: {} files, {} total bytes",
+        transfer_id, total_files, total_bytes
+    );
+
+    // Create local ZIP file
+    let local_path = Path::new(&request.local_path);
+    if let Some(parent) = local_path.parent() {
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(|e| format!("Failed to create local directory: {}", e))?;
+    }
+
+    let file = tokio::fs::File::create(&request.local_path)
+        .await
+        .map_err(|e| format!("Failed to create ZIP file: {}", e))?;
+
+    let mut zip_writer = ZipFileWriter::with_tokio(file);
+    let mut bytes_transferred: u64 = 0;
+
+    // Process each file/directory
+    for (relative_path, size, is_dir) in &file_list {
+        let zip_path = format!("{}/{}", dir_name, relative_path);
+
+        if *is_dir {
+            // Add directory entry to ZIP (trailing slash indicates directory)
+            let entry = ZipEntryBuilder::new(
+                format!("{}/", zip_path).into(),
+                Compression::Stored,
+            );
+            zip_writer
+                .write_entry_whole(entry, &[])
+                .await
+                .map_err(|e| format!("Failed to write directory entry: {}", e))?;
+        } else {
+            // Read file from remote
+            let remote_file_path = format!("{}/{}", request.remote_path, relative_path);
+            
+            let file_data = {
+                let conn_guard = session.connection.lock().await;
+                let conn = conn_guard
+                    .as_ref()
+                    .ok_or_else(|| "Connection not active".to_string())?;
+                conn.read_file(&remote_file_path).await?
+            };
+
+            // Add file to ZIP
+            let entry = ZipEntryBuilder::new(zip_path.into(), Compression::Deflate);
+            zip_writer
+                .write_entry_whole(entry, &file_data)
+                .await
+                .map_err(|e| format!("Failed to write file to ZIP: {}", e))?;
+
+            bytes_transferred += size;
+
+            // Emit progress
+            let percent = if total_bytes > 0 {
+                (bytes_transferred as f64 / total_bytes as f64 * 100.0) as f32
+            } else {
+                100.0
+            };
+
+            let progress = TransferProgress {
+                transfer_id: transfer_id.clone(),
+                file_name: format!("{}.zip", dir_name),
+                bytes_transferred,
+                total_bytes,
+                percent,
+                status: "transferring".to_string(),
+                error: None,
+            };
+            let _ = app.emit("sftp_transfer_progress", &progress);
+        }
+    }
+
+    // Finalize ZIP
+    zip_writer
+        .close()
+        .await
+        .map_err(|e| format!("Failed to finalize ZIP: {}", e))?;
+
+    // Get final ZIP size
+    let zip_size = tokio::fs::metadata(&request.local_path)
+        .await
+        .map(|m| m.len())
+        .unwrap_or(0);
+
+    // Emit completion
+    let progress = TransferProgress {
+        transfer_id: transfer_id.clone(),
+        file_name: format!("{}.zip", dir_name),
+        bytes_transferred: total_bytes,
+        total_bytes,
+        percent: 100.0,
+        status: "completed".to_string(),
+        error: None,
+    };
+    let _ = app.emit("sftp_transfer_progress", &progress);
+
+    info!(
+        "SFTP dir download complete [{}]: {} bytes in ZIP",
+        transfer_id, zip_size
+    );
+
+    Ok(transfer_id)
 }

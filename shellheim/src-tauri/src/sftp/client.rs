@@ -242,6 +242,47 @@ impl SftpConnection {
             .map_err(|e| format!("Failed to rename '{}' to '{}': {}", old_path, new_path, e))
     }
 
+    /// Recursively list all files in a directory
+    /// Returns a flat list of (relative_path, size, is_dir) tuples
+    pub async fn list_dir_recursive(
+        &self,
+        base_path: &str,
+    ) -> Result<Vec<(String, u64, bool)>, String> {
+        let mut result = Vec::new();
+        let mut stack = vec![("".to_string(), base_path.to_string())];
+
+        while let Some((relative_base, current_path)) = stack.pop() {
+            let entries = self.list_dir(&current_path).await?;
+
+            for entry in entries {
+                // Skip . and .. entries
+                if entry.name == "." || entry.name == ".." {
+                    continue;
+                }
+
+                let relative_path = if relative_base.is_empty() {
+                    entry.name.clone()
+                } else {
+                    format!("{}/{}", relative_base, entry.name)
+                };
+
+                if entry.is_dir {
+                    // Add directory to result and queue for traversal
+                    result.push((relative_path.clone(), 0, true));
+                    stack.push((relative_path, entry.path.clone()));
+                } else {
+                    // Add file to result
+                    result.push((relative_path, entry.size, false));
+                }
+            }
+        }
+
+        // Sort by path for consistent ordering
+        result.sort_by(|a, b| a.0.cmp(&b.0));
+
+        Ok(result)
+    }
+
     /// Get the current working directory (home directory)
     pub async fn get_home_dir(&self) -> Result<String, String> {
         self.sftp

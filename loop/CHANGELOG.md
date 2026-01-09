@@ -4,6 +4,54 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 17 - 2026-01-09
+
+### Completed
+- **Implemented Directory Download as ZIP** - Full folder download support:
+  - Select any folder in SFTP file browser and download as .zip
+  - Recursive directory traversal to collect all files
+  - ZIP archive created using async-zip with Deflate compression
+  - Real-time progress events during download
+  - Native save dialog with .zip filter
+
+- **Added Recursive Directory Listing** (`src-tauri/src/sftp/client.rs`):
+  - `list_dir_recursive()` method traverses entire directory tree
+  - Returns flat list of (relative_path, size, is_dir) tuples
+  - Iterative traversal using stack (avoids stack overflow on deep trees)
+  - Skips `.` and `..` entries
+
+- **Built Directory Download API** (`src-tauri/src/api/sftp.rs`):
+  - `sftp_download_directory` command creates ZIP from remote folder
+  - `DownloadDirRequest` struct with session_id, remote_path, local_path
+  - Emits `sftp_transfer_progress` events with "scanning" and "transferring" status
+  - Uses async_zip crate for async ZIP file creation
+  - Directories added with trailing slash, files with Deflate compression
+
+- **Updated Frontend**:
+  - `DownloadDirRequest` type in `src/types/sftp.ts`
+  - `sftpDownloadDirectory()` API function in `src/lib/api.ts`
+  - Updated `FileBrowser.tsx` to handle folder downloads
+  - Download button now works for both files and directories
+  - Folders prompt for .zip save location
+
+- **Added async_zip dependency** (`Cargo.toml`):
+  - Version 0.0.17 with tokio and deflate features
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Snippets and scripts** - Command automation
+2. **Session recording** - Record terminal sessions
+3. **Search files** - Search within directory tree
+
+### Tech Notes
+- ZIP creation is synchronous per file (read remote → add to ZIP)
+- Progress tracks bytes of source files transferred, not ZIP output size
+- Empty directories are included in ZIP with trailing slash convention
+- Large files read entirely into memory before adding to ZIP (future: streaming)
+
+---
+
 ## Session 16 - 2026-01-09
 
 ### Completed

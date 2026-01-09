@@ -116,6 +116,7 @@ pub fn run() {
             api::sftp::list_sftp_sessions,
             api::sftp::sftp_download_file,
             api::sftp::sftp_upload_files,
+            api::sftp::sftp_download_directory,
             
             // Tunnel commands
             api::tunnel::create_tunnel,
