@@ -4,6 +4,64 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 40 - 2026-01-10
+
+### Completed
+- **Implemented Scripts System** - Automated command execution on servers via SSH:
+  - Full CRUD for script management (create, edit, delete, search)
+  - Execute scripts on any SSH server with real-time output
+  - Configurable interpreter (bash, sh, zsh, fish, python3, perl, ruby, powershell)
+  - Target OS filtering (any, linux, ubuntu, debian, centos, fedora, alpine, macos, windows, proxmox)
+  - Optional sudo execution
+  - Configurable timeout (1-3600 seconds)
+  - Category organization with tabs
+
+- **Created Database Migration 19** (`migrations_list.rs`):
+  - `scripts` table with all script properties
+  - Indexes for account and category lookups
+
+- **Built Scripts Backend API** (`src-tauri/src/api/scripts.rs`):
+  - `list_scripts`, `get_script`, `create_script`, `update_script`, `delete_script`
+  - `list_scripts_by_category`, `list_script_categories`, `search_scripts`
+  - `execute_script`: Run script on server via SSH with output capture
+
+- **Created Script Models** (`src-tauri/src/models/script.rs`):
+  - `Script`: Database model with interpreter, target_os, run_as_sudo, timeout_seconds
+  - `CreateScriptRequest`, `UpdateScriptRequest` for CRUD
+  - `ExecuteScriptRequest`, `ScriptExecutionResult` for execution
+
+- **Built ScriptsPanel Component** (`src/components/ScriptsPanel.tsx`):
+  - Side panel with script list and category tabs
+  - Search functionality
+  - Script editor modal with all configuration options
+  - Execute modal: Select server + identity, run script, view output
+  - Tokyo Night themed glassmorphism design
+
+- **Integrated into Dashboard**:
+  - Added 📝 **Scripts** button to terminal toolbar
+  - Panel accessible from SSH terminal view
+
+- **Added Frontend Types and API** (`src/types/script.ts`, `src/lib/api.ts`):
+  - All CRUD operations + execute API
+  - Type definitions for all script-related data
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Technical Notes
+- Scripts are wrapped in interpreter: `{interpreter} -c '{content}'`
+- Sudo prefix added before interpreter if run_as_sudo enabled
+- Uses `get_decrypted_identity()` for secure credential handling
+- Execution result includes: success boolean, exit_code, output, duration_ms
+- Different from snippets: Scripts execute with output capture; snippets paste into terminal
+
+### Next
+1. **Session sharing** - Collaborative terminal sessions
+2. **OIDC/LDAP authentication** - Enterprise SSO
+3. **Jump host/bastion support** - Chain SSH connections
+4. **Session recording playback** - Review terminal recordings
+
+---
+
 ## Session 39 - 2026-01-10
 
 ### Completed

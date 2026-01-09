@@ -25,6 +25,7 @@ import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse
 import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest, SearchFilesRequest, SearchResult } from "../types/sftp";
 import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
 import type { Snippet, CreateSnippetRequest, UpdateSnippetRequest } from "../types/snippet";
+import type { Script, CreateScriptRequest, UpdateScriptRequest, ExecuteScriptRequest, ScriptExecutionResult } from "../types/script";
 import type { AiSettings, UpdateAiSettingsRequest, GenerateCommandRequest, GenerateCommandResponse, TestConnectionResult } from "../types/ai";
 import type { Recording, StartRecordingRequest, StartRecordingResponse, StopRecordingRequest, StopRecordingResponse, UpdateRecordingRequest } from "../types/recording";
 
@@ -958,4 +959,60 @@ export async function checkDockerAvailable(entryId: string): Promise<boolean> {
 // Wake-on-LAN API
 export async function sendWol(macAddress: string, broadcastAddress?: string): Promise<void> {
   return invoke<void>("send_wol", { macAddress, broadcastAddress });
+}
+
+// ============ Scripts API ============
+
+export async function listScripts(): Promise<Script[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Script[]>("list_scripts", { token });
+}
+
+export async function getScript(scriptId: string): Promise<Script> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Script>("get_script", { token, scriptId });
+}
+
+export async function createScript(request: CreateScriptRequest): Promise<Script> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Script>("create_script", { token, request });
+}
+
+export async function updateScript(scriptId: string, request: UpdateScriptRequest): Promise<Script> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Script>("update_script", { token, scriptId, request });
+}
+
+export async function deleteScript(scriptId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_script", { token, scriptId });
+}
+
+export async function listScriptsByCategory(category: string | null): Promise<Script[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Script[]>("list_scripts_by_category", { token, category });
+}
+
+export async function listScriptCategories(): Promise<string[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string[]>("list_script_categories", { token });
+}
+
+export async function searchScripts(query: string): Promise<Script[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Script[]>("search_scripts", { token, query });
+}
+
+export async function executeScript(request: ExecuteScriptRequest): Promise<ScriptExecutionResult> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ScriptExecutionResult>("execute_script", { token, request });
 }

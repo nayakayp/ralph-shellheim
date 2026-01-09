@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard, Link, Brain } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard, Link, Brain, Code } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -20,6 +20,7 @@ import { HostKeyDialog } from "./HostKeyDialog";
 import { KnownHostsPanel } from "./KnownHostsPanel";
 import { TunnelPanel } from "./TunnelPanel";
 import { SnippetsPanel } from "./SnippetsPanel";
+import { ScriptsPanel } from "./ScriptsPanel";
 import { RecordingsPanel } from "./RecordingsPanel";
 import { AuditPanel } from "./AuditPanel";
 import { TagsPanel } from "./TagsPanel";
@@ -56,6 +57,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showKnownHosts, setShowKnownHosts] = useState(false);
   const [showTunnels, setShowTunnels] = useState(false);
   const [showSnippets, setShowSnippets] = useState(false);
+  const [showScripts, setShowScripts] = useState(false);
   const [showRecordings, setShowRecordings] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [showTags, setShowTags] = useState(false);
@@ -844,6 +846,14 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               </button>
               <button 
                 className="toolbar-btn"
+                onClick={() => setShowScripts(true)}
+                title="Automation Scripts"
+              >
+                <Code size={16} />
+                Scripts
+              </button>
+              <button 
+                className="toolbar-btn"
                 onClick={() => setShowTunnels(true)}
                 title="SSH Tunnels"
               >
@@ -994,6 +1004,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           isOpen={showSnippets}
           onClose={() => setShowSnippets(false)}
           onExecute={handleExecuteSnippet}
+        />
+
+        <ScriptsPanel
+          isOpen={showScripts}
+          onClose={() => setShowScripts(false)}
         />
 
         <RecordingsPanel
@@ -1197,6 +1212,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showSnippets}
         onClose={() => setShowSnippets(false)}
         onExecute={handleExecuteSnippet}
+      />
+
+      <ScriptsPanel
+        isOpen={showScripts}
+        onClose={() => setShowScripts(false)}
       />
 
       <RecordingsPanel

@@ -384,5 +384,31 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 19,
+            description: "create_scripts_table",
+            sql: r#"
+                -- Scripts for automated command execution
+                CREATE TABLE IF NOT EXISTS scripts (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    description TEXT,
+                    category TEXT,
+                    target_os TEXT NOT NULL DEFAULT 'any',
+                    interpreter TEXT NOT NULL DEFAULT 'bash',
+                    run_as_sudo INTEGER NOT NULL DEFAULT 0,
+                    timeout_seconds INTEGER NOT NULL DEFAULT 60,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_scripts_account ON scripts(account_id);
+                CREATE INDEX IF NOT EXISTS idx_scripts_category ON scripts(account_id, category);
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

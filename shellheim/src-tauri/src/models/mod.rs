@@ -16,6 +16,7 @@ mod audit_log;
 mod monitoring;
 mod backup;
 mod integration;
+mod script;
 
 pub use account::*;
 pub use ai::*;
@@ -33,3 +34,4 @@ pub use audit_log::*;
 pub use monitoring::*;
 pub use backup::*;
 pub use integration::*;
+pub use script::*;

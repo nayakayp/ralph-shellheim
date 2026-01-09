@@ -233,6 +233,17 @@ pub fn run() {
             
             // Wake-on-LAN commands
             api::wol::send_wol,
+            
+            // Script commands
+            api::scripts::list_scripts,
+            api::scripts::get_script,
+            api::scripts::create_script,
+            api::scripts::update_script,
+            api::scripts::delete_script,
+            api::scripts::list_scripts_by_category,
+            api::scripts::list_script_categories,
+            api::scripts::search_scripts,
+            api::scripts::execute_script,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

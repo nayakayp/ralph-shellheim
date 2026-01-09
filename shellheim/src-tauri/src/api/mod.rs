@@ -13,6 +13,7 @@ pub mod keymaps;
 pub mod known_hosts;
 pub mod monitoring;
 pub mod recordings;
+pub mod scripts;
 pub mod sftp;
 pub mod snippets;
 pub mod ssh;
