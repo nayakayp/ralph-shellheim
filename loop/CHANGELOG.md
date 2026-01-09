@@ -4,6 +4,66 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 18 - 2026-01-09
+
+### Completed
+- **Implemented Command Snippets** - Full CRUD for reusable SSH commands:
+  - Save frequently used commands as named snippets
+  - Organize snippets by category
+  - Search snippets by name, content, or description
+  - Execute snippets directly in active SSH terminal
+  - Copy snippets to clipboard
+
+- **Built Snippets Backend** (`src-tauri/src/api/snippets.rs`):
+  - `list_snippets`: Fetch all snippets for authenticated user
+  - `get_snippet`: Get single snippet by ID
+  - `create_snippet`: Create new snippet with name, content, description, category
+  - `update_snippet`: Partial updates
+  - `delete_snippet`: Remove snippet
+  - `list_snippets_by_category`: Filter by category
+  - `list_snippet_categories`: Get unique categories
+  - `search_snippets`: Search by name/content/description
+
+- **Created Frontend Types** (`src/types/snippet.ts`):
+  - `Snippet`, `CreateSnippetRequest`, `UpdateSnippetRequest` interfaces
+
+- **Added API Functions** (`src/lib/api.ts`):
+  - `listSnippets`, `getSnippet`, `createSnippet`, `updateSnippet`, `deleteSnippet`
+  - `listSnippetsByCategory`, `listSnippetCategories`, `searchSnippets`
+
+- **Built SnippetsPanel Component** (`src/components/SnippetsPanel.tsx`):
+  - Slide-in panel from right side
+  - Search bar with debounced filtering
+  - Category dropdown filter
+  - Snippet cards with name, category badge, description, and command preview
+  - Actions: Copy to clipboard, Execute in terminal, Edit, Delete
+  - Empty state and loading indicators
+
+- **Built SnippetModal Component** (`src/components/SnippetModal.tsx`):
+  - Create/Edit form with name, command (code textarea), description, category
+  - Support for creating new categories inline
+  - Form validation
+
+- **Integrated with Dashboard**:
+  - Added "Snippets" button to toolbar (Terminal icon)
+  - Panel accessible from both server list and terminal modes
+  - Execute handler sends snippet content to active SSH session via `sendSshData`
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Session recording** - Record terminal sessions
+2. **Search files** - Search within SFTP directory tree
+3. **Monitoring service** - Server health monitoring
+
+### Tech Notes
+- Snippets stored in SQLite with account_id ownership
+- Categories are user-defined strings, no predefined list
+- Execute appends newline to snippet content before sending to terminal
+- Search uses SQL LIKE with % wildcards for fuzzy matching
+
+---
+
 ## Session 17 - 2026-01-09
 
 ### Completed

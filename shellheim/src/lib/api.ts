@@ -24,6 +24,7 @@ import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
 import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
 import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest } from "../types/sftp";
 import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
+import type { Snippet, CreateSnippetRequest, UpdateSnippetRequest } from "../types/snippet";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -385,4 +386,53 @@ export async function listSessionTunnels(sessionId: string): Promise<Tunnel[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<Tunnel[]>("list_session_tunnels", { token, sessionId });
+}
+
+// Snippet API
+export async function listSnippets(): Promise<Snippet[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Snippet[]>("list_snippets", { token });
+}
+
+export async function getSnippet(snippetId: string): Promise<Snippet> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Snippet>("get_snippet", { token, snippetId });
+}
+
+export async function createSnippet(request: CreateSnippetRequest): Promise<Snippet> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Snippet>("create_snippet", { token, request });
+}
+
+export async function updateSnippet(snippetId: string, request: UpdateSnippetRequest): Promise<Snippet> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Snippet>("update_snippet", { token, snippetId, request });
+}
+
+export async function deleteSnippet(snippetId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_snippet", { token, snippetId });
+}
+
+export async function listSnippetsByCategory(category?: string): Promise<Snippet[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Snippet[]>("list_snippets_by_category", { token, category });
+}
+
+export async function listSnippetCategories(): Promise<string[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string[]>("list_snippet_categories", { token });
+}
+
+export async function searchSnippets(query: string): Promise<Snippet[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Snippet[]>("search_snippets", { token, query });
 }

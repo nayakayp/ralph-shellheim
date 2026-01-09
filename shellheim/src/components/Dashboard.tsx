@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -7,7 +7,8 @@ import type { SftpSessionInfo } from "../types/sftp";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData } from "../lib/api";
+import type { Snippet } from "../types/snippet";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
@@ -16,6 +17,7 @@ import { FolderTree } from "./FolderTree";
 import { HostKeyDialog } from "./HostKeyDialog";
 import { KnownHostsPanel } from "./KnownHostsPanel";
 import { TunnelPanel } from "./TunnelPanel";
+import { SnippetsPanel } from "./SnippetsPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -37,6 +39,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showIdentities, setShowIdentities] = useState(false);
   const [showKnownHosts, setShowKnownHosts] = useState(false);
   const [showTunnels, setShowTunnels] = useState(false);
+  const [showSnippets, setShowSnippets] = useState(false);
   const [error, setError] = useState("");
   
   // Multiple SSH sessions state
@@ -309,6 +312,25 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     setEntries(updatedEntries);
   };
 
+  const handleExecuteSnippet = async (snippet: Snippet) => {
+    // Execute snippet in active SSH session
+    if (!activeSessionId || activeTabType !== "ssh") {
+      alert("No active SSH session. Connect to a server first.");
+      return;
+    }
+    
+    try {
+      // Send snippet content to terminal, followed by Enter
+      await sendSshData({
+        session_id: activeSessionId,
+        data: snippet.content + "\n",
+      });
+    } catch (err) {
+      console.error("Failed to execute snippet:", err);
+      alert("Failed to execute snippet: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  };
+
   const handleSelectTab = (sessionId: string, tabType: "ssh" | "sftp") => {
     setActiveSessionId(sessionId);
     setActiveTabType(tabType);
@@ -544,6 +566,12 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           sessions={sessions}
         />
 
+        <SnippetsPanel
+          isOpen={showSnippets}
+          onClose={() => setShowSnippets(false)}
+          onExecute={handleExecuteSnippet}
+        />
+
         {hostKeyVerification && (
           <HostKeyDialog
             host={hostKeyVerification.host}
@@ -601,6 +629,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               <span className="server-count">{filteredEntries.length}</span>
             </div>
             <div className="toolbar-right">
+              <button className="toolbar-btn" onClick={() => setShowSnippets(true)} title="Manage Command Snippets">
+                <TerminalIcon size={18} />
+                Snippets
+              </button>
               <button className="toolbar-btn" onClick={() => setShowTunnels(true)} title="Manage SSH Tunnels">
                 <Stack size={18} />
                 Tunnels
@@ -696,6 +728,12 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showTunnels}
         onClose={() => setShowTunnels(false)}
         sessions={sessions}
+      />
+
+      <SnippetsPanel
+        isOpen={showSnippets}
+        onClose={() => setShowSnippets(false)}
+        onExecute={handleExecuteSnippet}
       />
 
       {hostKeyVerification && (

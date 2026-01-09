@@ -1,0 +1,217 @@
+/* =============================================================================
+   SNIPPETS PANEL
+   Slide-out panel for managing command snippets
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   PANEL
+   --------------------------------------------------------------------------- */
+.snippets-panel {
+  width: 480px;
+  max-width: 100%;
+  height: 100%;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 200ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   SEARCH & ACTIONS
+   --------------------------------------------------------------------------- */
+.snippets-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.snippets-search svg {
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.snippets-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg-primary);
+  font-size: var(--text-sm);
+}
+
+.snippets-search input::placeholder {
+  color: var(--fg-faint);
+}
+
+.snippets-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.category-filter {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-primary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  outline: none;
+}
+
+.category-filter:focus {
+  border-color: var(--accent);
+}
+
+.add-snippet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.add-snippet-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------------------------------------------------------------------------
+   SNIPPETS LIST
+   --------------------------------------------------------------------------- */
+.snippets-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ---------------------------------------------------------------------------
+   SNIPPET CARD
+   --------------------------------------------------------------------------- */
+.snippet-card {
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all var(--transition-fast);
+}
+
+.snippet-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.snippet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.snippet-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.snippet-name {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+  color: var(--fg-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snippet-category {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.snippet-category svg {
+  color: var(--accent);
+}
+
+.snippet-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.snippet-action-btn {
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.snippet-action-btn:hover {
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+}
+
+.snippet-action-btn.copy:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.snippet-action-btn.execute:hover {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.snippet-action-btn.delete:hover {
+  border-color: var(--error-fg);
+  color: var(--error-fg);
+}
+
+.snippet-description {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.snippet-content {
+  margin: 0;
+  padding: var(--space-3);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--terminal-green);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

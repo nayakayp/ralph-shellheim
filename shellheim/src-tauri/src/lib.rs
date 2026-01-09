@@ -123,6 +123,16 @@ pub fn run() {
             api::tunnel::stop_tunnel,
             api::tunnel::list_tunnels,
             api::tunnel::list_session_tunnels,
+            
+            // Snippet commands
+            api::snippets::list_snippets,
+            api::snippets::get_snippet,
+            api::snippets::create_snippet,
+            api::snippets::update_snippet,
+            api::snippets::delete_snippet,
+            api::snippets::list_snippets_by_category,
+            api::snippets::list_snippet_categories,
+            api::snippets::search_snippets,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
