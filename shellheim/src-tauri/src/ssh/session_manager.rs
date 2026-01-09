@@ -11,6 +11,9 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::info;
 
+/// Maximum terminal buffer size (200KB, matching Nexterm)
+const MAX_BUFFER_SIZE: usize = 200 * 1024;
+
 /// Active SSH session with connection
 pub struct SshSession {
     pub id: String,
@@ -19,8 +22,13 @@ pub struct SshSession {
     pub host: String,
     pub port: u16,
     pub username: String,
+    pub identity_id: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub is_hibernated: bool,
+    pub terminal_cols: u32,
+    pub terminal_rows: u32,
+    /// Terminal output buffer for hibernation restore
+    terminal_buffer: RwLock<String>,
     /// The active SSH connection (wrapped in async mutex for mutable access)
     pub connection: Mutex<Option<ActiveConnection>>,
 }
@@ -29,6 +37,27 @@ impl SshSession {
     /// Check if the session has an active connection
     pub async fn is_connected(&self) -> bool {
         self.connection.lock().await.is_some()
+    }
+
+    /// Append data to the terminal buffer
+    pub fn append_to_buffer(&self, data: &str) {
+        let mut buffer = self.terminal_buffer.write();
+        buffer.push_str(data);
+        // Trim from the start if buffer exceeds max size
+        if buffer.len() > MAX_BUFFER_SIZE {
+            let excess = buffer.len() - MAX_BUFFER_SIZE;
+            buffer.drain(..excess);
+        }
+    }
+
+    /// Get the terminal buffer content
+    pub fn get_buffer(&self) -> String {
+        self.terminal_buffer.read().clone()
+    }
+
+    /// Clear the terminal buffer
+    pub fn clear_buffer(&self) {
+        self.terminal_buffer.write().clear();
     }
 }
 
@@ -68,6 +97,9 @@ impl SessionManager {
         host: String,
         port: u16,
         username: String,
+        identity_id: Option<String>,
+        terminal_cols: u32,
+        terminal_rows: u32,
         connection: ActiveConnection,
     ) -> Arc<SshSession> {
         let session_id = uuid::Uuid::new_v4().to_string();
@@ -79,8 +111,12 @@ impl SessionManager {
             host,
             port,
             username,
+            identity_id,
             created_at: chrono::Utc::now(),
             is_hibernated: false,
+            terminal_cols,
+            terminal_rows,
+            terminal_buffer: RwLock::new(String::new()),
             connection: Mutex::new(Some(connection)),
         });
 

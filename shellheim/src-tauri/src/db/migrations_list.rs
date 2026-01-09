@@ -204,5 +204,31 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 12,
+            description: "create_hibernated_sessions_table",
+            sql: r#"
+                CREATE TABLE IF NOT EXISTS hibernated_sessions (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL,
+                    entry_id TEXT NOT NULL,
+                    host TEXT NOT NULL,
+                    port INTEGER NOT NULL DEFAULT 22,
+                    username TEXT NOT NULL,
+                    identity_id TEXT,
+                    terminal_buffer TEXT,
+                    terminal_cols INTEGER DEFAULT 80,
+                    terminal_rows INTEGER DEFAULT 24,
+                    hibernated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+                    FOREIGN KEY (entry_id) REFERENCES entries(id) ON DELETE CASCADE,
+                    FOREIGN KEY (identity_id) REFERENCES identities(id) ON DELETE SET NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_hibernated_sessions_account ON hibernated_sessions(account_id);
+                CREATE INDEX IF NOT EXISTS idx_hibernated_sessions_entry ON hibernated_sessions(entry_id);
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

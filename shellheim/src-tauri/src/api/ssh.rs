@@ -3,8 +3,14 @@
 use crate::api::identities::get_decrypted_identity;
 use crate::api::known_hosts::lookup_known_host;
 use crate::db;
-use crate::models::{EntryRow, HostKeyStatus};
-use crate::ssh::{self, ConnectRequest, ConnectResult, ResizeRequest, SendDataRequest, SessionManager, SshSessionInfo};
+use crate::models::{
+    EntryRow, HibernateSessionRequest, HibernatedSession, HibernatedSessionRow, HostKeyStatus,
+    ResumeSessionRequest, ResumeSessionResponse,
+};
+use crate::ssh::{
+    self, ConnectRequest, ConnectResult, ResizeRequest, SendDataRequest, SessionManager,
+    SshSessionInfo,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use tauri::{command, AppHandle};
@@ -140,6 +146,9 @@ pub async fn connect_ssh(
                 host.clone(),
                 port,
                 username,
+                Some(identity_id),
+                request.cols,
+                request.rows,
                 connection,
             );
 
@@ -275,4 +284,219 @@ pub async fn list_ssh_sessions(token: String) -> Result<Vec<SshSessionInfo>, Str
             connected_at: s.created_at.to_rfc3339(),
         })
         .collect())
+}
+
+/// Hibernate an active SSH session (close connection but save state for resume)
+#[command]
+pub async fn hibernate_session(
+    token: String,
+    request: HibernateSessionRequest,
+) -> Result<HibernatedSession, String> {
+    info!("Hibernate session request: {}", request.session_id);
+
+    let account_id = get_account_id_from_token(&token).await?;
+    let manager = SessionManager::instance();
+
+    // 1. Get the session and verify ownership
+    let session = manager
+        .get_session(&request.session_id)
+        .ok_or_else(|| "Session not found".to_string())?;
+
+    if session.account_id != account_id {
+        return Err("Session not found".to_string());
+    }
+
+    // 2. Capture session state before closing
+    // Use frontend-provided buffer if available, otherwise use backend buffer
+    let terminal_buffer = request.terminal_buffer.unwrap_or_else(|| session.get_buffer());
+    let hibernated_at = chrono::Utc::now().to_rfc3339();
+    let created_at = session.created_at.to_rfc3339();
+
+    // 3. Save to database
+    let pool = db::pool();
+    let id = uuid::Uuid::new_v4().to_string();
+
+    sqlx::query(
+        r#"
+        INSERT INTO hibernated_sessions 
+        (id, account_id, entry_id, host, port, username, identity_id, terminal_buffer, terminal_cols, terminal_rows, hibernated_at, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        "#,
+    )
+    .bind(&id)
+    .bind(&session.account_id)
+    .bind(&session.entry_id)
+    .bind(&session.host)
+    .bind(session.port as i32)
+    .bind(&session.username)
+    .bind(&session.identity_id)
+    .bind(&terminal_buffer)
+    .bind(session.terminal_cols as i32)
+    .bind(session.terminal_rows as i32)
+    .bind(&hibernated_at)
+    .bind(&created_at)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Failed to save hibernated session: {}", e))?;
+
+    // 4. Close the active session
+    manager.remove_session(&request.session_id).await;
+
+    info!("Session {} hibernated as {}", request.session_id, id);
+
+    Ok(HibernatedSession {
+        id,
+        entry_id: session.entry_id.clone(),
+        host: session.host.clone(),
+        port: session.port,
+        username: session.username.clone(),
+        terminal_cols: session.terminal_cols,
+        terminal_rows: session.terminal_rows,
+        hibernated_at,
+        created_at,
+    })
+}
+
+/// List hibernated sessions for current user
+#[command]
+pub async fn list_hibernated_sessions(token: String) -> Result<Vec<HibernatedSession>, String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    let pool = db::pool();
+
+    let rows: Vec<HibernatedSessionRow> = sqlx::query_as(
+        "SELECT * FROM hibernated_sessions WHERE account_id = ? ORDER BY hibernated_at DESC",
+    )
+    .bind(&account_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
+
+    Ok(rows.into_iter().map(|r| r.into()).collect())
+}
+
+/// Resume a hibernated session (reconnect and restore terminal state)
+#[command]
+pub async fn resume_session(
+    app: AppHandle,
+    token: String,
+    request: ResumeSessionRequest,
+) -> Result<ResumeSessionResponse, String> {
+    info!(
+        "Resume session request: {}",
+        request.hibernated_session_id
+    );
+
+    let account_id = get_account_id_from_token(&token).await?;
+    let pool = db::pool();
+
+    // 1. Get hibernated session
+    let hibernated: HibernatedSessionRow = sqlx::query_as(
+        "SELECT * FROM hibernated_sessions WHERE id = ? AND account_id = ?",
+    )
+    .bind(&request.hibernated_session_id)
+    .bind(&account_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?
+    .ok_or_else(|| "Hibernated session not found".to_string())?;
+
+    // 2. Get identity credentials
+    let identity_id = hibernated
+        .identity_id
+        .as_ref()
+        .ok_or_else(|| "No identity configured for this session".to_string())?;
+
+    let identity = get_decrypted_identity(&token, identity_id).await?;
+
+    // 3. Check known hosts
+    let known_host =
+        lookup_known_host(&account_id, &hibernated.host, hibernated.port as u16).await?;
+    let expected_fingerprint = known_host.map(|(fp, _)| fp);
+
+    // 4. Reconnect via russh
+    let result = ssh::connect(
+        uuid::Uuid::new_v4().to_string(),
+        &hibernated.host,
+        hibernated.port as u16,
+        &hibernated.username,
+        identity.password.as_deref(),
+        identity.ssh_key.as_deref(),
+        identity.passphrase.as_deref(),
+        request.cols,
+        request.rows,
+        expected_fingerprint,
+        app,
+    )
+    .await?;
+
+    match result {
+        ConnectResult::Connected(connection) => {
+            // 5. Create new session
+            let manager = SessionManager::instance();
+            let session = manager.create_session(
+                hibernated.entry_id.clone(),
+                account_id,
+                hibernated.host.clone(),
+                hibernated.port as u16,
+                hibernated.username.clone(),
+                hibernated.identity_id.clone(),
+                request.cols,
+                request.rows,
+                connection,
+            );
+
+            // 6. Delete hibernated session from database
+            sqlx::query("DELETE FROM hibernated_sessions WHERE id = ?")
+                .bind(&request.hibernated_session_id)
+                .execute(pool)
+                .await
+                .map_err(|e| format!("Failed to delete hibernated session: {}", e))?;
+
+            // 7. Update last_connected_at
+            let now = chrono::Utc::now().to_rfc3339();
+            let _ = sqlx::query("UPDATE entries SET last_connected_at = ? WHERE id = ?")
+                .bind(&now)
+                .bind(&hibernated.entry_id)
+                .execute(pool)
+                .await;
+
+            info!("Session {} resumed as {}", request.hibernated_session_id, session.id);
+
+            Ok(ResumeSessionResponse {
+                session_id: session.id.clone(),
+                entry_id: hibernated.entry_id,
+                host: hibernated.host,
+                port: hibernated.port as u16,
+                connected_at: session.created_at.to_rfc3339(),
+                terminal_buffer: hibernated.terminal_buffer,
+            })
+        }
+        ConnectResult::HostKeyVerificationNeeded(_) => {
+            Err("Host key changed since session was hibernated. Please reconnect manually.".to_string())
+        }
+    }
+}
+
+/// Delete a hibernated session without resuming
+#[command]
+pub async fn delete_hibernated_session(
+    token: String,
+    hibernated_session_id: String,
+) -> Result<(), String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    let pool = db::pool();
+
+    let result = sqlx::query("DELETE FROM hibernated_sessions WHERE id = ? AND account_id = ?")
+        .bind(&hibernated_session_id)
+        .bind(&account_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Database error: {}", e))?;
+
+    if result.rows_affected() == 0 {
+        return Err("Hibernated session not found".to_string());
+    }
+
+    info!("Deleted hibernated session: {}", hibernated_session_id);
+    Ok(())
 }

@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
-import type { SshSessionInfo } from "../types/ssh";
+import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession } from "../lib/api";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
@@ -37,8 +37,12 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   // Multiple SSH sessions state
   const [sessions, setSessions] = useState<SshSessionInfo[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [hibernatedSessions, setHibernatedSessions] = useState<HibernatedSession[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showServerPanel, setShowServerPanel] = useState(false);
+  
+  // Terminal refs for extracting buffer during hibernation
+  const terminalRefs = useRef<Map<string, { getBuffer: () => string }>>(new Map());
   
   // Host key verification state
   const [hostKeyVerification, setHostKeyVerification] = useState<{
@@ -65,14 +69,16 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const loadData = useCallback(async () => {
     try {
       setError("");
-      const [entriesData, foldersData, countsData] = await Promise.all([
+      const [entriesData, foldersData, countsData, hibernatedData] = await Promise.all([
         listEntries(),
         listFolders(),
         getFolderCounts(),
+        listHibernatedSessions(),
       ]);
       setEntries(entriesData);
       setFolders(foldersData);
       setFolderCounts(new Map(countsData));
+      setHibernatedSessions(hibernatedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -234,6 +240,87 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     });
   };
 
+  const handleHibernateTab = async (sessionId: string) => {
+    try {
+      // Get terminal buffer from the terminal component
+      const terminalRef = terminalRefs.current.get(sessionId);
+      const terminalBuffer = terminalRef?.getBuffer?.();
+      
+      const hibernated = await hibernateSession({
+        sessionId,
+        terminalBuffer,
+      });
+      
+      // Remove from active sessions
+      setSessions((prev) => {
+        const newSessions = prev.filter((s) => s.session_id !== sessionId);
+        if (activeSessionId === sessionId && newSessions.length > 0) {
+          setActiveSessionId(newSessions[0].session_id);
+        } else if (newSessions.length === 0) {
+          setActiveSessionId(null);
+        }
+        return newSessions;
+      });
+      
+      // Add to hibernated sessions
+      setHibernatedSessions((prev) => [hibernated, ...prev]);
+      
+      // Clean up terminal ref
+      terminalRefs.current.delete(sessionId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to hibernate session");
+    }
+  };
+
+  const handleResumeSession = async (hibernated: HibernatedSession) => {
+    if (isConnecting) return;
+    setIsConnecting(true);
+    setError("");
+    
+    try {
+      const response = await resumeSession({
+        hibernatedSessionId: hibernated.id,
+        cols: hibernated.terminalCols || 120,
+        rows: hibernated.terminalRows || 30,
+      });
+      
+      // Create new session
+      const session: SshSessionInfo = {
+        session_id: response.sessionId,
+        entry_id: response.entryId,
+        host: response.host,
+        port: response.port,
+        connected_at: response.connectedAt,
+      };
+      
+      setSessions((prev) => [...prev, session]);
+      setActiveSessionId(session.session_id);
+      
+      // Remove from hibernated list
+      setHibernatedSessions((prev) => prev.filter((h) => h.id !== hibernated.id));
+      
+      // TODO: Restore terminal buffer if available
+      // The buffer is in response.terminalBuffer
+      
+      setShowServerPanel(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resume session");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDeleteHibernated = async (id: string) => {
+    if (!confirm("Delete this hibernated session?")) return;
+    
+    try {
+      await deleteHibernatedSession(id);
+      setHibernatedSessions((prev) => prev.filter((h) => h.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete hibernated session");
+    }
+  };
+
   const handleNewConnection = () => {
     setShowServerPanel(true);
   };
@@ -242,15 +329,19 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     handleCloseTab(sessionId);
   };
 
-  // Terminal mode: show terminals if we have any sessions
-  if (sessions.length > 0) {
+  // Terminal mode: show terminals if we have any sessions (or hibernated sessions to show in tabs)
+  if (sessions.length > 0 || hibernatedSessions.length > 0) {
     return (
       <div className="dashboard terminal-mode">
         <TerminalTabs
           sessions={sessions}
           activeSessionId={activeSessionId}
+          hibernatedSessions={hibernatedSessions}
           onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
+          onHibernateTab={handleHibernateTab}
+          onResumeSession={handleResumeSession}
+          onDeleteHibernated={handleDeleteHibernated}
           onNewConnection={handleNewConnection}
         />
         <div className="terminal-area">

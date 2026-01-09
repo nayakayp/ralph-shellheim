@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
-import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest, ConnectSshResponse } from "../types/ssh";
+import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 import type { KnownHost, TrustHostKeyRequest, HostKeyStatus } from "../types/known_host";
 
@@ -160,6 +160,31 @@ export async function listSshSessions(): Promise<SshSessionInfo[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<SshSessionInfo[]>("list_ssh_sessions", { token });
+}
+
+// Hibernated Session API
+export async function hibernateSession(request: HibernateSessionRequest): Promise<HibernatedSession> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HibernatedSession>("hibernate_session", { token, request });
+}
+
+export async function listHibernatedSessions(): Promise<HibernatedSession[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HibernatedSession[]>("list_hibernated_sessions", { token });
+}
+
+export async function resumeSession(request: ResumeSessionRequest): Promise<ResumeSessionResponse> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ResumeSessionResponse>("resume_session", { token, request });
+}
+
+export async function deleteHibernatedSession(hibernatedSessionId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_hibernated_session", { token, hibernatedSessionId });
 }
 
 // Folder API

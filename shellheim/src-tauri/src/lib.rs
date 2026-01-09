@@ -77,6 +77,10 @@ pub fn run() {
             api::ssh::send_data,
             api::ssh::resize_terminal,
             api::ssh::list_ssh_sessions,
+            api::ssh::hibernate_session,
+            api::ssh::list_hibernated_sessions,
+            api::ssh::resume_session,
+            api::ssh::delete_hibernated_session,
             
             // Folder commands
             api::folders::list_folders,

@@ -42,3 +42,36 @@ export interface SshCloseEvent {
   session_id: string;
   reason: string;
 }
+
+// Hibernated session types
+export interface HibernatedSession {
+  id: string;
+  entryId: string;
+  host: string;
+  port: number;
+  username: string;
+  terminalCols: number;
+  terminalRows: number;
+  hibernatedAt: string;
+  createdAt: string;
+}
+
+export interface HibernateSessionRequest {
+  sessionId: string;
+  terminalBuffer?: string;
+}
+
+export interface ResumeSessionRequest {
+  hibernatedSessionId: string;
+  cols: number;
+  rows: number;
+}
+
+export interface ResumeSessionResponse {
+  sessionId: string;
+  entryId: string;
+  host: string;
+  port: number;
+  connectedAt: string;
+  terminalBuffer?: string;
+}

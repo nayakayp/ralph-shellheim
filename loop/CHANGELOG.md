@@ -4,6 +4,64 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 11 - 2026-01-09
+
+### Completed
+- **Implemented Session Hibernation** - Save and restore SSH sessions across app restarts:
+  - Created `hibernated_sessions` database table (migration v12)
+  - Stores session metadata: entry, host, port, username, identity, terminal dimensions
+  - Captures terminal buffer content (up to 200KB) for session restoration
+  - Hibernated sessions persist across app restarts
+
+- **Built Hibernation Backend API** (`src-tauri/src/api/ssh.rs`):
+  - `hibernate_session`: Close SSH connection, save session state to DB
+  - `list_hibernated_sessions`: Get all hibernated sessions for current user
+  - `resume_session`: Reconnect to SSH server, restore session with buffer
+  - `delete_hibernated_session`: Remove hibernated session without resuming
+  - All operations validate account ownership
+
+- **Created Frontend Types** (`src/types/ssh.ts`):
+  - `HibernatedSession`, `HibernateSessionRequest`, `ResumeSessionRequest`
+  - `ResumeSessionResponse` with optional `terminalBuffer` for restoration
+
+- **Added Hibernation API Functions** (`src/lib/api.ts`):
+  - hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession
+
+- **Updated TerminalTabs Component**:
+  - Added hibernate button (⏸) on active session tabs
+  - Hibernated sessions show with dashed border and orange indicator
+  - Resume (▶) and delete (×) actions on hibernated tabs
+  - Visual distinction between connected (green) and hibernated (orange) states
+  - Relative time display ("5m ago", "2h ago") for hibernation timestamp
+
+- **Updated Dashboard**:
+  - Loads hibernated sessions on startup
+  - `handleHibernateTab`: Captures terminal buffer, saves to DB, removes from active
+  - `handleResumeSession`: Reconnects, restores session, removes from hibernated list
+  - `handleDeleteHibernated`: Delete confirmation and removal
+  - Terminal refs map for future buffer extraction
+
+- **New CSS Styles** (`TerminalTabs.css`):
+  - `.terminal-tab.hibernated`: Dashed border, orange-tinted background
+  - `.tab-actions`: Hover-reveal action buttons
+  - `.terminal-tab-action.hibernate/resume/close`: Color-coded hover states
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **SFTP file management** - File browser and transfers
+2. **Folder drag-and-drop** - Reorder folders and move entries
+3. **Terminal buffer restoration** - Write hibernated buffer to terminal on resume
+
+### Tech Notes
+- Hibernation closes the actual SSH connection (can't serialize TCP sockets)
+- Resume reconnects using stored identity credentials
+- Terminal buffer provided by frontend during hibernate (backend has 200KB buffer as fallback)
+- Host key must still be valid for resume (changed key = manual reconnect required)
+- Hibernated sessions shown in tab bar even when no active sessions
+
+---
+
 ## Session 10 - 2026-01-09
 
 ### Completed
@@ -556,8 +614,8 @@ shellheim/
 - [x] SSH terminal connections via russh
 - [x] Terminal UI with xterm.js
 - [x] Multiple terminal tabs
+- [x] Session management (hibernate, resume)
 - [ ] SFTP file management
-- [ ] Session management (hibernate, resume)
 - [ ] Port forwarding
 
 ### Phase 3: Advanced Features (Future)

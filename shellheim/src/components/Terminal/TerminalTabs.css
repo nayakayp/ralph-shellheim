@@ -56,10 +56,29 @@
   color: #c0caf5;
 }
 
+.terminal-tab.hibernated {
+  background: rgba(255, 158, 100, 0.08);
+  border: 1px dashed rgba(255, 158, 100, 0.3);
+  border-bottom: none;
+}
+
+.terminal-tab.hibernated:hover {
+  background: rgba(255, 158, 100, 0.15);
+  color: #ffa657;
+}
+
 .tab-indicator {
-  color: #9ece6a;
   font-size: 8px;
+}
+
+.tab-indicator.connected {
+  color: #9ece6a;
   animation: pulse 2s infinite;
+}
+
+.tab-indicator.hibernated {
+  color: #ffa657;
+  font-size: 10px;
 }
 
 @keyframes pulse {
@@ -74,21 +93,45 @@
   text-align: left;
 }
 
-.terminal-tab-close {
+.tab-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.terminal-tab:hover .tab-actions {
+  opacity: 1;
+}
+
+.terminal-tab-action {
   background: transparent;
   border: none;
   color: inherit;
-  font-size: 16px;
+  font-size: 12px;
   cursor: pointer;
   padding: 2px 4px;
-  opacity: 0.5;
+  opacity: 0.7;
   transition: all 0.2s;
   line-height: 1;
   border-radius: 4px;
 }
 
-.terminal-tab-close:hover {
+.terminal-tab-action:hover {
   opacity: 1;
+}
+
+.terminal-tab-action.hibernate:hover {
+  color: #ffa657;
+  background: rgba(255, 166, 87, 0.15);
+}
+
+.terminal-tab-action.resume:hover {
+  color: #9ece6a;
+  background: rgba(158, 206, 106, 0.15);
+}
+
+.terminal-tab-action.close:hover {
   color: #f7768e;
   background: rgba(247, 118, 142, 0.15);
 }
