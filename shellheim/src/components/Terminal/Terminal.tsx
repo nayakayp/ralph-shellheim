@@ -12,10 +12,11 @@ interface TerminalProps {
   sessionId: string;
   host: string;
   isActive: boolean;
+  initialBuffer?: string; // Buffer to restore (from hibernation)
   onClose: () => void;
 }
 
-export default function Terminal({ sessionId, host, isActive, onClose }: TerminalProps) {
+export default function Terminal({ sessionId, host, isActive, initialBuffer, onClose }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -76,6 +77,12 @@ export default function Terminal({ sessionId, host, isActive, onClose }: Termina
 
     xtermRef.current = xterm;
     fitAddonRef.current = fitAddon;
+
+    // Restore terminal buffer from hibernation (if available)
+    if (initialBuffer) {
+      xterm.write(initialBuffer);
+      xterm.write("\r\n\x1b[90m[Session restored from hibernation]\x1b[0m\r\n");
+    }
 
     // Handle terminal input
     xterm.onData((data) => {

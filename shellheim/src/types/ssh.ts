@@ -15,6 +15,7 @@ export interface SshSessionInfo {
   host: string;
   port: number;
   connected_at: string;
+  initialBuffer?: string; // Buffer to restore on terminal mount (from hibernation)
 }
 
 // SSH connection response - can be connected or need host key verification

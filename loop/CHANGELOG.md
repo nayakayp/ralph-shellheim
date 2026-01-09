@@ -4,6 +4,35 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 14 - 2026-01-09
+
+### Completed
+- **Implemented Terminal Buffer Restoration** - Restored sessions now display previous terminal output:
+  - Added `initialBuffer` prop to Terminal component
+  - Terminal writes buffer content on mount before SSH data stream
+  - Gray "[Session restored from hibernation]" indicator appended after buffer
+  - `SshSessionInfo` type extended with optional `initialBuffer` field
+  - `handleResumeSession` now passes `terminalBuffer` from response to session
+
+- **Files Modified**:
+  - `src/types/ssh.ts`: Added `initialBuffer` to `SshSessionInfo`
+  - `src/components/Terminal/Terminal.tsx`: Accept and write `initialBuffer` on init
+  - `src/components/Dashboard.tsx`: Pass buffer from resume response to Terminal
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Folder drag-and-drop** - Reorder folders and move entries
+2. **Port forwarding** - SSH tunnel support
+3. **Directory download** - Download folders as ZIP
+
+### Tech Notes
+- Buffer is written synchronously before event listeners are set up
+- Uses gray escape sequence for restoration indicator (`\x1b[90m`)
+- Buffer only provided when resuming from hibernation (regular connects have no buffer)
+
+---
+
 ## Session 13 - 2026-01-09
 
 ### Completed

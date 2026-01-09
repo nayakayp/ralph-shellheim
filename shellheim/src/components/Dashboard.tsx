@@ -349,13 +349,14 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         rows: hibernated.terminalRows || 30,
       });
       
-      // Create new session
+      // Create new session with optional buffer for restoration
       const session: SshSessionInfo = {
         session_id: response.sessionId,
         entry_id: response.entryId,
         host: response.host,
         port: response.port,
         connected_at: response.connectedAt,
+        initialBuffer: response.terminalBuffer, // Pass buffer for terminal restoration
       };
       
       setSessions((prev) => [...prev, session]);
@@ -363,9 +364,6 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       
       // Remove from hibernated list
       setHibernatedSessions((prev) => prev.filter((h) => h.id !== hibernated.id));
-      
-      // TODO: Restore terminal buffer if available
-      // The buffer is in response.terminalBuffer
       
       setShowServerPanel(false);
     } catch (err) {
@@ -419,6 +417,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               sessionId={session.session_id}
               host={`${session.host}:${session.port}`}
               isActive={session.session_id === activeSessionId && activeTabType === "ssh"}
+              initialBuffer={session.initialBuffer}
               onClose={() => handleTerminalClose(session.session_id)}
             />
           ))}
