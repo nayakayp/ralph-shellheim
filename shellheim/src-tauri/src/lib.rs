@@ -212,6 +212,12 @@ pub fn run() {
             api::integrations::start_pve_resource,
             api::integrations::stop_pve_resource,
             api::integrations::shutdown_pve_resource,
+            
+            // AI commands
+            api::ai::get_ai_settings,
+            api::ai::update_ai_settings,
+            api::ai::test_ai_connection,
+            api::ai::generate_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,6 +1,7 @@
 //! Data models for Shellheim
 
 mod account;
+mod ai;
 mod entry;
 mod identity;
 mod folder;
@@ -17,6 +18,7 @@ mod backup;
 mod integration;
 
 pub use account::*;
+pub use ai::*;
 pub use entry::*;
 pub use identity::*;
 pub use folder::*;

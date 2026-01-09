@@ -352,5 +352,28 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 17,
+            description: "create_ai_settings_table",
+            sql: r#"
+                -- AI settings for command suggestions
+                CREATE TABLE IF NOT EXISTS ai_settings (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL UNIQUE,
+                    api_key_encrypted TEXT,
+                    api_endpoint TEXT NOT NULL DEFAULT 'https://api.openai.com/v1',
+                    model TEXT NOT NULL DEFAULT 'gpt-4o-mini',
+                    temperature REAL NOT NULL DEFAULT 0.7,
+                    system_prompt TEXT,
+                    enabled INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_ai_settings_account ON ai_settings(account_id);
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

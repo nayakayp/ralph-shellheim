@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard, Link } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard, Link, Brain } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -28,6 +28,7 @@ import { BackupPanel } from "./BackupPanel";
 import { IntegrationPanel } from "./IntegrationPanel";
 import { ServerStatsPanel } from "./ServerStatsPanel";
 import { CommandPalette } from "./CommandPalette";
+import { AiPanel } from "./AiPanel";
 import KeybindsPanel from "./KeybindsPanel";
 import { useKeymaps } from "../hooks/useKeymaps";
 import type { KeymapAction } from "../types/keymap";
@@ -61,6 +62,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showBackup, setShowBackup] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [showKeybinds, setShowKeybinds] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [statsEntry, setStatsEntry] = useState<Entry | null>(null);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
@@ -1097,6 +1099,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 <Keyboard size={18} />
                 Keys
               </button>
+              <button className="toolbar-btn" onClick={() => setShowAiPanel(true)} title="AI Settings">
+                <Brain size={18} />
+                AI
+              </button>
               <button className="add-btn" onClick={() => setShowAddModal(true)}>
                 <Plus size={18} />
                 Add Server
@@ -1220,6 +1226,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       <KeybindsPanel
         isOpen={showKeybinds}
         onClose={() => setShowKeybinds(false)}
+      />
+
+      <AiPanel
+        isOpen={showAiPanel}
+        onClose={() => setShowAiPanel(false)}
       />
 
       {showIntegrations && (

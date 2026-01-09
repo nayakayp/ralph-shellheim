@@ -4,6 +4,77 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 37 - 2026-01-10
+
+### Completed
+- **Implemented AI-Powered Command Suggestions** - LLM integration for natural language to shell commands:
+  - OpenAI-compatible API support (works with GPT-4o, GPT-4o-mini, Claude, local LLMs)
+  - Configurable API endpoint, model, temperature, and system prompt
+  - Server context awareness (OS, shell, hostname) for accurate command generation
+  - Encrypted API key storage using same AES-GCM as identity passwords
+
+- **Created AI Settings Database Schema** (migration 17):
+  - `ai_settings` table with API key (encrypted), endpoint, model, temperature
+  - Custom system prompt support for personalized command generation
+  - Enabled/disabled toggle per account
+
+- **Built AI Backend API** (`src-tauri/src/api/ai.rs`):
+  - `get_ai_settings`: Retrieve user's AI config (without exposing API key)
+  - `update_ai_settings`: Create/update API key, endpoint, model, system prompt
+  - `test_ai_connection`: Validate API connectivity with test request
+  - `generate_command`: Generate shell commands from natural language with server context
+
+- **Created AI Models** (`src-tauri/src/models/ai.rs`):
+  - `AiSettings` database model with encrypted API key
+  - `AiSettingsInfo` safe response model (shows `has_api_key` boolean)
+  - `GenerateCommandRequest/Response` for command generation
+  - `ChatCompletionRequest/Response` for OpenAI-compatible API calls
+
+- **Built AiPanel Component** (`src/components/AiPanel.tsx`):
+  - Settings form with API endpoint, key, model, temperature, system prompt
+  - Model dropdown with common options (gpt-4o-mini, gpt-4o, gpt-4-turbo, custom)
+  - Temperature slider (0.0-1.0)
+  - Test connection button with success/error feedback
+  - Enabled toggle switch
+  - Tokyo Night themed glassmorphism design
+
+- **Built AiCommandInput Component** (`src/components/Terminal/AiCommandInput.tsx`):
+  - Floating overlay activated with **Ctrl+Shift+A** hotkey
+  - Natural language input for command description
+  - Generated command display with explanation
+  - **Insert** button to type command into terminal
+  - **Copy** button for clipboard
+  - Loading state and error handling
+  - Glassmorphism design matching terminal theme
+
+- **Integrated into Dashboard**:
+  - Added 🤖 **AI** button to toolbar
+  - Opens AiPanel for API configuration
+  - AI command input accessible in terminal via hotkey
+
+- **Added Frontend Types and API** (`src/types/ai.ts`, `src/lib/api.ts`):
+  - `AiSettings`, `UpdateAiSettingsRequest` interfaces
+  - `GenerateCommandRequest`, `GenerateCommandResponse`
+  - `TestConnectionResult` for API validation
+  - API functions: `getAiSettings`, `updateAiSettings`, `testAiConnection`, `generateCommand`
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Technical Notes
+- Uses OpenAI-compatible `/v1/chat/completions` endpoint
+- Works with any OpenAI-compatible provider (OpenAI, Anthropic via proxy, local Ollama, etc.)
+- System prompt includes server OS context for accurate Linux/macOS/Windows commands
+- API key encrypted at rest using same method as SSH passwords
+- Command insertion sends characters via SSH data channel (types like user input)
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation or guacd)
+2. **OIDC/LDAP authentication** - Enterprise SSO
+3. **Real-time monitoring with WebSocket** - Live stats streaming
+4. **Command history with AI suggestions** - Context-aware autocompletion
+
+---
+
 ## Session 36 - 2026-01-10
 
 ### Completed

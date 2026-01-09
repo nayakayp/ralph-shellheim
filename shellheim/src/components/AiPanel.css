@@ -1,0 +1,398 @@
+/* =============================================================================
+   AI SETTINGS PANEL
+   Slide-out panel for configuring AI assistant settings
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   PANEL
+   --------------------------------------------------------------------------- */
+.ai-panel {
+  width: 480px;
+  max-width: 100%;
+  height: 100%;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 200ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   STATUS BADGE
+   --------------------------------------------------------------------------- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--fg-muted);
+}
+
+.status-success {
+  color: var(--success-fg);
+}
+
+.status-warning {
+  color: var(--warning-fg);
+}
+
+.status-error {
+  color: var(--error-fg);
+}
+
+/* ---------------------------------------------------------------------------
+   FORM STYLES
+   --------------------------------------------------------------------------- */
+.ai-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--fg-secondary);
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group input[type="password"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--fg-primary);
+  transition: all var(--transition-fast);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--fg-faint);
+}
+
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237982a9' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: var(--space-8);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: var(--font-mono);
+  line-height: var(--leading-relaxed);
+}
+
+.form-hint {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.key-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  font-size: var(--text-xs);
+  font-weight: var(--font-normal);
+  color: var(--success-fg);
+}
+
+/* ---------------------------------------------------------------------------
+   TOGGLE SWITCH
+   --------------------------------------------------------------------------- */
+.toggle-group {
+  padding: var(--space-4);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.toggle-label {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.label-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-md) !important;
+  color: var(--fg-primary) !important;
+}
+
+.label-text svg {
+  color: var(--accent);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--fg-muted);
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  background: white;
+  transform: translateX(22px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* ---------------------------------------------------------------------------
+   TEMPERATURE SLIDER
+   --------------------------------------------------------------------------- */
+.temperature-value {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  background: var(--accent-subtle);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.slider-label {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  min-width: 50px;
+}
+
+.slider-label:last-child {
+  text-align: right;
+}
+
+.form-group input[type="range"] {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, var(--accent-subtle), var(--accent));
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.form-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.form-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.form-group input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   TEST CONNECTION
+   --------------------------------------------------------------------------- */
+.test-section {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.test-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.test-btn:hover:not(:disabled) {
+  background: var(--bg-primary);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-btn svg {
+  color: var(--accent);
+}
+
+.test-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.test-result.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success-fg);
+}
+
+.test-result.error {
+  background: var(--error-muted);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--error-fg);
+}
+
+/* ---------------------------------------------------------------------------
+   SAVE BUTTON
+   --------------------------------------------------------------------------- */
+.form-actions {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.save-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+   SUCCESS MESSAGE
+   --------------------------------------------------------------------------- */
+.panel-success {
+  padding: var(--space-3) var(--space-4);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--success-fg);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+/* ---------------------------------------------------------------------------
+   SPINNING ANIMATION
+   --------------------------------------------------------------------------- */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -25,6 +25,7 @@ import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse
 import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest, DownloadDirRequest, SearchFilesRequest, SearchResult } from "../types/sftp";
 import type { Tunnel, CreateTunnelRequest } from "../types/tunnel";
 import type { Snippet, CreateSnippetRequest, UpdateSnippetRequest } from "../types/snippet";
+import type { AiSettings, UpdateAiSettingsRequest, GenerateCommandRequest, GenerateCommandResponse, TestConnectionResult } from "../types/ai";
 import type { Recording, StartRecordingRequest, StartRecordingResponse, StopRecordingRequest, StopRecordingResponse, UpdateRecordingRequest } from "../types/recording";
 
 // Storage key for auth token
@@ -864,4 +865,29 @@ export async function shutdownPveResource(entryId: string): Promise<string> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<string>("shutdown_pve_resource", { token, entryId });
+}
+
+// ============ AI API ============
+export async function getAiSettings(): Promise<AiSettings | null> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<AiSettings | null>("get_ai_settings", { token });
+}
+
+export async function updateAiSettings(request: UpdateAiSettingsRequest): Promise<AiSettings> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<AiSettings>("update_ai_settings", { token, request });
+}
+
+export async function testAiConnection(): Promise<TestConnectionResult> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<TestConnectionResult>("test_ai_connection", { token });
+}
+
+export async function generateCommand(request: GenerateCommandRequest): Promise<GenerateCommandResponse> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<GenerateCommandResponse>("generate_command", { token, request });
 }

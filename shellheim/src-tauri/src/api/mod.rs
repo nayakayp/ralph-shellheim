@@ -1,6 +1,7 @@
 //! API handlers (Tauri commands)
 
 pub mod account;
+pub mod ai;
 pub mod audit;
 pub mod backup;
 pub mod entries;

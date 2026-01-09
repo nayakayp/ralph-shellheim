@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { sendSshData, resizeSshTerminal, disconnectSsh } from "../../lib/api";
 import type { SshDataEvent, SshCloseEvent } from "../../types/ssh";
+import AiCommandInput from "./AiCommandInput";
 import "@xterm/xterm/css/xterm.css";
 import "./Terminal.css";
 
@@ -23,6 +24,30 @@ export default function Terminal({ sessionId, host: _host, isActive, initialBuff
   const isInitializedRef = useRef(false);
   const dataUnlistenRef = useRef<UnlistenFn | null>(null);
   const closeUnlistenRef = useRef<UnlistenFn | null>(null);
+  const [showAiInput, setShowAiInput] = useState(false);
+
+  // Handle Ctrl+Shift+A to toggle AI input
+  const handleAiHotkey = useCallback((e: KeyboardEvent) => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a" && isActive) {
+      e.preventDefault();
+      setShowAiInput(prev => !prev);
+    }
+  }, [isActive]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleAiHotkey);
+    return () => window.removeEventListener("keydown", handleAiHotkey);
+  }, [handleAiHotkey]);
+
+  // Handle inserting AI-generated command into terminal
+  const handleInsertCommand = useCallback((command: string) => {
+    if (xtermRef.current) {
+      // Send the command text to the terminal (type it in)
+      sendSshData({ session_id: sessionId, data: command }).catch((e) => {
+        console.error("Failed to insert command:", e);
+      });
+    }
+  }, [sessionId]);
 
   // Note: disconnectSsh is available for future use when disconnect button is added
   void disconnectSsh; // Suppress unused import warning
@@ -219,6 +244,11 @@ export default function Terminal({ sessionId, host: _host, isActive, initialBuff
   return (
     <div className={`terminal-container ${isActive ? "active" : "hidden"}`}>
       <div className="terminal-body" ref={terminalRef} />
+      <AiCommandInput
+        isOpen={showAiInput}
+        onClose={() => setShowAiInput(false)}
+        onInsertCommand={handleInsertCommand}
+      />
     </div>
   );
 }
