@@ -8,6 +8,7 @@ import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
 import { IdentitiesPanel } from "./IdentitiesPanel";
 import Terminal from "./Terminal/Terminal";
+import { TerminalTabs } from "./Terminal/TerminalTabs";
 import "./Dashboard.css";
 
 interface DashboardProps {
@@ -23,9 +24,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showIdentities, setShowIdentities] = useState(false);
   const [error, setError] = useState("");
   
-  // SSH session state
-  const [activeSession, setActiveSession] = useState<SshSessionInfo | null>(null);
+  // Multiple SSH sessions state
+  const [sessions, setSessions] = useState<SshSessionInfo[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showServerPanel, setShowServerPanel] = useState(false);
 
   const loadEntries = useCallback(async () => {
     try {
@@ -74,7 +77,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         rows: 30,
       });
       
-      setActiveSession(session);
+      // Add to sessions list and make active
+      setSessions((prev) => [...prev, session]);
+      setActiveSessionId(session.session_id);
+      setShowServerPanel(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to connect";
       setError(`Connection failed: ${message}`);
@@ -99,23 +105,128 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     }
   };
 
-  const handleTerminalClose = () => {
-    setActiveSession(null);
+  const handleSelectTab = (sessionId: string) => {
+    setActiveSessionId(sessionId);
   };
 
-  // If there's an active session, show the terminal full screen
-  if (activeSession) {
+  const handleCloseTab = (sessionId: string) => {
+    setSessions((prev) => {
+      const newSessions = prev.filter((s) => s.session_id !== sessionId);
+      
+      // If closing the active tab, switch to another
+      if (activeSessionId === sessionId) {
+        const closingIndex = prev.findIndex((s) => s.session_id === sessionId);
+        if (newSessions.length > 0) {
+          // Switch to the next tab, or previous if at the end
+          const newIndex = Math.min(closingIndex, newSessions.length - 1);
+          setActiveSessionId(newSessions[newIndex].session_id);
+        } else {
+          setActiveSessionId(null);
+        }
+      }
+      
+      return newSessions;
+    });
+  };
+
+  const handleNewConnection = () => {
+    setShowServerPanel(true);
+  };
+
+  const handleTerminalClose = (sessionId: string) => {
+    handleCloseTab(sessionId);
+  };
+
+  // Terminal mode: show terminals if we have any sessions
+  if (sessions.length > 0) {
     return (
       <div className="dashboard terminal-mode">
-        <Terminal
-          sessionId={activeSession.session_id}
-          host={`${activeSession.host}:${activeSession.port}`}
-          onClose={handleTerminalClose}
+        <TerminalTabs
+          sessions={sessions}
+          activeSessionId={activeSessionId}
+          onSelectTab={handleSelectTab}
+          onCloseTab={handleCloseTab}
+          onNewConnection={handleNewConnection}
+        />
+        <div className="terminal-area">
+          {sessions.map((session) => (
+            <Terminal
+              key={session.session_id}
+              sessionId={session.session_id}
+              host={`${session.host}:${session.port}`}
+              isActive={session.session_id === activeSessionId}
+              onClose={() => handleTerminalClose(session.session_id)}
+            />
+          ))}
+        </div>
+        
+        {/* Server panel overlay for new connections */}
+        {showServerPanel && (
+          <div className="server-panel-overlay">
+            <div className="server-panel">
+              <div className="server-panel-header">
+                <h2>Connect to Server</h2>
+                <button className="close-panel-btn" onClick={() => setShowServerPanel(false)}>
+                  ✕
+                </button>
+              </div>
+              <div className="server-panel-body">
+                {isConnecting && (
+                  <div className="connecting-inline">
+                    <div className="spinner" />
+                    <span>Connecting...</span>
+                  </div>
+                )}
+                {error && <div className="panel-error">{error}</div>}
+                {isLoading ? (
+                  <div className="loading-state">
+                    <div className="spinner" />
+                    <p>Loading servers...</p>
+                  </div>
+                ) : entries.length === 0 ? (
+                  <div className="panel-empty">
+                    <p>No servers configured</p>
+                    <button onClick={() => { setShowServerPanel(false); setShowAddModal(true); }}>
+                      Add Server
+                    </button>
+                  </div>
+                ) : (
+                  <ServerList
+                    entries={entries}
+                    onConnect={handleConnect}
+                    onEdit={(entry) => { setShowServerPanel(false); handleEdit(entry); }}
+                    onDelete={handleDelete}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAddModal && (
+          <AddServerModal
+            onClose={() => setShowAddModal(false)}
+            onSubmit={handleAddServer}
+          />
+        )}
+
+        {editingEntry && (
+          <EditServerModal
+            entry={editingEntry}
+            onClose={() => setEditingEntry(null)}
+            onSubmit={handleUpdateServer}
+          />
+        )}
+
+        <IdentitiesPanel
+          isOpen={showIdentities}
+          onClose={() => setShowIdentities(false)}
         />
       </div>
     );
   }
 
+  // Regular dashboard mode
   return (
     <div className="dashboard">
       <header className="dashboard-header">

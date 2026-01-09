@@ -261,11 +261,140 @@
 /* Terminal mode - full screen terminal */
 .dashboard.terminal-mode {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.dashboard.terminal-mode .terminal-container {
-  height: 100vh;
-  border-radius: 0;
+.terminal-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Server panel overlay for quick connections */
+.server-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 35, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.server-panel {
+  background: linear-gradient(180deg, rgba(30, 30, 60, 0.98) 0%, rgba(20, 20, 45, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+}
+
+.server-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.server-panel-header h2 {
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.close-panel-btn {
+  background: transparent;
+  border: none;
+  color: #565f89;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-panel-btn:hover {
+  background: rgba(247, 118, 142, 0.2);
+  color: #f7768e;
+}
+
+.server-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.server-panel-body .server-list {
+  max-height: none;
+}
+
+.connecting-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: #a5b4fc;
+}
+
+.connecting-inline .spinner {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.panel-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.panel-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #8b8b9e;
+}
+
+.panel-empty p {
+  margin: 0 0 1rem;
+}
+
+.panel-empty button {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-empty button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 /* Connecting overlay */

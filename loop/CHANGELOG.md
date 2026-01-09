@@ -4,6 +4,56 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 7 - 2025-01-09
+
+### Completed
+- **Implemented Multiple Terminal Tabs** - Full multi-session support:
+  - Created `TerminalTabs` component with tab bar UI
+  - Visual indicators for active tab and connection status
+  - Close button on each tab with smart tab switching
+  - "+" button for opening new connections
+  
+- **Updated Dashboard for Multi-Session Management**:
+  - Changed from single `activeSession` to `sessions[]` array
+  - Added `activeSessionId` state for tab switching
+  - `handleSelectTab()` switches between terminals
+  - `handleCloseTab()` with automatic next-tab selection
+  - Terminals persist in DOM when switching (no re-init)
+
+- **Modified Terminal Component**:
+  - Added `isActive` prop for visibility control
+  - Uses CSS visibility (not unmounting) to preserve xterm state
+  - Re-fits and refocuses terminal when becoming active
+  - Initialization guard prevents double-mount issues
+
+- **Added Server Panel Overlay**:
+  - Glassmorphism overlay for new connections while in terminal mode
+  - Shows server list without leaving terminal view
+  - Loading and error states within panel
+  - Quick access to add/edit servers
+
+- **New CSS Components**:
+  - `TerminalTabs.css` - Tab bar with Tokyo Night theme
+  - Terminal area with absolute positioning for stacking
+  - Server panel overlay with blur backdrop
+  - Responsive inline connecting indicator
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Implement Folder management** - Organize servers into folders
+2. **Add host key verification** - Known hosts support for security
+3. **Session hibernation** - Save and restore SSH sessions
+4. **SFTP file management** - File browser and transfers
+
+### Tech Notes
+- Terminals use visibility:hidden (not display:none) to keep xterm instances alive
+- Tab switching triggers fit() and focus() on active terminal
+- Server panel uses fixed z-index (100) to overlay terminal tabs
+- Each Terminal component has isInitializedRef to prevent re-initialization
+
+---
+
 ## Session 6 - 2025-01-09
 
 ### Completed
@@ -339,10 +389,10 @@ shellheim/
 ### Phase 2: SSH Core (Target: Session 6-15)
 - [x] SSH terminal connections via russh
 - [x] Terminal UI with xterm.js
+- [x] Multiple terminal tabs
 - [ ] SFTP file management
 - [ ] Session management (hibernate, resume)
 - [ ] Port forwarding
-- [ ] Multiple terminal tabs
 
 ### Phase 3: Advanced Features (Future)
 - [ ] Snippets and scripts

@@ -4,9 +4,24 @@
   height: 100%;
   width: 100%;
   background: #1a1b26;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.terminal-container.hidden {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+}
+
+.terminal-container.active {
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .terminal-header {

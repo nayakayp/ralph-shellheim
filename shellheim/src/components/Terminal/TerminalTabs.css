@@ -1,0 +1,116 @@
+.terminal-tabs-bar {
+  display: flex;
+  align-items: center;
+  background: #15161e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.terminal-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 0;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.terminal-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.terminal-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-tabs::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-radius: 8px 8px 0 0;
+  color: #565f89;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.terminal-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #a9b1d6;
+}
+
+.terminal-tab.active {
+  background: #1a1b26;
+  color: #c0caf5;
+}
+
+.tab-indicator {
+  color: #9ece6a;
+  font-size: 8px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tab-host {
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  text-align: left;
+}
+
+.terminal-tab-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0.5;
+  transition: all 0.2s;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.terminal-tab-close:hover {
+  opacity: 1;
+  color: #f7768e;
+  background: rgba(247, 118, 142, 0.15);
+}
+
+.new-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 4px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #565f89;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.new-tab-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}

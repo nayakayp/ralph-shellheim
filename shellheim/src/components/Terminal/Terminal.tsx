@@ -11,13 +11,15 @@ import "./Terminal.css";
 interface TerminalProps {
   sessionId: string;
   host: string;
+  isActive: boolean;
   onClose: () => void;
 }
 
-export default function Terminal({ sessionId, host, onClose }: TerminalProps) {
+export default function Terminal({ sessionId, host, isActive, onClose }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const isInitializedRef = useRef(false);
 
   const handleDisconnect = useCallback(async () => {
     try {
@@ -28,10 +30,11 @@ export default function Terminal({ sessionId, host, onClose }: TerminalProps) {
     onClose();
   }, [sessionId, onClose]);
 
+  // Initialize terminal only once
   useEffect(() => {
-    if (!terminalRef.current) return;
+    if (!terminalRef.current || isInitializedRef.current) return;
+    isInitializedRef.current = true;
 
-    // Initialize xterm
     const xterm = new XTerm({
       cursorBlink: true,
       fontSize: 14,
@@ -94,9 +97,6 @@ export default function Terminal({ sessionId, host, onClose }: TerminalProps) {
 
     window.addEventListener("resize", handleResize);
 
-    // Also trigger resize after a short delay (for layout settling)
-    const resizeTimeout = setTimeout(handleResize, 100);
-
     // Listen for SSH data events
     let dataUnlisten: UnlistenFn;
     let closeUnlisten: UnlistenFn;
@@ -131,15 +131,31 @@ export default function Terminal({ sessionId, host, onClose }: TerminalProps) {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      clearTimeout(resizeTimeout);
       if (dataUnlisten) dataUnlisten();
       if (closeUnlisten) closeUnlisten();
       xterm.dispose();
     };
   }, [sessionId, onClose]);
 
+  // Handle visibility changes - fit and focus when becoming active
+  useEffect(() => {
+    if (isActive && xtermRef.current && fitAddonRef.current) {
+      // Small delay to allow CSS transition to complete
+      const timeout = setTimeout(() => {
+        fitAddonRef.current?.fit();
+        xtermRef.current?.focus();
+        // Notify backend of new size
+        if (xtermRef.current) {
+          const { cols, rows } = xtermRef.current;
+          resizeSshTerminal({ session_id: sessionId, cols, rows }).catch(console.error);
+        }
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [isActive, sessionId]);
+
   return (
-    <div className="terminal-container">
+    <div className={`terminal-container ${isActive ? "active" : "hidden"}`}>
       <div className="terminal-header">
         <div className="terminal-title">
           <span className="terminal-icon">⬤</span>
