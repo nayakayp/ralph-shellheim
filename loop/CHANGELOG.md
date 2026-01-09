@@ -4,6 +4,42 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 26 - 2026-01-10
+
+### Completed
+- **Display Tags on ServerList Cards** - Show assigned tags visually on server entries:
+  - Tag chips with background colors below server info
+  - Fetches tags for all entries on mount via `getEntryTags`
+  - Parallel tag fetching for performance
+  - Contrast-aware text color for readability
+
+- **Updated ServerList Component** (`src/components/ServerList.tsx`):
+  - Added `entryTags` state with Map<string, Tag[]> for per-entry tags
+  - useEffect fetches tags in parallel for all entries
+  - Tag chips rendered conditionally when entry has tags
+  - Uses `getContrastColor()` for readable text on colored backgrounds
+
+- **Added Tag Chip Styles** (`src/components/ServerList.css`):
+  - `.server-tags` container with flex-wrap
+  - `.server-tag-chip` compact pill-style chips
+  - Max-width with text ellipsis for long tag names
+  - Consistent spacing with design system
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Monitoring service** - Server health monitoring
+2. **Integrate audit logging** - Add logging to existing operations
+3. **RDP/VNC support** - Remote desktop protocols
+
+### Tech Notes
+- Tags fetched via existing `getEntryTags(entryId)` API
+- Parallel Promise.all for efficient bulk fetching
+- Tags re-fetch when entries array changes
+- Chip max-width prevents layout overflow with long names
+
+---
+
 ## Session 25 - 2026-01-10
 
 ### Completed

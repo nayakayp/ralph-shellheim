@@ -1,6 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { Entry } from "../types/entry";
+import type { Tag } from "../types/tag";
+import { getContrastColor } from "../types/tag";
+import { getEntryTags } from "../lib/api";
 import "./ServerList.css";
 
 interface ServerListProps {
@@ -24,6 +27,34 @@ export function ServerList({
 }: ServerListProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [entryTags, setEntryTags] = useState<Map<string, Tag[]>>(new Map());
+
+  // Fetch tags for all entries
+  useEffect(() => {
+    async function fetchAllTags() {
+      const tagsMap = new Map<string, Tag[]>();
+      
+      await Promise.all(
+        entries.map(async (entry) => {
+          try {
+            const tags = await getEntryTags(entry.id);
+            tagsMap.set(entry.id, tags);
+          } catch (err) {
+            console.error(`Failed to fetch tags for entry ${entry.id}:`, err);
+            tagsMap.set(entry.id, []);
+          }
+        })
+      );
+      
+      setEntryTags(tagsMap);
+    }
+    
+    if (entries.length > 0) {
+      fetchAllTags();
+    } else {
+      setEntryTags(new Map());
+    }
+  }, [entries]);
 
   const getProtocolIcon = (protocol?: string) => {
     switch (protocol) {
@@ -129,6 +160,22 @@ export function ServerList({
             {entry.description && (
               <div className="server-description">{entry.description}</div>
             )}
+            {entryTags.get(entry.id)?.length ? (
+              <div className="server-tags">
+                {entryTags.get(entry.id)?.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="server-tag-chip"
+                    style={{
+                      backgroundColor: tag.color || '#6b7280',
+                      color: getContrastColor(tag.color || '#6b7280'),
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
           
           <div className="server-actions" onClick={(e) => e.stopPropagation()}>

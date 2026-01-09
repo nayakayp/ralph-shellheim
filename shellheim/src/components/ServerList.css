@@ -177,3 +177,27 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-muted);
 }
+
+/* ---------------------------------------------------------------------------
+   SERVER TAGS
+   --------------------------------------------------------------------------- */
+.server-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.server-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
