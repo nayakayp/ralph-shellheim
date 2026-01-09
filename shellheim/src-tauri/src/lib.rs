@@ -110,6 +110,8 @@ pub fn run() {
             api::sftp::sftp_rename,
             api::sftp::sftp_get_session,
             api::sftp::list_sftp_sessions,
+            api::sftp::sftp_download_file,
+            api::sftp::sftp_upload_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

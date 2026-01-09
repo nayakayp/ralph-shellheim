@@ -178,6 +178,18 @@
   color: #f87171;
 }
 
+.fb-action-btn.fb-action-upload:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.fb-action-btn.fb-action-download:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
 .fb-action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

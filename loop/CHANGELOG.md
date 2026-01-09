@@ -4,6 +4,72 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 13 - 2026-01-09
+
+### Completed
+- **Implemented File Upload/Download with Progress** - Full transfer system with real-time progress tracking:
+  - Upload files from local filesystem to remote server via SFTP
+  - Download remote files to local filesystem with save dialog
+  - Real-time progress events emitted via Tauri event system
+  - 32KB chunk-based streaming for progress granularity
+
+- **Built TransferProgress Component** (`TransferProgress.tsx`):
+  - Floating panel showing active/completed/failed transfers
+  - Progress bar with percentage and byte count display
+  - Color-coded status indicators (active=purple, completed=green, error=red)
+  - Dismiss individual transfers or clear all completed
+  - Uses Tauri event listener for `sftp_transfer_progress` events
+  - `useTransferProgress` hook for managing transfer state
+
+- **Added SFTP Backend Transfer Commands** (`src-tauri/src/api/sftp.rs`):
+  - `sftp_download_file`: Download remote file to local path with progress
+  - `sftp_upload_files`: Upload multiple local files to remote directory
+  - `TransferProgress` struct emitted as Tauri events
+  - Unique `transfer_id` per transfer using UUID
+
+- **Extended SFTP Client** (`src-tauri/src/sftp/client.rs`):
+  - `read_file_with_progress`: Streams remote file to local in chunks
+  - `write_file_with_progress`: Streams local file to remote in chunks
+  - `TRANSFER_CHUNK_SIZE` constant (32KB)
+  - Uses tokio fs for local file operations
+
+- **Updated FileBrowser Component**:
+  - Added Upload button (green hover) - opens native file picker
+  - Added Download button (blue hover) - opens native save dialog
+  - Integrated with TransferProgress panel
+  - Uses `@tauri-apps/plugin-dialog` for native dialogs
+
+- **Added Frontend Types** (`src/types/sftp.ts`):
+  - `DownloadRequest`, `UploadFilesRequest` interfaces
+  - `TransferProgress` event payload type
+  - `ActiveTransfer` state type for UI
+
+- **Added API Functions** (`src/lib/api.ts`):
+  - `sftpDownloadFile(request)` - returns transfer_id
+  - `sftpUploadFiles(request)` - returns transfer_id
+
+- **Styling** (`FileBrowser.css`, `TransferProgress.css`):
+  - Upload button: green hover state
+  - Download button: blue hover state
+  - Transfer panel: glassmorphism design matching Tokyo Night theme
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Folder drag-and-drop** - Reorder folders and move entries
+2. **Terminal buffer restoration** - Write hibernated buffer to terminal on resume
+3. **Port forwarding** - SSH tunnel support
+4. **Directory download** - Download folders as ZIP
+
+### Tech Notes
+- Transfers emit progress events every 32KB chunk
+- Multiple simultaneous transfers supported
+- Transfer state managed in React via `useTransferProgress` hook
+- Directory download not yet supported (files only)
+- Progress panel auto-clears completed transfers on "Clear" click
+
+---
+
 ## Session 12 - 2026-01-09
 
 ### Completed

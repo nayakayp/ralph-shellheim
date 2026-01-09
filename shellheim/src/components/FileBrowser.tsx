@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { open, save } from '@tauri-apps/plugin-dialog';
 import type { FileEntry, SftpSessionInfo } from '../types/sftp';
 import { formatFileSize, formatPermissions, getFileIcon } from '../types/sftp';
 import {
@@ -8,7 +9,10 @@ import {
   sftpDeleteDir,
   sftpRename,
   disconnectSftp,
+  sftpDownloadFile,
+  sftpUploadFiles,
 } from '../lib/api';
+import { TransferProgress, useTransferProgress } from './TransferProgress';
 import './FileBrowser.css';
 
 interface FileBrowserProps {
@@ -27,6 +31,9 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
   const [newFolderName, setNewFolderName] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renamingValue, setRenamingValue] = useState('');
+  
+  // Transfer progress tracking
+  const { transfers, addTransfer, clearTransfer, clearCompleted } = useTransferProgress();
 
   // Load directory contents
   const loadDirectory = useCallback(async (path: string) => {
@@ -188,6 +195,79 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
     }
   };
 
+  // Upload files
+  const handleUpload = async () => {
+    try {
+      const selected = await open({
+        multiple: true,
+        directory: false,
+        title: 'Select files to upload',
+      });
+      
+      if (!selected || (Array.isArray(selected) && selected.length === 0)) {
+        return; // User cancelled
+      }
+
+      const paths = Array.isArray(selected) ? selected : [selected];
+      
+      // Start upload
+      const transferId = await sftpUploadFiles({
+        session_id: session.session_id,
+        local_paths: paths,
+        remote_dir: currentPath,
+      });
+      
+      // Track the transfer
+      const fileName = paths.length === 1 
+        ? paths[0].split('/').pop() || 'file'
+        : `${paths.length} files`;
+      addTransfer(transferId, fileName, 'upload');
+      
+      // Refresh after a short delay to see new files
+      setTimeout(() => handleRefresh(), 1000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload failed');
+    }
+  };
+
+  // Download selected files
+  const handleDownload = async () => {
+    if (selectedItems.size === 0) return;
+
+    // Get selected file entries (not directories)
+    const filesToDownload = entries.filter(
+      e => selectedItems.has(e.path) && !e.is_dir
+    );
+
+    if (filesToDownload.length === 0) {
+      setError('Select files to download (directories not supported yet)');
+      return;
+    }
+
+    try {
+      for (const file of filesToDownload) {
+        // Ask where to save
+        const savePath = await save({
+          defaultPath: file.name,
+          title: `Save ${file.name}`,
+        });
+
+        if (!savePath) continue; // User cancelled
+
+        // Start download
+        const transferId = await sftpDownloadFile({
+          session_id: session.session_id,
+          remote_path: file.path,
+          local_path: savePath,
+        });
+
+        addTransfer(transferId, file.name, 'download');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Download failed');
+    }
+  };
+
   // Format timestamp
   const formatTime = (timestamp: number | null) => {
     if (!timestamp) return '-';
@@ -261,6 +341,29 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
         </div>
 
         <div className="fb-actions">
+          <button 
+            onClick={handleUpload} 
+            title="Upload files"
+            className="fb-action-btn fb-action-upload"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </button>
+          <button 
+            onClick={handleDownload} 
+            disabled={selectedItems.size === 0}
+            title="Download selected"
+            className="fb-action-btn fb-action-download"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
           <button 
             onClick={() => setShowNewFolderInput(true)} 
             title="New folder"
@@ -438,6 +541,13 @@ export function FileBrowser({ session, onClose }: FileBrowserProps) {
         <span>{entries.length} items</span>
         {selectedItems.size > 0 && <span>{selectedItems.size} selected</span>}
       </div>
+
+      {/* Transfer progress overlay */}
+      <TransferProgress
+        transfers={transfers}
+        onClear={clearTransfer}
+        onClearAll={clearCompleted}
+      />
     </div>
   );
 }

@@ -6,11 +6,13 @@ use crate::api::identities::get_decrypted_identity;
 use crate::api::known_hosts::lookup_known_host;
 use crate::db;
 use crate::models::EntryRow;
-use crate::sftp::{self, FileEntry, FileStats, SftpSessionManager};
+use crate::sftp::{self, FileEntry, FileStats, SftpSessionManager, TransferProgressUpdate};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use tauri::command;
-use tracing::info;
+use std::path::Path;
+use tauri::{command, AppHandle, Emitter};
+use tokio::sync::mpsc;
+use tracing::{debug, error, info};
 
 /// SFTP session info returned to frontend
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -445,4 +447,298 @@ pub async fn list_sftp_sessions(token: String) -> Result<Vec<SftpSessionInfo>, S
             connected_at: s.created_at.to_rfc3339(),
         })
         .collect())
+}
+
+// ============================================================================
+// File Transfer with Progress
+// ============================================================================
+
+/// Request for downloading a file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadRequest {
+    pub session_id: String,
+    pub remote_path: String,
+    pub local_path: String,
+}
+
+/// Request for uploading multiple files
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UploadFilesRequest {
+    pub session_id: String,
+    pub local_paths: Vec<String>,
+    pub remote_dir: String,
+}
+
+/// Progress event emitted during file transfers
+#[derive(Debug, Clone, Serialize)]
+pub struct TransferProgress {
+    pub transfer_id: String,
+    pub file_name: String,
+    pub bytes_transferred: u64,
+    pub total_bytes: u64,
+    pub percent: f32,
+    pub status: String, // "transferring", "completed", "error"
+    pub error: Option<String>,
+}
+
+/// Download a remote file to local path with progress events
+#[command]
+pub async fn sftp_download_file(
+    app: AppHandle,
+    token: String,
+    request: DownloadRequest,
+) -> Result<String, String> {
+    let transfer_id = uuid::Uuid::new_v4().to_string();
+    info!(
+        "SFTP download request [{}]: {} -> {}",
+        transfer_id, request.remote_path, request.local_path
+    );
+
+    let manager = SftpSessionManager::instance();
+
+    // Verify session ownership
+    let session = manager
+        .get_session(&request.session_id)
+        .ok_or_else(|| "Session not found".to_string())?;
+
+    let account_id = get_account_id_from_token(&token).await?;
+    if session.account_id != account_id {
+        return Err("Session not found".to_string());
+    }
+
+    // Extract file name for progress events
+    let file_name = Path::new(&request.remote_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown")
+        .to_string();
+
+    // Create progress channel
+    let (progress_tx, mut progress_rx) = mpsc::channel::<TransferProgressUpdate>(32);
+
+    // Clone values for the progress emitter task
+    let app_clone = app.clone();
+    let transfer_id_clone = transfer_id.clone();
+    let file_name_clone = file_name.clone();
+
+    // Spawn task to emit progress events
+    let progress_task = tokio::spawn(async move {
+        while let Some(update) = progress_rx.recv().await {
+            let percent = if update.total_bytes > 0 {
+                (update.bytes_transferred as f64 / update.total_bytes as f64 * 100.0) as f32
+            } else {
+                0.0
+            };
+
+            let progress = TransferProgress {
+                transfer_id: transfer_id_clone.clone(),
+                file_name: file_name_clone.clone(),
+                bytes_transferred: update.bytes_transferred,
+                total_bytes: update.total_bytes,
+                percent,
+                status: "transferring".to_string(),
+                error: None,
+            };
+
+            if let Err(e) = app_clone.emit("sftp_transfer_progress", &progress) {
+                error!("Failed to emit progress event: {}", e);
+            }
+        }
+    });
+
+    // Perform the download
+    let result = {
+        let conn_guard = session.connection.lock().await;
+        let conn = conn_guard
+            .as_ref()
+            .ok_or_else(|| "Connection not active".to_string())?;
+
+        conn.read_file_with_progress(&request.remote_path, &request.local_path, progress_tx)
+            .await
+    };
+
+    // Wait for progress task to complete
+    let _ = progress_task.await;
+
+    // Emit final status
+    match &result {
+        Ok(()) => {
+            // Get final file size for completed event
+            let total_bytes = tokio::fs::metadata(&request.local_path)
+                .await
+                .map(|m| m.len())
+                .unwrap_or(0);
+
+            let progress = TransferProgress {
+                transfer_id: transfer_id.clone(),
+                file_name,
+                bytes_transferred: total_bytes,
+                total_bytes,
+                percent: 100.0,
+                status: "completed".to_string(),
+                error: None,
+            };
+            let _ = app.emit("sftp_transfer_progress", &progress);
+            debug!("Download completed: {}", transfer_id);
+        }
+        Err(e) => {
+            let progress = TransferProgress {
+                transfer_id: transfer_id.clone(),
+                file_name,
+                bytes_transferred: 0,
+                total_bytes: 0,
+                percent: 0.0,
+                status: "error".to_string(),
+                error: Some(e.clone()),
+            };
+            let _ = app.emit("sftp_transfer_progress", &progress);
+            error!("Download failed [{}]: {}", transfer_id, e);
+        }
+    }
+
+    result.map(|_| transfer_id)
+}
+
+/// Upload local files to remote directory with progress events
+#[command]
+pub async fn sftp_upload_files(
+    app: AppHandle,
+    token: String,
+    request: UploadFilesRequest,
+) -> Result<Vec<String>, String> {
+    info!(
+        "SFTP upload request: {} files to {}",
+        request.local_paths.len(),
+        request.remote_dir
+    );
+
+    let manager = SftpSessionManager::instance();
+
+    // Verify session ownership
+    let session = manager
+        .get_session(&request.session_id)
+        .ok_or_else(|| "Session not found".to_string())?;
+
+    let account_id = get_account_id_from_token(&token).await?;
+    if session.account_id != account_id {
+        return Err("Session not found".to_string());
+    }
+
+    let mut transfer_ids = Vec::new();
+    let mut errors = Vec::new();
+
+    // Process files sequentially to avoid overwhelming the connection
+    for local_path in &request.local_paths {
+        let transfer_id = uuid::Uuid::new_v4().to_string();
+        transfer_ids.push(transfer_id.clone());
+
+        // Extract file name
+        let file_name = Path::new(local_path)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("unknown")
+            .to_string();
+
+        // Build remote path
+        let remote_path = format!(
+            "{}/{}",
+            request.remote_dir.trim_end_matches('/'),
+            file_name
+        );
+
+        info!(
+            "SFTP upload [{}]: {} -> {}",
+            transfer_id, local_path, remote_path
+        );
+
+        // Create progress channel
+        let (progress_tx, mut progress_rx) = mpsc::channel::<TransferProgressUpdate>(32);
+
+        // Clone values for the progress emitter task
+        let app_clone = app.clone();
+        let transfer_id_clone = transfer_id.clone();
+        let file_name_clone = file_name.clone();
+
+        // Spawn task to emit progress events
+        let progress_task = tokio::spawn(async move {
+            while let Some(update) = progress_rx.recv().await {
+                let percent = if update.total_bytes > 0 {
+                    (update.bytes_transferred as f64 / update.total_bytes as f64 * 100.0) as f32
+                } else {
+                    0.0
+                };
+
+                let progress = TransferProgress {
+                    transfer_id: transfer_id_clone.clone(),
+                    file_name: file_name_clone.clone(),
+                    bytes_transferred: update.bytes_transferred,
+                    total_bytes: update.total_bytes,
+                    percent,
+                    status: "transferring".to_string(),
+                    error: None,
+                };
+
+                if let Err(e) = app_clone.emit("sftp_transfer_progress", &progress) {
+                    error!("Failed to emit progress event: {}", e);
+                }
+            }
+        });
+
+        // Perform the upload
+        let result = {
+            let conn_guard = session.connection.lock().await;
+            let conn = conn_guard
+                .as_ref()
+                .ok_or_else(|| "Connection not active".to_string())?;
+
+            conn.write_file_with_progress(local_path, &remote_path, progress_tx)
+                .await
+        };
+
+        // Wait for progress task to complete
+        let _ = progress_task.await;
+
+        // Emit final status
+        match &result {
+            Ok(()) => {
+                // Get file size for completed event
+                let total_bytes = tokio::fs::metadata(local_path)
+                    .await
+                    .map(|m| m.len())
+                    .unwrap_or(0);
+
+                let progress = TransferProgress {
+                    transfer_id: transfer_id.clone(),
+                    file_name: file_name.clone(),
+                    bytes_transferred: total_bytes,
+                    total_bytes,
+                    percent: 100.0,
+                    status: "completed".to_string(),
+                    error: None,
+                };
+                let _ = app.emit("sftp_transfer_progress", &progress);
+                debug!("Upload completed: {}", transfer_id);
+            }
+            Err(e) => {
+                let progress = TransferProgress {
+                    transfer_id: transfer_id.clone(),
+                    file_name: file_name.clone(),
+                    bytes_transferred: 0,
+                    total_bytes: 0,
+                    percent: 0.0,
+                    status: "error".to_string(),
+                    error: Some(e.clone()),
+                };
+                let _ = app.emit("sftp_transfer_progress", &progress);
+                error!("Upload failed [{}]: {}", transfer_id, e);
+                errors.push(format!("{}: {}", file_name, e));
+            }
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(transfer_ids)
+    } else {
+        Err(format!("Some uploads failed: {}", errors.join("; ")))
+    }
 }

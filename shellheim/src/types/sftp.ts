@@ -59,6 +59,44 @@ export interface UploadRequest {
   data: number[]; // byte array
 }
 
+// Request to download file with progress
+export interface DownloadRequest {
+  session_id: string;
+  remote_path: string;
+  local_path: string;
+}
+
+// Request to upload files with progress
+export interface UploadFilesRequest {
+  session_id: string;
+  local_paths: string[];
+  remote_dir: string;
+}
+
+// Transfer progress event payload
+export interface TransferProgress {
+  transfer_id: string;
+  file_name: string;
+  bytes_transferred: number;
+  total_bytes: number;
+  percent: number;
+  status: 'transferring' | 'completed' | 'error';
+  error: string | null;
+}
+
+// Active transfer state for UI
+export interface ActiveTransfer {
+  id: string;
+  fileName: string;
+  direction: 'upload' | 'download';
+  bytesTransferred: number;
+  totalBytes: number;
+  percent: number;
+  status: 'transferring' | 'completed' | 'error';
+  error: string | null;
+  startedAt: Date;
+}
+
 // Helper to format file size
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';

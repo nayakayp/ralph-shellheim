@@ -8,8 +8,21 @@ use russh::Disconnect;
 use russh_keys::key::PrivateKeyWithHashAlg;
 use russh_sftp::client::SftpSession;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::sync::Arc;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
+
+/// Chunk size for streaming transfers (32KB)
+pub const TRANSFER_CHUNK_SIZE: usize = 32 * 1024;
+
+/// Progress update during file transfer
+#[derive(Debug, Clone)]
+pub struct TransferProgressUpdate {
+    pub bytes_transferred: u64,
+    pub total_bytes: u64,
+}
 
 /// File entry in a directory listing
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -243,6 +256,165 @@ impl SftpConnection {
             .canonicalize(path)
             .await
             .map_err(|e| format!("Failed to resolve path '{}': {}", path, e))
+    }
+
+    /// Read file with progress updates - streams file in chunks
+    /// Returns a receiver that will receive progress updates during transfer
+    pub async fn read_file_with_progress(
+        &self,
+        remote_path: &str,
+        local_path: &str,
+        progress_tx: mpsc::Sender<TransferProgressUpdate>,
+    ) -> Result<(), String> {
+        debug!(
+            "SFTP streaming download: {} -> {}",
+            remote_path, local_path
+        );
+
+        // Get file size first
+        let metadata = self
+            .sftp
+            .metadata(remote_path)
+            .await
+            .map_err(|e| format!("Failed to get file metadata: {}", e))?;
+
+        let total_bytes = metadata.size.unwrap_or(0);
+
+        // Open remote file for reading
+        let mut remote_file = self
+            .sftp
+            .open(remote_path)
+            .await
+            .map_err(|e| format!("Failed to open remote file '{}': {}", remote_path, e))?;
+
+        // Create local file
+        let local_path = Path::new(local_path);
+        if let Some(parent) = local_path.parent() {
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(|e| format!("Failed to create local directory: {}", e))?;
+        }
+
+        let mut local_file = tokio::fs::File::create(local_path)
+            .await
+            .map_err(|e| format!("Failed to create local file: {}", e))?;
+
+        // Stream in chunks
+        let mut buffer = vec![0u8; TRANSFER_CHUNK_SIZE];
+        let mut bytes_transferred: u64 = 0;
+
+        loop {
+            let bytes_read = remote_file
+                .read(&mut buffer)
+                .await
+                .map_err(|e| format!("Failed to read from remote file: {}", e))?;
+
+            if bytes_read == 0 {
+                break;
+            }
+
+            local_file
+                .write_all(&buffer[..bytes_read])
+                .await
+                .map_err(|e| format!("Failed to write to local file: {}", e))?;
+
+            bytes_transferred += bytes_read as u64;
+
+            // Send progress update (ignore send errors - receiver may have dropped)
+            let _ = progress_tx
+                .send(TransferProgressUpdate {
+                    bytes_transferred,
+                    total_bytes,
+                })
+                .await;
+        }
+
+        // Ensure all data is flushed
+        local_file
+            .flush()
+            .await
+            .map_err(|e| format!("Failed to flush local file: {}", e))?;
+
+        debug!(
+            "SFTP download complete: {} bytes transferred",
+            bytes_transferred
+        );
+        Ok(())
+    }
+
+    /// Write file with progress updates - streams file in chunks
+    /// Returns a receiver that will receive progress updates during transfer
+    pub async fn write_file_with_progress(
+        &self,
+        local_path: &str,
+        remote_path: &str,
+        progress_tx: mpsc::Sender<TransferProgressUpdate>,
+    ) -> Result<(), String> {
+        debug!(
+            "SFTP streaming upload: {} -> {}",
+            local_path, remote_path
+        );
+
+        // Get local file size
+        let local_metadata = tokio::fs::metadata(local_path)
+            .await
+            .map_err(|e| format!("Failed to get local file metadata: {}", e))?;
+
+        let total_bytes = local_metadata.len();
+
+        // Open local file for reading
+        let mut local_file = tokio::fs::File::open(local_path)
+            .await
+            .map_err(|e| format!("Failed to open local file '{}': {}", local_path, e))?;
+
+        // Create remote file
+        let mut remote_file = self
+            .sftp
+            .create(remote_path)
+            .await
+            .map_err(|e| format!("Failed to create remote file '{}': {}", remote_path, e))?;
+
+        // Stream in chunks
+        let mut buffer = vec![0u8; TRANSFER_CHUNK_SIZE];
+        let mut bytes_transferred: u64 = 0;
+
+        loop {
+            let bytes_read = local_file
+                .read(&mut buffer)
+                .await
+                .map_err(|e| format!("Failed to read from local file: {}", e))?;
+
+            if bytes_read == 0 {
+                break;
+            }
+
+            remote_file
+                .write_all(&buffer[..bytes_read])
+                .await
+                .map_err(|e| format!("Failed to write to remote file: {}", e))?;
+
+            bytes_transferred += bytes_read as u64;
+
+            // Send progress update (ignore send errors - receiver may have dropped)
+            let _ = progress_tx
+                .send(TransferProgressUpdate {
+                    bytes_transferred,
+                    total_bytes,
+                })
+                .await;
+        }
+
+        // Ensure all data is flushed
+        remote_file
+            .flush()
+            .await
+            .map_err(|e| format!("Failed to flush remote file: {}", e))?;
+
+        debug!(
+            "SFTP upload complete: {} bytes transferred",
+            bytes_transferred
+        );
+        Ok(())
     }
 
     /// Close the connection

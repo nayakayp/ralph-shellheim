@@ -22,7 +22,7 @@ import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
 import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
-import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest } from "../types/sftp";
+import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest, DownloadRequest, UploadFilesRequest } from "../types/sftp";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -308,4 +308,18 @@ export async function listSftpSessions(): Promise<SftpSessionInfo[]> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<SftpSessionInfo[]>("list_sftp_sessions", { token });
+}
+
+// Download file with progress (returns transfer_id)
+export async function sftpDownloadFile(request: DownloadRequest): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("sftp_download_file", { token, request });
+}
+
+// Upload files with progress (returns transfer_id)
+export async function sftpUploadFiles(request: UploadFilesRequest): Promise<string> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<string>("sftp_upload_files", { token, request });
 }
