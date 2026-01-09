@@ -4,6 +4,51 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 28 - 2026-01-10
+
+### Completed
+- **Implemented Auto-Refresh Monitoring** - Periodic background health checks with UI controls:
+  - Configurable interval options: Off, 30s, 1m, 2m, 5m
+  - Live countdown timer showing next check
+  - Pause/resume toggle for temporary suspension
+  - Preference persisted in localStorage
+
+- **Updated MonitoringPanel Component** (`src/components/MonitoringPanel.tsx`):
+  - Added `refreshInterval`, `countdown`, `isPaused` state management
+  - `handleIntervalChange()` updates interval and persists to localStorage
+  - `togglePause()` suspends/resumes auto-refresh
+  - Timer effect with dual intervals (countdown display + health check)
+  - `formatCountdown()` helper for human-readable time display
+  - Proper cleanup on unmount and interval changes
+
+- **Added Auto-Refresh UI** (new refresh bar below header):
+  - Interval selector buttons with active state styling
+  - Pause/resume button with play/pause icons
+  - Countdown display showing time until next check
+  - Visual states for paused mode
+
+- **Added CSS Styles** (`src/components/MonitoringPanel.css`):
+  - `.monitoring-refresh-bar` container with Tokyo Night theme
+  - `.interval-btn` selectable buttons with active state
+  - `.pause-btn` toggle with paused/active states
+  - `.countdown-display` monospace timer with color coding
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Integrate audit logging** - Add logging to existing operations
+2. **RDP/VNC support** - Remote desktop protocols
+3. **Export/import settings** - Backup and restore configuration
+
+### Tech Notes
+- Uses `setInterval` for both countdown (1s) and health checks (user-selected)
+- Intervals cleared on unmount, pause, or interval change to prevent memory leaks
+- localStorage key: `shellheim_monitoring_interval` 
+- Default interval: 60 seconds (1 minute)
+- Countdown resets after each health check cycle
+
+---
+
 ## Session 27 - 2026-01-10
 
 ### Completed
@@ -1504,7 +1549,7 @@ shellheim/
 
 ### Phase 3: Advanced Features (Future)
 - [x] Snippets and scripts
-- [ ] Monitoring service
+- [x] Monitoring service (with auto-refresh)
 - [x] Audit logging
 - [x] Tags and search
 - [x] Session recording

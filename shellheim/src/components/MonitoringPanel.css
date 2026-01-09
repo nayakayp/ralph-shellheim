@@ -303,3 +303,106 @@
     opacity: 0.5;
   }
 }
+
+/* Auto-refresh bar */
+.monitoring-refresh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(40, 40, 56, 0.6);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.refresh-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.refresh-label svg {
+  color: #7aa2f7;
+}
+
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refresh-intervals {
+  display: flex;
+  gap: 4px;
+}
+
+.interval-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(45, 45, 62, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 4px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.interval-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #e2e8f0;
+}
+
+.interval-btn.active {
+  background: rgba(122, 162, 247, 0.2);
+  border-color: rgba(122, 162, 247, 0.5);
+  color: #7aa2f7;
+}
+
+.pause-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(45, 45, 62, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pause-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #e2e8f0;
+}
+
+.pause-btn.paused {
+  background: rgba(158, 206, 106, 0.15);
+  border-color: rgba(158, 206, 106, 0.4);
+  color: #9ece6a;
+}
+
+.countdown-display {
+  min-width: 50px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(122, 162, 247, 0.1);
+  border: 1px solid rgba(122, 162, 247, 0.25);
+  border-radius: 4px;
+  color: #7aa2f7;
+  text-align: center;
+}
+
+.countdown-display.paused {
+  background: rgba(86, 95, 137, 0.2);
+  border-color: rgba(86, 95, 137, 0.4);
+  color: #565f89;
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Heartbeat,
   X,
@@ -8,12 +8,26 @@ import {
   Warning,
   Question,
   Spinner,
+  Timer,
+  Pause,
+  Play,
 } from "@phosphor-icons/react";
 import type { HealthCheckResult, MonitoringStats, HealthStatus } from "../types/monitoring";
 import { STATUS_COLORS, STATUS_LABELS, formatResponseTime, formatRelativeTime } from "../types/monitoring";
 import type { Entry } from "../types/entry";
 import { listEntries, checkEntriesHealth, getCachedHealth, getMonitoringStats } from "../lib/api";
 import "./MonitoringPanel.css";
+
+// Refresh interval options in seconds
+const REFRESH_INTERVALS = [
+  { label: "Off", value: 0 },
+  { label: "30s", value: 30 },
+  { label: "1m", value: 60 },
+  { label: "2m", value: 120 },
+  { label: "5m", value: 300 },
+] as const;
+
+const STORAGE_KEY = "shellheim_monitoring_interval";
 
 interface MonitoringPanelProps {
   isOpen: boolean;
@@ -27,6 +41,16 @@ export function MonitoringPanel({ isOpen, onClose }: MonitoringPanelProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState("");
+  
+  // Auto-refresh state
+  const [refreshInterval, setRefreshInterval] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? parseInt(saved, 10) : 60; // Default 1 minute
+  });
+  const [countdown, setCountdown] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load entries and cached health data
   const loadData = useCallback(async () => {
@@ -81,11 +105,66 @@ export function MonitoringPanel({ isOpen, onClose }: MonitoringPanelProps) {
     }
   };
 
+  // Handle interval change
+  const handleIntervalChange = (newInterval: number) => {
+    setRefreshInterval(newInterval);
+    localStorage.setItem(STORAGE_KEY, String(newInterval));
+    setCountdown(newInterval);
+    setIsPaused(false);
+  };
+
+  // Toggle pause/resume
+  const togglePause = () => {
+    setIsPaused(!isPaused);
+  };
+
+  // Auto-refresh timer effect
+  useEffect(() => {
+    // Clear existing timers
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+
+    // Don't run if panel closed, no interval, or paused
+    if (!isOpen || refreshInterval === 0 || isPaused) {
+      return;
+    }
+
+    // Reset countdown
+    setCountdown(refreshInterval);
+
+    // Countdown timer (updates every second)
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          return refreshInterval; // Reset after reaching 0
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Health check timer
+    intervalRef.current = setInterval(() => {
+      if (!isChecking) {
+        checkAllHealth();
+      }
+    }, refreshInterval * 1000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [isOpen, refreshInterval, isPaused, isChecking]);
+
+  // Initial data load
   useEffect(() => {
     if (isOpen) {
       loadData();
+      // Reset countdown when opening
+      if (refreshInterval > 0) {
+        setCountdown(refreshInterval);
+      }
     }
-  }, [isOpen, loadData]);
+  }, [isOpen, loadData, refreshInterval]);
 
   // Get status icon component
   const getStatusIcon = (status: HealthStatus) => {
@@ -104,6 +183,16 @@ export function MonitoringPanel({ isOpen, onClose }: MonitoringPanelProps) {
   };
 
   if (!isOpen) return null;
+
+  // Format countdown display
+  const formatCountdown = (secs: number) => {
+    if (secs >= 60) {
+      const mins = Math.floor(secs / 60);
+      const remainSecs = secs % 60;
+      return remainSecs > 0 ? `${mins}m ${remainSecs}s` : `${mins}m`;
+    }
+    return `${secs}s`;
+  };
 
   return (
     <div className="monitoring-panel">
@@ -131,6 +220,41 @@ export function MonitoringPanel({ isOpen, onClose }: MonitoringPanelProps) {
           >
             <X size={18} />
           </button>
+        </div>
+      </div>
+
+      {/* Auto-refresh controls */}
+      <div className="monitoring-refresh-bar">
+        <div className="refresh-label">
+          <Timer size={16} />
+          <span>Auto-refresh</span>
+        </div>
+        <div className="refresh-controls">
+          <div className="refresh-intervals">
+            {REFRESH_INTERVALS.map(({ label, value }) => (
+              <button
+                key={value}
+                className={`interval-btn ${refreshInterval === value ? "active" : ""}`}
+                onClick={() => handleIntervalChange(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {refreshInterval > 0 && (
+            <>
+              <button
+                className={`pause-btn ${isPaused ? "paused" : ""}`}
+                onClick={togglePause}
+                title={isPaused ? "Resume" : "Pause"}
+              >
+                {isPaused ? <Play size={14} weight="fill" /> : <Pause size={14} weight="fill" />}
+              </button>
+              <div className={`countdown-display ${isPaused ? "paused" : ""}`}>
+                {isPaused ? "Paused" : formatCountdown(countdown)}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
