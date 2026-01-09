@@ -1,4 +1,9 @@
+import { useState, useEffect, useCallback } from "react";
 import type { Account } from "../types/auth";
+import type { Entry, CreateEntryRequest } from "../types/entry";
+import { listEntries, createEntry, deleteEntry } from "../lib/api";
+import { ServerList } from "./ServerList";
+import { AddServerModal } from "./AddServerModal";
 import "./Dashboard.css";
 
 interface DashboardProps {
@@ -7,6 +12,53 @@ interface DashboardProps {
 }
 
 export function Dashboard({ account, onLogout }: DashboardProps) {
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadEntries = useCallback(async () => {
+    try {
+      setError("");
+      const data = await listEntries();
+      setEntries(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load servers");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
+
+  const handleAddServer = async (request: CreateEntryRequest) => {
+    const newEntry = await createEntry(request);
+    setEntries((prev) => [...prev, newEntry]);
+  };
+
+  const handleConnect = (entry: Entry) => {
+    // TODO: Implement SSH connection
+    console.log("Connect to:", entry.name);
+  };
+
+  const handleEdit = (entry: Entry) => {
+    // TODO: Implement edit modal
+    console.log("Edit:", entry.name);
+  };
+
+  const handleDelete = async (entry: Entry) => {
+    if (!confirm(`Delete "${entry.name}"?`)) return;
+    
+    try {
+      await deleteEntry(entry.id);
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete server");
+    }
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -37,26 +89,63 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         </div>
       </header>
 
-      <main className="dashboard-main">
-        <div className="empty-state">
-          <div className="empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-          </div>
-          <h2>No servers yet</h2>
-          <p>Add your first SSH server to get started</p>
-          <button className="add-server-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Server
-          </button>
+      <div className="dashboard-toolbar">
+        <div className="toolbar-left">
+          <h1>Servers</h1>
+          <span className="server-count">{entries.length}</span>
         </div>
+        <button className="add-btn" onClick={() => setShowAddModal(true)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add Server
+        </button>
+      </div>
+
+      <main className="dashboard-main">
+        {error && <div className="dashboard-error">{error}</div>}
+        
+        {isLoading ? (
+          <div className="loading-state">
+            <div className="spinner" />
+            <p>Loading servers...</p>
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+            </div>
+            <h2>No servers yet</h2>
+            <p>Add your first SSH server to get started</p>
+            <button className="add-server-btn" onClick={() => setShowAddModal(true)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Server
+            </button>
+          </div>
+        ) : (
+          <ServerList
+            entries={entries}
+            onConnect={handleConnect}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
       </main>
+
+      {showAddModal && (
+        <AddServerModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddServer}
+        />
+      )}
     </div>
   );
 }

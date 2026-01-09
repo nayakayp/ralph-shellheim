@@ -58,6 +58,7 @@ pub fn run() {
             
             // Entry/Server commands
             api::entries::list_entries,
+            api::entries::get_entry,
             api::entries::create_entry,
             api::entries::update_entry,
             api::entries::delete_entry,

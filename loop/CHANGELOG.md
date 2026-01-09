@@ -4,6 +4,56 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 3 - 2025-01-09
+
+### Completed
+- **Implemented Entry CRUD backend** (`src-tauri/src/api/entries.rs`):
+  - `list_entries`: Fetch all servers for authenticated user, optional folder filtering
+  - `get_entry`: Retrieve single entry by ID with ownership check
+  - `create_entry`: Create server with auto-incrementing sort_order
+  - `update_entry`: Partial updates with ownership validation
+  - `delete_entry`: Remove entry with ownership check
+  - Token-to-account helper function for session validation
+
+- **Created frontend Entry types** (`src/types/entry.ts`):
+  - Entry, CreateEntryRequest, UpdateEntryRequest interfaces
+  - Protocol type union and default port mappings
+
+- **Added Entry API functions** (`src/lib/api.ts`):
+  - listEntries, getEntry, createEntry, updateEntry, deleteEntry
+  - All functions auto-inject stored auth token
+
+- **Built AddServerModal component**:
+  - Form with name, host, port, protocol, description fields
+  - Protocol selector auto-updates default port
+  - Glassmorphism design matching auth pages
+  - Loading states and validation
+
+- **Built ServerList component**:
+  - Server cards with protocol icons and status indicators
+  - Hover actions: edit/delete buttons
+  - Click-to-connect interaction (stub for SSH)
+
+- **Updated Dashboard**:
+  - Toolbar with server count and "Add Server" button
+  - Server list integration with CRUD operations
+  - Loading spinner and error states
+  - Empty state with call-to-action
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Implement Identity management** - SSH keys and credentials storage
+2. **Build EditServerModal** - Edit existing server entries
+3. **Add Folder management** - Organize servers into folders
+
+### Tech Notes
+- Entry ownership enforced via account_id check on all operations
+- sort_order auto-increments based on existing entries in folder
+- Protocol defaults: SSH/SFTP=22, RDP=3389, VNC=5900, Telnet=23
+
+---
+
 ## Session 2 - 2025-01-09
 
 ### Completed
@@ -111,11 +161,11 @@ shellheim/
 ## Feature Parity Tracking
 
 ### Phase 1: Foundation (Target: Session 2-5)
-- [ ] Account management (create, login, logout, 2FA)
-- [ ] Entry/server CRUD
+- [x] Account management (create, login, logout, 2FA)
+- [x] Entry/server CRUD
 - [ ] Identity management with encryption
 - [ ] Folder organization
-- [ ] Basic React UI shell
+- [x] Basic React UI shell
 
 ### Phase 2: SSH Core (Target: Session 6-15)
 - [ ] SSH terminal connections via russh

@@ -1,6 +1,7 @@
 // Tauri API bindings
 import { invoke } from "@tauri-apps/api/core";
 import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from "../types/auth";
+import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -62,4 +63,35 @@ export async function getCurrentUser(): Promise<Account | null> {
     clearAuth();
     return null;
   }
+}
+
+// Entry/Server API
+export async function listEntries(folderId?: string): Promise<Entry[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Entry[]>("list_entries", { token, folderId });
+}
+
+export async function getEntry(entryId: string): Promise<Entry> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Entry>("get_entry", { token, entryId });
+}
+
+export async function createEntry(request: CreateEntryRequest): Promise<Entry> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Entry>("create_entry", { token, request });
+}
+
+export async function updateEntry(entryId: string, request: UpdateEntryRequest): Promise<Entry> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Entry>("update_entry", { token, entryId, request });
+}
+
+export async function deleteEntry(entryId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_entry", { token, entryId });
 }
