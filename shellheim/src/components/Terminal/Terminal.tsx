@@ -41,6 +41,10 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
       return;
     }
     isInitializedRef.current = true;
+    
+    // Track if this effect instance has been cleaned up
+    let isCleanedUp = false;
+    
     console.log(`[Terminal] Initializing xterm for ${sessionId}`);
 
     const xterm = new XTerm({
@@ -134,20 +138,36 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
 
     const setupListeners = async () => {
       console.log(`[Terminal] Setting up listeners for session: ${sessionId}`);
-      dataUnlistenRef.current = await listen<SshDataEvent>(`ssh-data-${sessionId}`, (event) => {
+      
+      const dataUnlisten = await listen<SshDataEvent>(`ssh-data-${sessionId}`, (event) => {
         console.log(`[Terminal] Received data for session ${sessionId}:`, event.payload.data.length, "chars");
-        if (xtermRef.current) {
+        if (xtermRef.current && !isCleanedUp) {
           xtermRef.current.write(event.payload.data);
         }
       });
+      
+      // If cleanup happened while we were awaiting, immediately unlisten
+      if (isCleanedUp) {
+        dataUnlisten();
+        return;
+      }
+      dataUnlistenRef.current = dataUnlisten;
 
-      closeUnlistenRef.current = await listen<SshCloseEvent>(`ssh-close-${sessionId}`, (event) => {
+      const closeUnlisten = await listen<SshCloseEvent>(`ssh-close-${sessionId}`, (event) => {
         console.log(`[Terminal] Session closed: ${sessionId}`, event.payload.reason);
-        if (xtermRef.current) {
+        if (xtermRef.current && !isCleanedUp) {
           xtermRef.current.write(`\r\n\x1b[31m[Connection closed: ${event.payload.reason}]\x1b[0m\r\n`);
         }
         setTimeout(onClose, 2000);
       });
+      
+      // If cleanup happened while we were awaiting, immediately unlisten
+      if (isCleanedUp) {
+        closeUnlisten();
+        return;
+      }
+      closeUnlistenRef.current = closeUnlisten;
+      
       console.log(`[Terminal] Listeners set up for session: ${sessionId}`);
     };
 
@@ -166,6 +186,7 @@ export default function Terminal({ sessionId, host, isActive, initialBuffer, onC
 
     return () => {
       console.log(`[Terminal] Cleaning up xterm for ${sessionId}`);
+      isCleanedUp = true;
       window.removeEventListener("resize", handleResize);
       if (dataUnlistenRef.current) {
         dataUnlistenRef.current();
