@@ -246,7 +246,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       const terminalRef = terminalRefs.current.get(sessionId);
       const terminalBuffer = terminalRef?.getBuffer?.();
       
-      const hibernated = await hibernateSession({
+      await hibernateSession({
         sessionId,
         terminalBuffer,
       });
@@ -262,8 +262,9 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         return newSessions;
       });
       
-      // Add to hibernated sessions
-      setHibernatedSessions((prev) => [hibernated, ...prev]);
+      // Refetch hibernated sessions list
+      const updatedHibernated = await listHibernatedSessions();
+      setHibernatedSessions(updatedHibernated);
       
       // Clean up terminal ref
       terminalRefs.current.delete(sessionId);

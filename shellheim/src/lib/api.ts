@@ -2,6 +2,11 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 
 // Check if running in Tauri context
+declare global {
+  interface Window {
+    __TAURI_INTERNALS__?: unknown;
+  }
+}
 const isTauri = typeof window !== "undefined" && window.__TAURI_INTERNALS__;
 
 // Wrapper that throws helpful error when not in Tauri
@@ -16,7 +21,7 @@ import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/ent
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
-import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
+import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
