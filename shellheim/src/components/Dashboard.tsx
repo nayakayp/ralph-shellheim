@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
+import type { SftpSessionInfo } from "../types/sftp";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp } from "../lib/api";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
@@ -15,6 +16,7 @@ import { HostKeyDialog } from "./HostKeyDialog";
 import { KnownHostsPanel } from "./KnownHostsPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
+import { FileBrowser } from "./FileBrowser";
 import "./Dashboard.css";
 
 interface DashboardProps {
@@ -37,9 +39,13 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   // Multiple SSH sessions state
   const [sessions, setSessions] = useState<SshSessionInfo[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeTabType, setActiveTabType] = useState<"ssh" | "sftp">("ssh");
   const [hibernatedSessions, setHibernatedSessions] = useState<HibernatedSession[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showServerPanel, setShowServerPanel] = useState(false);
+  
+  // SFTP sessions state
+  const [sftpSessions, setSftpSessions] = useState<SftpSessionInfo[]>([]);
   
   // Terminal refs for extracting buffer during hibernation
   const terminalRefs = useRef<Map<string, { getBuffer: () => string }>>(new Map());
@@ -159,6 +165,63 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     }
   };
 
+  const handleConnectSftp = async (entry: Entry) => {
+    if (isConnecting) return;
+    
+    // Check if entry has an identity
+    if (!entry.identity_ids || entry.identity_ids.length === 0) {
+      alert("This server has no credentials configured. Please edit it and add an identity first.");
+      setEditingEntry(entry);
+      return;
+    }
+    
+    setIsConnecting(true);
+    setError("");
+    
+    try {
+      const session = await connectSftp({
+        entry_id: entry.id,
+      });
+      
+      setSftpSessions((prev) => [...prev, session]);
+      setActiveSessionId(session.session_id);
+      setActiveTabType("sftp");
+      setShowServerPanel(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to connect";
+      setError(`SFTP connection failed: ${message}`);
+      console.error("SFTP connect error:", err);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleCloseSftpTab = async (sessionId: string) => {
+    try {
+      await disconnectSftp(sessionId);
+    } catch (err) {
+      console.error("Error disconnecting SFTP:", err);
+    }
+    
+    setSftpSessions((prev) => {
+      const newSessions = prev.filter((s) => s.session_id !== sessionId);
+      
+      // If closing the active tab, switch to another
+      if (activeSessionId === sessionId && activeTabType === "sftp") {
+        if (newSessions.length > 0) {
+          setActiveSessionId(newSessions[0].session_id);
+        } else if (sessions.length > 0) {
+          setActiveSessionId(sessions[0].session_id);
+          setActiveTabType("ssh");
+        } else {
+          setActiveSessionId(null);
+        }
+      }
+      
+      return newSessions;
+    });
+  };
+
   const handleHostKeyAccept = async () => {
     if (!hostKeyVerification) return;
     
@@ -216,8 +279,9 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     }
   };
 
-  const handleSelectTab = (sessionId: string) => {
+  const handleSelectTab = (sessionId: string, tabType: "ssh" | "sftp") => {
     setActiveSessionId(sessionId);
+    setActiveTabType(tabType);
   };
 
   const handleCloseTab = (sessionId: string) => {
@@ -331,15 +395,18 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   };
 
   // Terminal mode: show terminals if we have any sessions (or hibernated sessions to show in tabs)
-  if (sessions.length > 0 || hibernatedSessions.length > 0) {
+  if (sessions.length > 0 || hibernatedSessions.length > 0 || sftpSessions.length > 0) {
     return (
       <div className="dashboard terminal-mode">
         <TerminalTabs
           sessions={sessions}
+          sftpSessions={sftpSessions}
           activeSessionId={activeSessionId}
+          activeTabType={activeTabType}
           hibernatedSessions={hibernatedSessions}
           onSelectTab={handleSelectTab}
           onCloseTab={handleCloseTab}
+          onCloseSftpTab={handleCloseSftpTab}
           onHibernateTab={handleHibernateTab}
           onResumeSession={handleResumeSession}
           onDeleteHibernated={handleDeleteHibernated}
@@ -351,9 +418,20 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               key={session.session_id}
               sessionId={session.session_id}
               host={`${session.host}:${session.port}`}
-              isActive={session.session_id === activeSessionId}
+              isActive={session.session_id === activeSessionId && activeTabType === "ssh"}
               onClose={() => handleTerminalClose(session.session_id)}
             />
+          ))}
+          {sftpSessions.map((session) => (
+            <div 
+              key={session.session_id}
+              className={`sftp-browser-wrapper ${session.session_id === activeSessionId && activeTabType === "sftp" ? "active" : ""}`}
+            >
+              <FileBrowser
+                session={session}
+                onClose={() => handleCloseSftpTab(session.session_id)}
+              />
+            </div>
           ))}
         </div>
         
@@ -391,6 +469,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                   <ServerList
                     entries={entries}
                     onConnect={handleConnect}
+                    onConnectSftp={handleConnectSftp}
                     onEdit={(entry) => { setShowServerPanel(false); handleEdit(entry); }}
                     onDelete={handleDelete}
                   />
@@ -554,6 +633,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               <ServerList
                 entries={filteredEntries}
                 onConnect={handleConnect}
+                onConnectSftp={handleConnectSftp}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />

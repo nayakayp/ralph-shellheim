@@ -4,6 +4,66 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 12 - 2026-01-09
+
+### Completed
+- **Integrated SFTP File Browser into Tab System** - Full SFTP file management with multi-tab support:
+  - SFTP sessions now appear as dedicated tabs alongside SSH terminal tabs
+  - Blue-themed SFTP tabs with folder icon indicator (📁)
+  - Multiple SFTP sessions can be open simultaneously
+  - Tab switching preserves file browser state
+
+- **Updated TerminalTabs Component**:
+  - Added `sftpSessions` prop for SFTP tab rendering
+  - Added `activeTabType` prop to distinguish SSH vs SFTP active tabs
+  - Added `onCloseSftpTab` callback for SFTP session cleanup
+  - SFTP tabs styled with blue accent (rgba(122, 162, 247, *))
+  - Export `TabSession` type for unified session handling
+
+- **Updated Dashboard for Multi-Tab SFTP**:
+  - Changed from single `sftpSession` to `sftpSessions[]` array
+  - Added `activeTabType` state ("ssh" | "sftp") for tab type tracking
+  - `handleConnectSftp`: Adds SFTP session to array, sets active tab type
+  - `handleCloseSftpTab`: Disconnects, removes from array, switches to next tab
+  - `handleSelectTab`: Updated signature to include tab type parameter
+  - SFTP browsers rendered in terminal area with visibility toggle
+
+- **Added CSS Styles**:
+  - `.sftp-browser-wrapper`: Absolute positioning with visibility toggle
+  - `.terminal-tab.sftp`: Blue-themed tab styling matching Tokyo Night theme
+  - `.tab-indicator.sftp`: Folder icon styling
+
+- **FileBrowser Component** (previously built):
+  - Directory listing with breadcrumb navigation
+  - List and grid view modes
+  - Create folder, delete, rename operations
+  - Multi-select with Ctrl/Cmd click
+  - File permission display (rwxrwxrwx format)
+  - File type icons based on extension
+  - Disconnect button to close SFTP session
+
+- **SFTP Backend** (previously built):
+  - Complete SFTP client using `russh-sftp`
+  - Operations: list_dir, stat, read_file, write_file, delete, mkdir, rename
+  - Session manager with connection pooling
+  - All operations validate account ownership
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **File upload/download UI** - Progress indicators and local file picker
+2. **Folder drag-and-drop** - Reorder folders and move entries
+3. **Terminal buffer restoration** - Write hibernated buffer to terminal on resume
+4. **Port forwarding** - SSH tunnel support
+
+### Tech Notes
+- SFTP uses separate SSH connection (not shared with terminal session)
+- File browser state (current path, selections) persists when switching tabs
+- Host key verification uses same known_hosts as SSH connections
+- Large file transfer uses streaming to avoid memory issues
+
+---
+
 ## Session 11 - 2026-01-09
 
 ### Completed
@@ -615,7 +675,7 @@ shellheim/
 - [x] Terminal UI with xterm.js
 - [x] Multiple terminal tabs
 - [x] Session management (hibernate, resume)
-- [ ] SFTP file management
+- [x] SFTP file management
 - [ ] Port forwarding
 
 ### Phase 3: Advanced Features (Future)

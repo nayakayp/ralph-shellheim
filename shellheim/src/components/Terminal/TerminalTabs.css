@@ -157,3 +157,25 @@
   border-color: rgba(99, 102, 241, 0.3);
   color: #a5b4fc;
 }
+
+/* SFTP tab styles */
+.terminal-tab.sftp {
+  background: rgba(122, 162, 247, 0.08);
+  border: 1px solid rgba(122, 162, 247, 0.15);
+  border-bottom: none;
+}
+
+.terminal-tab.sftp:hover {
+  background: rgba(122, 162, 247, 0.15);
+  color: #7aa2f7;
+}
+
+.terminal-tab.sftp.active {
+  background: rgba(122, 162, 247, 0.2);
+  color: #7aa2f7;
+  border-color: rgba(122, 162, 247, 0.3);
+}
+
+.tab-indicator.sftp {
+  font-size: 12px;
+}

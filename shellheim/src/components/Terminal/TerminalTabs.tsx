@@ -1,12 +1,20 @@
 import type { SshSessionInfo, HibernatedSession } from "../../types/ssh";
+import type { SftpSessionInfo } from "../../types/sftp";
 import "./TerminalTabs.css";
+
+export type TabSession = 
+  | { type: "ssh"; session: SshSessionInfo }
+  | { type: "sftp"; session: SftpSessionInfo };
 
 interface TerminalTabsProps {
   sessions: SshSessionInfo[];
+  sftpSessions?: SftpSessionInfo[];
   activeSessionId: string | null;
+  activeTabType?: "ssh" | "sftp";
   hibernatedSessions?: HibernatedSession[];
-  onSelectTab: (sessionId: string) => void;
+  onSelectTab: (sessionId: string, tabType: "ssh" | "sftp") => void;
   onCloseTab: (sessionId: string) => void;
+  onCloseSftpTab?: (sessionId: string) => void;
   onHibernateTab: (sessionId: string) => void;
   onResumeSession?: (hibernatedSession: HibernatedSession) => void;
   onDeleteHibernated?: (id: string) => void;
@@ -15,10 +23,13 @@ interface TerminalTabsProps {
 
 export function TerminalTabs({
   sessions,
+  sftpSessions = [],
   activeSessionId,
+  activeTabType = "ssh",
   hibernatedSessions = [],
   onSelectTab,
   onCloseTab,
+  onCloseSftpTab,
   onHibernateTab,
   onResumeSession,
   onDeleteHibernated,
@@ -27,12 +38,12 @@ export function TerminalTabs({
   return (
     <div className="terminal-tabs-bar">
       <div className="terminal-tabs">
-        {/* Active sessions */}
+        {/* Active SSH sessions */}
         {sessions.map((session) => (
           <button
-            key={session.session_id}
-            className={`terminal-tab ${session.session_id === activeSessionId ? "active" : ""}`}
-            onClick={() => onSelectTab(session.session_id)}
+            key={`ssh-${session.session_id}`}
+            className={`terminal-tab ${session.session_id === activeSessionId && activeTabType === "ssh" ? "active" : ""}`}
+            onClick={() => onSelectTab(session.session_id, "ssh")}
           >
             <span className="tab-indicator connected">⬤</span>
             <span className="tab-host">{session.host}</span>
@@ -54,6 +65,30 @@ export function TerminalTabs({
                   onCloseTab(session.session_id);
                 }}
                 title="Close connection"
+              >
+                ×
+              </button>
+            </div>
+          </button>
+        ))}
+
+        {/* SFTP sessions */}
+        {sftpSessions.map((session) => (
+          <button
+            key={`sftp-${session.session_id}`}
+            className={`terminal-tab sftp ${session.session_id === activeSessionId && activeTabType === "sftp" ? "active" : ""}`}
+            onClick={() => onSelectTab(session.session_id, "sftp")}
+          >
+            <span className="tab-indicator sftp">📁</span>
+            <span className="tab-host">{session.host} (SFTP)</span>
+            <div className="tab-actions">
+              <button
+                className="terminal-tab-action close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseSftpTab?.(session.session_id);
+                }}
+                title="Close SFTP"
               >
                 ×
               </button>

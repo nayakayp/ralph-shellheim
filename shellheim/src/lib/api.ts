@@ -22,6 +22,7 @@ import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
 import type { KnownHost, TrustHostKeyRequest } from "../types/known_host";
 import type { ConnectRequest, SendDataRequest, ResizeRequest, ConnectSshResponse, HibernatedSession, HibernateSessionRequest, ResumeSessionRequest, ResumeSessionResponse } from "../types/ssh";
+import type { SftpSessionInfo, FileEntry, FileStats, ConnectSftpRequest, ListDirRequest, FileOpRequest, RenameRequest, UploadRequest } from "../types/sftp";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -240,4 +241,71 @@ export async function deleteHibernatedSession(hibernatedSessionId: string): Prom
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<void>("delete_hibernated_session", { token, hibernatedSessionId });
+}
+
+// SFTP API
+export async function connectSftp(request: ConnectSftpRequest): Promise<SftpSessionInfo> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<SftpSessionInfo>("connect_sftp", { token, request });
+}
+
+export async function disconnectSftp(sessionId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("disconnect_sftp", { token, sessionId });
+}
+
+export async function sftpListDir(request: ListDirRequest): Promise<FileEntry[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<FileEntry[]>("sftp_list_dir", { token, request });
+}
+
+export async function sftpStat(request: FileOpRequest): Promise<FileStats> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<FileStats>("sftp_stat", { token, request });
+}
+
+export async function sftpReadFile(request: FileOpRequest): Promise<number[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<number[]>("sftp_read_file", { token, request });
+}
+
+export async function sftpWriteFile(request: UploadRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("sftp_write_file", { token, request });
+}
+
+export async function sftpDeleteFile(request: FileOpRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("sftp_delete_file", { token, request });
+}
+
+export async function sftpDeleteDir(request: FileOpRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("sftp_delete_dir", { token, request });
+}
+
+export async function sftpCreateDir(request: FileOpRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("sftp_create_dir", { token, request });
+}
+
+export async function sftpRename(request: RenameRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("sftp_rename", { token, request });
+}
+
+export async function listSftpSessions(): Promise<SftpSessionInfo[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<SftpSessionInfo[]>("list_sftp_sessions", { token });
 }

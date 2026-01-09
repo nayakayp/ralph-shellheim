@@ -5,6 +5,7 @@
 
 pub mod db;
 pub mod ssh;
+pub mod sftp;
 pub mod api;
 pub mod services;
 pub mod models;
@@ -95,6 +96,20 @@ pub fn run() {
             api::known_hosts::check_host_key,
             api::known_hosts::trust_host_key,
             api::known_hosts::delete_known_host,
+            
+            // SFTP commands
+            api::sftp::connect_sftp,
+            api::sftp::disconnect_sftp,
+            api::sftp::sftp_list_dir,
+            api::sftp::sftp_stat,
+            api::sftp::sftp_read_file,
+            api::sftp::sftp_write_file,
+            api::sftp::sftp_delete_file,
+            api::sftp::sftp_delete_dir,
+            api::sftp::sftp_create_dir,
+            api::sftp::sftp_rename,
+            api::sftp::sftp_get_session,
+            api::sftp::list_sftp_sessions,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -113,6 +128,9 @@ async fn initialize_app(app: &tauri::AppHandle) -> anyhow::Result<()> {
     
     // Initialize SSH session manager
     ssh::SessionManager::init();
+    
+    // Initialize SFTP session manager
+    sftp::SftpSessionManager::init();
     
     info!("All services initialized");
     Ok(())

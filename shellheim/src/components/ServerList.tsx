@@ -4,11 +4,12 @@ import "./ServerList.css";
 interface ServerListProps {
   entries: Entry[];
   onConnect: (entry: Entry) => void;
+  onConnectSftp?: (entry: Entry) => void;
   onEdit: (entry: Entry) => void;
   onDelete: (entry: Entry) => void;
 }
 
-export function ServerList({ entries, onConnect, onEdit, onDelete }: ServerListProps) {
+export function ServerList({ entries, onConnect, onConnectSftp, onEdit, onDelete }: ServerListProps) {
   const getProtocolIcon = (protocol?: string) => {
     switch (protocol) {
       case "ssh":
@@ -67,6 +68,18 @@ export function ServerList({ entries, onConnect, onEdit, onDelete }: ServerListP
           </div>
           
           <div className="server-actions" onClick={(e) => e.stopPropagation()}>
+            {onConnectSftp && (
+              <button 
+                className="action-btn action-btn-sftp" 
+                onClick={() => onConnectSftp(entry)}
+                title="Open SFTP"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+              </button>
+            )}
             <button 
               className="action-btn" 
               onClick={() => onEdit(entry)}
