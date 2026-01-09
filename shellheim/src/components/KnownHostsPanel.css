@@ -1,0 +1,181 @@
+/* Known Hosts Panel - extends panel-overlay styles from IdentitiesPanel.css */
+
+.known-hosts-panel {
+  width: 500px;
+  max-width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #1a1a2e 0%, #16162a 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+}
+
+/* Known hosts list */
+.known-hosts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Known host card */
+.known-host-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.known-host-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Host icon */
+.known-host-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.15));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.known-host-icon svg {
+  color: #10b981;
+}
+
+/* Host info */
+.known-host-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.known-host-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.known-host-address {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.known-host-port {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+.known-host-key-type {
+  display: inline-flex;
+  padding: 0.125rem 0.5rem;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #a5b4fc;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Fingerprint - monospace with subtle styling */
+.known-host-fingerprint {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.375rem 0.5rem;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* Dates */
+.known-host-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.date-separator {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Actions */
+.known-host-actions {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.25rem;
+}
+
+.delete-host-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-host-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.delete-host-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Small spinner for delete button */
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #f87171;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 560px) {
+  .known-hosts-panel {
+    width: 100%;
+  }
+  
+  .known-host-fingerprint {
+    font-size: 0.6875rem;
+  }
+  
+  .known-host-dates {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
+  }
+  
+  .date-separator {
+    display: none;
+  }
+}

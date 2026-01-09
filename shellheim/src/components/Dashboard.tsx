@@ -12,6 +12,7 @@ import { EditServerModal } from "./EditServerModal";
 import { IdentitiesPanel } from "./IdentitiesPanel";
 import { FolderTree } from "./FolderTree";
 import { HostKeyDialog } from "./HostKeyDialog";
+import { KnownHostsPanel } from "./KnownHostsPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import "./Dashboard.css";
@@ -30,6 +31,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [showIdentities, setShowIdentities] = useState(false);
+  const [showKnownHosts, setShowKnownHosts] = useState(false);
   const [error, setError] = useState("");
   
   // Multiple SSH sessions state
@@ -329,6 +331,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           onClose={() => setShowIdentities(false)}
         />
 
+        <KnownHostsPanel
+          isOpen={showKnownHosts}
+          onClose={() => setShowKnownHosts(false)}
+        />
+
         {hostKeyVerification && (
           <HostKeyDialog
             host={hostKeyVerification.host}
@@ -392,6 +399,13 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               <span className="server-count">{filteredEntries.length}</span>
             </div>
             <div className="toolbar-right">
+              <button className="toolbar-btn" onClick={() => setShowKnownHosts(true)} title="Manage Known Hosts">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 12l2 2 4-4" />
+                  <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                </svg>
+                Hosts
+              </button>
               <button className="toolbar-btn" onClick={() => setShowIdentities(true)} title="Manage Identities">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
@@ -477,6 +491,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       <IdentitiesPanel
         isOpen={showIdentities}
         onClose={() => setShowIdentities(false)}
+      />
+
+      <KnownHostsPanel
+        isOpen={showKnownHosts}
+        onClose={() => setShowKnownHosts(false)}
       />
 
       {hostKeyVerification && (

@@ -4,6 +4,42 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 10 - 2026-01-09
+
+### Completed
+- **Implemented Known Hosts Management UI** - Settings panel to view/delete trusted SSH hosts:
+  - Created `KnownHostsPanel.tsx` component with full CRUD support
+  - Lists all trusted hosts with host:port, key type, fingerprint
+  - Visual indicators for key types (Ed25519, ECDSA, RSA) with custom icons
+  - Shows timestamps for "Added" and "Last seen" dates
+  - Delete confirmation dialog with clear warning message
+  - Monospace fingerprint display with truncation for long values
+
+- **Styled with Tokyo Night Theme** (`KnownHostsPanel.css`):
+  - Glassmorphism panel design matching IdentitiesPanel
+  - Host cards with gradient icons and hover states
+  - Responsive layout for narrow viewports
+  - Loading spinner and delete-in-progress states
+
+- **Updated Dashboard**:
+  - Added `showKnownHosts` state for panel visibility
+  - New "Hosts" toolbar button with checkmark-circle icon
+  - KnownHostsPanel integrated in both terminal and dashboard modes
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Session hibernation** - Save and restore SSH sessions
+2. **SFTP file management** - File browser and transfers
+3. **Folder drag-and-drop** - Reorder folders and move entries
+
+### Tech Notes
+- Known hosts list uses existing `listKnownHosts` API from Session 9
+- Panel reuses shared CSS from IdentitiesPanel (panel-overlay, panel-header, etc.)
+- Delete triggers re-verification on next connection to that host
+
+---
+
 ## Session 9 - 2025-01-09
 
 ### Completed
