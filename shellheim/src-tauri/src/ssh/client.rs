@@ -464,21 +464,22 @@ pub struct JumpHostConfig {
 /// Connect through a jump host (bastion/proxy)
 /// 
 /// This establishes an SSH connection to the jump host, then creates a
-/// direct-tcpip channel to forward traffic to the target host.
+/// direct-tcpip channel to forward traffic to the target host, and finally
+/// runs a nested SSH session over that tunnel.
 pub async fn connect_via_jump(
     session_id: String,
     jump: JumpHostConfig,
     target_host: &str,
     target_port: u16,
-    _target_username: &str,
-    _target_password: Option<&str>,
-    _target_ssh_key: Option<&str>,
-    _target_passphrase: Option<&str>,
-    _cols: u32,
-    _rows: u32,
-    _target_expected_fingerprint: Option<String>,
+    target_username: &str,
+    target_password: Option<&str>,
+    target_ssh_key: Option<&str>,
+    target_passphrase: Option<&str>,
+    cols: u32,
+    rows: u32,
+    target_expected_fingerprint: Option<String>,
     app_handle: AppHandle,
-) -> Result<ConnectResult, String> {
+) -> Result<JumpConnectResult, String> {
     info!(
         "SSH[{}] connecting via jump host {}@{}:{} to {}:{}",
         session_id, jump.username, jump.host, jump.port, target_host, target_port
@@ -512,7 +513,7 @@ pub async fn connect_via_jump(
             let _ = jump_session
                 .disconnect(Disconnect::ByApplication, "Jump host key verification needed", "en")
                 .await;
-            return Ok(ConnectResult::HostKeyVerificationNeeded(host_key));
+            return Ok(JumpConnectResult::JumpHostKeyVerificationNeeded(host_key));
         }
     }
 
@@ -540,87 +541,117 @@ pub async fn connect_via_jump(
         .await
         .map_err(|e| format!("Failed to open tunnel to {}:{}: {}", target_host, target_port, e))?;
 
-    info!("SSH[{}] tunnel opened, connecting to target SSH", session_id);
+    info!("SSH[{}] tunnel opened, connecting to target SSH over stream", session_id);
 
-    // 4. Create a custom Stream from the channel for the target SSH connection
-    // russh doesn't directly support connecting through a channel, so we need 
-    // to use a different approach: use the AsyncRead/AsyncWrite on the channel
+    // 4. Convert the channel to a stream (AsyncRead + AsyncWrite)
+    let tunnel_stream = tunnel_channel.into_stream();
     
-    // For russh, we need to create a new SSH session over the tunneled channel
-    // This is complex because russh expects a TcpStream. We'll use tokio's duplex
-    // to bridge the channel to the SSH client.
-    
-    let (client_read, client_write) = tokio::io::duplex(65536);
-    
-    // Spawn a task to bridge the tunnel channel with the duplex
-    let tunnel_channel = Arc::new(Mutex::new(tunnel_channel));
-    let tunnel_channel_reader = tunnel_channel.clone();
-    let tunnel_channel_writer = tunnel_channel.clone();
-    
-    // Write from client to channel
-    let session_id_writer = session_id.clone();
-    tokio::spawn(async move {
-        use tokio::io::AsyncReadExt;
-        let mut client_read = client_read;
-        let mut buf = [0u8; 8192];
-        loop {
-            match client_read.read(&mut buf).await {
-                Ok(0) => break, // EOF
-                Ok(n) => {
-                    let channel = tunnel_channel_writer.lock().await;
-                    if let Err(e) = channel.data(&buf[..n]).await {
-                        warn!("SSH[{}] tunnel write error: {}", session_id_writer, e);
-                        break;
-                    }
-                }
-                Err(e) => {
-                    warn!("SSH[{}] client read error: {}", session_id_writer, e);
-                    break;
-                }
-            }
+    // 5. Create target SSH handler
+    let target_captured_host_key = Arc::new(Mutex::new(None));
+    let target_handler = SshClientHandler {
+        session_id: session_id.clone(),
+        app_handle: app_handle.clone(),
+        expected_fingerprint: target_expected_fingerprint.clone(),
+        captured_host_key: target_captured_host_key.clone(),
+    };
+
+    // 6. Connect to target SSH server over the tunnel stream using connect_stream
+    let mut target_session = client::connect_stream(config.clone(), tunnel_stream, target_handler)
+        .await
+        .map_err(|e| format!("Failed to connect to target SSH over tunnel: {}", e))?;
+
+    info!("SSH[{}] connected to target over tunnel, checking host key...", session_id);
+
+    // Check target host key if first time
+    if target_expected_fingerprint.is_none() {
+        let captured = target_captured_host_key.lock().await;
+        if let Some(host_key) = captured.clone() {
+            info!(
+                "SSH[{}] target host key needs verification: {}",
+                session_id, host_key.fingerprint
+            );
+            let _ = target_session
+                .disconnect(Disconnect::ByApplication, "Target host key verification needed", "en")
+                .await;
+            return Ok(JumpConnectResult::TargetHostKeyVerificationNeeded(host_key));
         }
-    });
-    
-    // Note: Reading from the tunnel channel back to the client is handled by 
-    // the target SSH handler's data callback. The duplex write side will be
-    // used when we connect the target SSH session.
-    
-    // For now, we use a simpler approach: connect directly with the tunnel
-    // We'll rely on the proxy's direct-tcpip channel to forward the connection
-    
-    // Actually, russh's connect() expects an address, not a stream.
-    // The proper way to do this is to implement a custom AsyncRead+AsyncWrite
-    // wrapper around the channel. This is complex.
-    //
-    // Alternative approach: Use the jump host's connection to open a session
-    // on the target by using the direct-tcpip tunnel as a TCP proxy, then
-    // doing SSH client protocol over it.
-    //
-    // For simplicity in this iteration, let's store the jump connection info
-    // and do the nested SSH over the tunnel using russh's stream_connect.
-    
-    // russh doesn't have stream_connect, so we need a workaround.
-    // Let's use a simpler design: store jump host connection in session manager
-    // and do proper nested SSH in a future iteration.
-    //
-    // For now, we'll note that jump host support requires complex stream bridging.
-    // Let's implement a basic version that at least opens the tunnel.
-    
-    drop(client_write); // Drop unused for now
-    drop(tunnel_channel_reader);
-    
-    // For this iteration, we'll do a simpler approach:
-    // Just use the jump host to port forward, and note that full nested SSH
-    // requires additional work. 
-    //
-    // However, we CAN make this work by using russh's ability to run the protocol
-    // over any AsyncRead + AsyncWrite stream. Let's try a different approach:
-    // use the channel itself as the transport.
-    
-    // The russh crate has connect_stream() in newer versions. Let's check.
-    // For now, return an error indicating jump host support is partial.
-    
-    Err("Jump host support requires connecting SSH over the tunnel channel. \
-         This feature is planned for a future update. \
-         The jump host connection was successful, but nested SSH is not yet implemented.".to_string())
+    }
+
+    // 7. Authenticate to target
+    let target_auth_success = if let Some(key_str) = target_ssh_key {
+        authenticate_with_key(&mut target_session, target_username, key_str, target_passphrase).await?
+    } else if let Some(pwd) = target_password {
+        target_session
+            .authenticate_password(target_username, pwd)
+            .await
+            .map_err(|e| format!("Target password auth error: {}", e))?
+    } else {
+        return Err("No authentication method for target".to_string());
+    };
+
+    if !target_auth_success {
+        return Err("Target authentication failed".to_string());
+    }
+
+    info!("SSH[{}] target authenticated successfully via jump host", session_id);
+
+    // 8. Open a session channel on target
+    let channel = target_session
+        .channel_open_session()
+        .await
+        .map_err(|e| format!("Failed to open session on target: {}", e))?;
+
+    info!("SSH[{}] session opened on target", session_id);
+
+    // 9. Request PTY
+    channel
+        .request_pty(
+            false,
+            "xterm-256color",
+            cols,
+            rows,
+            0,
+            0,
+            &[], // No special terminal modes
+        )
+        .await
+        .map_err(|e| format!("Failed to request PTY: {}", e))?;
+
+    info!("SSH[{}] PTY requested ({}x{})", session_id, cols, rows);
+
+    // 10. Start shell
+    channel
+        .request_shell(false)
+        .await
+        .map_err(|e| format!("Failed to start shell: {}", e))?;
+
+    info!("SSH[{}] shell started via jump host", session_id);
+
+    // Wrap channel for thread-safe access
+    let channel = Arc::new(Mutex::new(channel));
+
+    // Create connection with both jump and target handles
+    Ok(JumpConnectResult::Connected(JumpConnection {
+        jump_handle: jump_session,
+        target_connection: ActiveConnection::new(target_session, channel, cols, rows),
+    }))
+}
+
+/// Result of connecting via jump host
+pub enum JumpConnectResult {
+    /// Successfully connected to target through jump host
+    Connected(JumpConnection),
+    /// Jump host key needs verification
+    JumpHostKeyVerificationNeeded(HostKeyInfo),
+    /// Target host key needs verification (jump host already verified)
+    TargetHostKeyVerificationNeeded(HostKeyInfo),
+}
+
+/// Active jump host connection holding both jump and target sessions
+pub struct JumpConnection {
+    /// The jump host SSH handle (kept alive to maintain tunnel)
+    #[allow(dead_code)]
+    pub jump_handle: Handle<SshClientHandler>,
+    /// The target SSH connection
+    pub target_connection: ActiveConnection,
 }

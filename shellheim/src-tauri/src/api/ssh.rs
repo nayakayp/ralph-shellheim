@@ -8,8 +8,8 @@ use crate::models::{
     ResumeSessionRequest, ResumeSessionResponse,
 };
 use crate::ssh::{
-    self, ConnectRequest, ConnectResult, ResizeRequest, SendDataRequest, SessionManager,
-    SshSessionInfo,
+    self, ConnectRequest, ConnectResult, JumpConnectResult, JumpHostConfig, ResizeRequest, 
+    SendDataRequest, SessionManager, SshSessionInfo,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -123,7 +123,31 @@ pub async fn connect_ssh(
     // 5. Generate session ID upfront so it's consistent for both connect() and session manager
     let session_id = uuid::Uuid::new_v4().to_string();
 
-    // 6. Connect via russh with host key verification
+    // 6. Check if this entry has a jump host configured
+    if let Some(jump_host_id) = &entry.jump_host_id {
+        // Connect via jump host
+        return connect_via_jump_host(
+            app,
+            &token,
+            &account_id,
+            session_id,
+            jump_host_id,
+            &request.entry_id,
+            &host,
+            port,
+            &username,
+            identity.password.as_deref(),
+            identity.ssh_key.as_deref(),
+            identity.passphrase.as_deref(),
+            request.cols,
+            request.rows,
+            expected_fingerprint,
+            &identity_id,
+            known_host,
+        ).await;
+    }
+
+    // 7. Direct connect via russh with host key verification
     let result = ssh::connect(
         session_id.clone(),
         &host,
@@ -141,7 +165,7 @@ pub async fn connect_ssh(
 
     match result {
         ConnectResult::Connected(connection) => {
-            // 7. Create session in manager with the same session_id used in connect()
+            // 8. Create session in manager with the same session_id used in connect()
             let manager = SessionManager::instance();
             let session = manager.create_session(
                 session_id,
@@ -156,7 +180,7 @@ pub async fn connect_ssh(
                 connection,
             );
 
-            // 7. Update last_connected_at
+            // 9. Update last_connected_at
             let pool = db::pool();
             let now = chrono::Utc::now().to_rfc3339();
             let _ = sqlx::query("UPDATE entries SET last_connected_at = ? WHERE id = ?")
@@ -201,6 +225,181 @@ pub async fn connect_ssh(
             Ok(ConnectSshResponse::HostKeyVerification {
                 host,
                 port,
+                status,
+            })
+        }
+    }
+}
+
+/// Helper function to connect via a jump host
+async fn connect_via_jump_host(
+    app: AppHandle,
+    token: &str,
+    account_id: &str,
+    session_id: String,
+    jump_host_id: &str,
+    target_entry_id: &str,
+    target_host: &str,
+    target_port: u16,
+    target_username: &str,
+    target_password: Option<&str>,
+    target_ssh_key: Option<&str>,
+    target_passphrase: Option<&str>,
+    cols: u32,
+    rows: u32,
+    target_expected_fingerprint: Option<String>,
+    target_identity_id: &str,
+    target_known_host: Option<(String, String)>,
+) -> Result<ConnectSshResponse, String> {
+    info!("Connecting via jump host: {}", jump_host_id);
+
+    let pool = db::pool();
+
+    // 1. Get jump host entry details
+    let jump_entry: EntryRow = sqlx::query_as("SELECT * FROM entries WHERE id = ? AND account_id = ?")
+        .bind(jump_host_id)
+        .bind(account_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| format!("Database error: {}", e))?
+        .ok_or_else(|| "Jump host entry not found".to_string())?;
+
+    let jump_host = jump_entry
+        .host
+        .ok_or_else(|| "Jump host has no host configured".to_string())?;
+    let jump_port = jump_entry.port.unwrap_or(22) as u16;
+
+    // 2. Check known hosts for jump host
+    let jump_known_host = lookup_known_host(account_id, &jump_host, jump_port).await?;
+    let jump_expected_fingerprint = jump_known_host.as_ref().map(|(fp, _)| fp.clone());
+
+    // 3. Get identity for jump host
+    let jump_identity_ids = get_identity_ids_for_entry(jump_host_id).await?;
+    let jump_identity_id = jump_identity_ids
+        .into_iter()
+        .next()
+        .ok_or_else(|| "No identity configured for jump host".to_string())?;
+
+    let jump_identity = get_decrypted_identity(token, &jump_identity_id).await?;
+
+    let jump_username = jump_identity
+        .username
+        .ok_or_else(|| "Jump host identity has no username".to_string())?;
+
+    // 4. Build jump host config
+    let jump_config = JumpHostConfig {
+        host: jump_host.clone(),
+        port: jump_port,
+        username: jump_username,
+        password: jump_identity.password,
+        ssh_key: jump_identity.ssh_key,
+        passphrase: jump_identity.passphrase,
+        expected_fingerprint: jump_expected_fingerprint,
+    };
+
+    // 5. Connect via jump host
+    let result = ssh::connect_via_jump(
+        session_id.clone(),
+        jump_config,
+        target_host,
+        target_port,
+        target_username,
+        target_password,
+        target_ssh_key,
+        target_passphrase,
+        cols,
+        rows,
+        target_expected_fingerprint.clone(),
+        app,
+    )
+    .await?;
+
+    match result {
+        JumpConnectResult::Connected(jump_connection) => {
+            // 6. Create session in manager
+            let manager = SessionManager::instance();
+            let session = manager.create_session(
+                session_id,
+                target_entry_id.to_string(),
+                account_id.to_string(),
+                target_host.to_string(),
+                target_port,
+                target_username.to_string(),
+                Some(target_identity_id.to_string()),
+                cols,
+                rows,
+                jump_connection.target_connection,
+            );
+
+            // 7. Update last_connected_at
+            let now = chrono::Utc::now().to_rfc3339();
+            let _ = sqlx::query("UPDATE entries SET last_connected_at = ? WHERE id = ?")
+                .bind(&now)
+                .bind(target_entry_id)
+                .execute(pool)
+                .await;
+
+            info!("SSH session created via jump host: {}", session.id);
+
+            Ok(ConnectSshResponse::Connected(SshSessionInfo {
+                session_id: session.id.clone(),
+                entry_id: target_entry_id.to_string(),
+                host: target_host.to_string(),
+                port: target_port,
+                connected_at: session.created_at.to_rfc3339(),
+            }))
+        }
+        JumpConnectResult::JumpHostKeyVerificationNeeded(host_key) => {
+            // Need verification for jump host
+            let status = if jump_known_host.is_some() {
+                let (old_fp, _) = jump_known_host.unwrap();
+                HostKeyStatus::Changed {
+                    key_type: host_key.key_type,
+                    new_fingerprint: host_key.fingerprint,
+                    old_fingerprint: old_fp,
+                }
+            } else {
+                HostKeyStatus::Unknown {
+                    key_type: host_key.key_type,
+                    fingerprint: host_key.fingerprint,
+                }
+            };
+
+            info!(
+                "Jump host {}:{} requires host key verification",
+                jump_host, jump_port
+            );
+
+            Ok(ConnectSshResponse::HostKeyVerification {
+                host: jump_host,
+                port: jump_port,
+                status,
+            })
+        }
+        JumpConnectResult::TargetHostKeyVerificationNeeded(host_key) => {
+            // Need verification for target host
+            let status = if target_known_host.is_some() {
+                let (old_fp, _) = target_known_host.unwrap();
+                HostKeyStatus::Changed {
+                    key_type: host_key.key_type,
+                    new_fingerprint: host_key.fingerprint,
+                    old_fingerprint: old_fp,
+                }
+            } else {
+                HostKeyStatus::Unknown {
+                    key_type: host_key.key_type,
+                    fingerprint: host_key.fingerprint,
+                }
+            };
+
+            info!(
+                "Target host {}:{} requires host key verification (via jump host)",
+                target_host, target_port
+            );
+
+            Ok(ConnectSshResponse::HostKeyVerification {
+                host: target_host.to_string(),
+                port: target_port,
                 status,
             })
         }

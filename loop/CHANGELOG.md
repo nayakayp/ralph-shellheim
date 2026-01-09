@@ -4,6 +4,53 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 35 - 2026-01-10
+
+### Completed
+- **Implemented Full Jump Host/Bastion SSH Tunneling** - Multi-hop SSH connections now work end-to-end:
+  - Used russh's `connect_stream()` to run nested SSH over tunnel channel
+  - `channel.into_stream()` provides `AsyncRead + AsyncWrite` for nested SSH
+  - Proper host key verification for both jump host AND target host
+  - Two-stage verification: jump host first, then target through tunnel
+
+- **Updated `connect_via_jump()` Function** (`src-tauri/src/ssh/client.rs`):
+  - Connects to jump host, authenticates, opens direct-tcpip tunnel
+  - Uses `client::connect_stream()` to run SSH protocol over the tunnel stream
+  - Full PTY + shell setup on target host through the tunnel
+  - Returns `JumpConnectResult` enum with three variants:
+    - `Connected(JumpConnection)` - success with both handles
+    - `JumpHostKeyVerificationNeeded(HostKeyInfo)` - verify jump host first
+    - `TargetHostKeyVerificationNeeded(HostKeyInfo)` - verify target host
+
+- **Created `JumpConnection` Struct**:
+  - Holds both `jump_handle` (kept alive to maintain tunnel) and `target_connection`
+  - Target connection is a standard `ActiveConnection` for terminal I/O
+
+- **Updated SSH API** (`src-tauri/src/api/ssh.rs`):
+  - `connect_ssh` now checks for `jump_host_id` on entry
+  - Added `connect_via_jump_host()` helper function
+  - Loads jump host entry, credentials, known hosts separately
+  - Proper error handling for both jump and target host key states
+
+- **Exported New Types** (`src-tauri/src/ssh/mod.rs`):
+  - `JumpConnectResult`, `JumpConnection` now public
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Technical Notes
+- russh `connect_stream()` accepts any `AsyncRead + AsyncWrite + Unpin + Send + 'static`
+- `channel.into_stream()` returns a stream wrapper implementing those traits
+- Jump host handle must be kept alive for the tunnel to remain open
+- Target SSH session is independent once established over the tunnel
+- Host key verification works for both hops - user verifies each host separately
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation or guacd)
+2. **OIDC/LDAP authentication** - Enterprise SSO
+3. **AI-powered command suggestions** - LLM integration
+
+---
+
 ## Session 34 - 2026-01-10
 
 ### Completed
