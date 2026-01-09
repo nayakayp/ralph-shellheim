@@ -645,3 +645,24 @@ export async function clearHealthCache(entryIds?: string[]): Promise<void> {
   if (!token) throw new Error("Not authenticated");
   return invoke<void>("clear_health_cache", { token, entryIds: entryIds ?? null });
 }
+
+// Backup/Export API
+import type { ExportData, ImportOptions, ImportResult, ExportStats } from "../types/backup";
+
+export async function exportConfig(): Promise<ExportData> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ExportData>("export_config", { token });
+}
+
+export async function importConfig(exportData: ExportData, options: ImportOptions): Promise<ImportResult> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ImportResult>("import_config", { token, exportData, options });
+}
+
+export async function getExportStats(): Promise<ExportStats> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<ExportStats>("get_export_stats", { token });
+}

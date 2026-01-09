@@ -12,6 +12,7 @@ mod snippet;
 mod tag;
 mod audit_log;
 mod monitoring;
+mod backup;
 
 pub use account::*;
 pub use entry::*;
@@ -25,3 +26,4 @@ pub use snippet::*;
 pub use tag::*;
 pub use audit_log::*;
 pub use monitoring::*;
+pub use backup::*;

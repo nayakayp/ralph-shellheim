@@ -172,6 +172,11 @@ pub fn run() {
             api::monitoring::get_cached_health,
             api::monitoring::get_monitoring_stats,
             api::monitoring::clear_health_cache,
+            
+            // Backup/Export commands
+            api::backup::export_config,
+            api::backup::import_config,
+            api::backup::get_export_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

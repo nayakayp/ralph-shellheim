@@ -4,6 +4,67 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 29 - 2026-01-10
+
+### Completed
+- **Implemented Export/Import Settings** - Backup and restore user configuration:
+  - Export all data (servers, folders, identities, tags, snippets) as JSON
+  - Import from backup file with merge/replace options
+  - Selective import (choose which data types to import)
+  - Security: Credentials NOT exported (only metadata)
+
+- **Built Backup Backend** (`src-tauri/src/api/backup.rs`):
+  - `export_config`: Exports all user data as structured JSON
+  - `import_config`: Imports data with ID remapping for relationships
+  - `get_export_stats`: Returns counts of exportable items
+  - Handles parent/child folder relationships correctly
+  - Entry-tag and entry-identity junction tables preserved
+
+- **Created Backup Model** (`src-tauri/src/models/backup.rs`):
+  - `ExportData`: Top-level export container with version/timestamp
+  - `UserData`: All user data (folders, entries, identities, tags, snippets)
+  - `ExportFolder`, `ExportEntry`, `ExportIdentity`, etc.
+  - `ImportOptions`: Merge mode, selective import flags
+  - `ImportResult`: Success status, counts, error messages
+
+- **Added Frontend Types** (`src/types/backup.ts`):
+  - TypeScript interfaces matching Rust models
+  - `DEFAULT_IMPORT_OPTIONS` with sensible defaults
+
+- **Built BackupPanel Component** (`src/components/BackupPanel.tsx`):
+  - Modal dialog with Tokyo Night glassmorphism design
+  - Export section with stats preview (servers, folders, etc.)
+  - Import section with file picker and preview
+  - Merge/replace toggle and selective import checkboxes
+  - Progress indicators and success/error messages
+
+- **Added BackupPanel Styles** (`src/components/BackupPanel.css`):
+  - Glassmorphism design consistent with app theme
+  - Stats grid with color-coded values
+  - Import options with checkbox group
+  - Action buttons with gradients
+
+- **Integrated with Dashboard**:
+  - Added "Backup" button to toolbar with Archive icon
+  - BackupPanel accessible from main dashboard
+  - Auto-refresh data after successful import
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols
+2. **Proxmox integration** - VM/container management
+3. **OIDC/LDAP authentication** - Enterprise SSO
+
+### Tech Notes
+- Export file format: JSON with version "1.0"
+- Identities exported with `has_password`/`has_ssh_key` flags only (no secrets)
+- Import creates new UUIDs, maps old IDs to new for relationships
+- Two-pass folder import: create all, then update parent relationships
+- Merge mode adds to existing; replace mode clears data first
+
+---
+
 ## Session 28 - 2026-01-10
 
 ### Completed

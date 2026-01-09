@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -23,6 +23,7 @@ import { RecordingsPanel } from "./RecordingsPanel";
 import { AuditPanel } from "./AuditPanel";
 import { TagsPanel } from "./TagsPanel";
 import { MonitoringPanel } from "./MonitoringPanel";
+import { BackupPanel } from "./BackupPanel";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -49,6 +50,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showAudit, setShowAudit] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(false);
+  const [showBackup, setShowBackup] = useState(false);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [tagFilteredEntryIds, setTagFilteredEntryIds] = useState<Set<string> | null>(null);
   const [error, setError] = useState("");
@@ -860,6 +862,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 <Heartbeat size={18} />
                 Monitor
               </button>
+              <button className="toolbar-btn" onClick={() => setShowBackup(true)} title="Backup & Restore">
+                <Archive size={18} />
+                Backup
+              </button>
               <button className="add-btn" onClick={() => setShowAddModal(true)}>
                 <Plus size={18} />
                 Add Server
@@ -964,6 +970,12 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       <MonitoringPanel
         isOpen={showMonitoring}
         onClose={() => setShowMonitoring(false)}
+      />
+
+      <BackupPanel
+        isOpen={showBackup}
+        onClose={() => setShowBackup(false)}
+        onImportComplete={loadData}
       />
 
       {showTags && (
