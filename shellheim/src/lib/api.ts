@@ -3,8 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
-import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest } from "../types/ssh";
+import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest, ConnectSshResponse } from "../types/ssh";
 import type { Folder, CreateFolderRequest, UpdateFolderRequest } from "../types/folder";
+import type { KnownHost, TrustHostKeyRequest, HostKeyStatus } from "../types/known_host";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -131,10 +132,10 @@ export async function deleteIdentity(identityId: string): Promise<void> {
 }
 
 // SSH API
-export async function connectSsh(request: ConnectRequest): Promise<SshSessionInfo> {
+export async function connectSsh(request: ConnectRequest): Promise<ConnectSshResponse> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
-  return invoke<SshSessionInfo>("connect_ssh", { token, request });
+  return invoke<ConnectSshResponse>("connect_ssh", { token, request });
 }
 
 export async function disconnectSsh(sessionId: string): Promise<void> {
@@ -196,4 +197,40 @@ export async function getFolderCounts(): Promise<Array<[string, number]>> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<Array<[string, number]>>("get_folder_counts", { token });
+}
+
+// Known Hosts API
+export async function listKnownHosts(): Promise<KnownHost[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<KnownHost[]>("list_known_hosts", { token });
+}
+
+export async function checkHostKey(
+  host: string,
+  port: number,
+  keyType: string,
+  fingerprint: string
+): Promise<HostKeyStatus> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<HostKeyStatus>("check_host_key", {
+    token,
+    host,
+    port,
+    keyType,
+    fingerprint,
+  });
+}
+
+export async function trustHostKey(request: TrustHostKeyRequest): Promise<KnownHost> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<KnownHost>("trust_host_key", { token, request });
+}
+
+export async function deleteKnownHost(id: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_known_host", { token, id });
 }

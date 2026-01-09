@@ -1,5 +1,7 @@
 // SSH session types
 
+import type { HostKeyStatus } from "./known_host";
+
 export interface ConnectRequest {
   entry_id: string;
   identity_id?: string;
@@ -14,6 +16,11 @@ export interface SshSessionInfo {
   port: number;
   connected_at: string;
 }
+
+// SSH connection response - can be connected or need host key verification
+export type ConnectSshResponse =
+  | { type: "Connected" } & SshSessionInfo
+  | { type: "HostKeyVerification"; host: string; port: number; status: HostKeyStatus };
 
 export interface ResizeRequest {
   session_id: string;

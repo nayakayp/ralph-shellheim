@@ -1,12 +1,28 @@
 //! SSH API handlers
 
 use crate::api::identities::get_decrypted_identity;
+use crate::api::known_hosts::lookup_known_host;
 use crate::db;
-use crate::models::EntryRow;
-use crate::ssh::{self, ConnectRequest, ResizeRequest, SendDataRequest, SessionManager, SshSessionInfo};
+use crate::models::{EntryRow, HostKeyStatus};
+use crate::ssh::{self, ConnectRequest, ConnectResult, ResizeRequest, SendDataRequest, SessionManager, SshSessionInfo};
+use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use tauri::{command, AppHandle};
 use tracing::info;
+
+/// Response for SSH connection attempt
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum ConnectSshResponse {
+    /// Connection successful
+    Connected(SshSessionInfo),
+    /// Host key verification needed
+    HostKeyVerification {
+        host: String,
+        port: u16,
+        status: HostKeyStatus,
+    },
+}
 
 /// Helper to get account_id from session token
 async fn get_account_id_from_token(token: &str) -> Result<String, String> {
@@ -64,7 +80,7 @@ pub async fn connect_ssh(
     app: AppHandle,
     token: String,
     request: ConnectRequest,
-) -> Result<SshSessionInfo, String> {
+) -> Result<ConnectSshResponse, String> {
     info!("SSH connect request for entry: {}", request.entry_id);
 
     // 1. Get entry details
@@ -75,7 +91,11 @@ pub async fn connect_ssh(
         .ok_or_else(|| "Entry has no host configured".to_string())?;
     let port = entry.port.unwrap_or(22) as u16;
 
-    // 2. Get identity for authentication
+    // 2. Check known hosts for this server
+    let known_host = lookup_known_host(&account_id, &host, port).await?;
+    let expected_fingerprint = known_host.as_ref().map(|(fp, _)| fp.clone());
+
+    // 3. Get identity for authentication
     let identity_id = if let Some(id) = request.identity_id.as_ref() {
         Some(id.clone())
     } else {
@@ -87,15 +107,15 @@ pub async fn connect_ssh(
     let identity_id =
         identity_id.ok_or_else(|| "No identity configured for this server".to_string())?;
 
-    // 3. Get decrypted credentials
+    // 4. Get decrypted credentials
     let identity = get_decrypted_identity(&token, &identity_id).await?;
 
     let username = identity
         .username
         .ok_or_else(|| "Identity has no username".to_string())?;
 
-    // 4. Connect via russh
-    let connection = ssh::connect(
+    // 5. Connect via russh with host key verification
+    let result = ssh::connect(
         uuid::Uuid::new_v4().to_string(), // temp session id for logging
         &host,
         port,
@@ -105,39 +125,73 @@ pub async fn connect_ssh(
         identity.passphrase.as_deref(),
         request.cols,
         request.rows,
+        expected_fingerprint.clone(),
         app,
     )
     .await?;
 
-    // 5. Create session in manager
-    let manager = SessionManager::instance();
-    let session = manager.create_session(
-        request.entry_id.clone(),
-        account_id,
-        host.clone(),
-        port,
-        username,
-        connection,
-    );
+    match result {
+        ConnectResult::Connected(connection) => {
+            // 6. Create session in manager
+            let manager = SessionManager::instance();
+            let session = manager.create_session(
+                request.entry_id.clone(),
+                account_id,
+                host.clone(),
+                port,
+                username,
+                connection,
+            );
 
-    // 6. Update last_connected_at
-    let pool = db::pool();
-    let now = chrono::Utc::now().to_rfc3339();
-    let _ = sqlx::query("UPDATE entries SET last_connected_at = ? WHERE id = ?")
-        .bind(&now)
-        .bind(&request.entry_id)
-        .execute(pool)
-        .await;
+            // 7. Update last_connected_at
+            let pool = db::pool();
+            let now = chrono::Utc::now().to_rfc3339();
+            let _ = sqlx::query("UPDATE entries SET last_connected_at = ? WHERE id = ?")
+                .bind(&now)
+                .bind(&request.entry_id)
+                .execute(pool)
+                .await;
 
-    info!("SSH session created: {}", session.id);
+            info!("SSH session created: {}", session.id);
 
-    Ok(SshSessionInfo {
-        session_id: session.id.clone(),
-        entry_id: request.entry_id,
-        host,
-        port,
-        connected_at: session.created_at.to_rfc3339(),
-    })
+            Ok(ConnectSshResponse::Connected(SshSessionInfo {
+                session_id: session.id.clone(),
+                entry_id: request.entry_id,
+                host,
+                port,
+                connected_at: session.created_at.to_rfc3339(),
+            }))
+        }
+        ConnectResult::HostKeyVerificationNeeded(host_key) => {
+            // Need user confirmation for this host key
+            let status = if known_host.is_some() {
+                // Key has changed from what we knew
+                let (old_fp, _) = known_host.unwrap();
+                HostKeyStatus::Changed {
+                    key_type: host_key.key_type,
+                    new_fingerprint: host_key.fingerprint,
+                    old_fingerprint: old_fp,
+                }
+            } else {
+                // First time seeing this host
+                HostKeyStatus::Unknown {
+                    key_type: host_key.key_type,
+                    fingerprint: host_key.fingerprint,
+                }
+            };
+
+            info!(
+                "SSH connection to {}:{} requires host key verification",
+                host, port
+            );
+
+            Ok(ConnectSshResponse::HostKeyVerification {
+                host,
+                port,
+                status,
+            })
+        }
+    }
 }
 
 #[command]

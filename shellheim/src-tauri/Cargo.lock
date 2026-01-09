@@ -4600,6 +4600,7 @@ dependencies = [
  "russh-keys",
  "serde",
  "serde_json",
+ "sha2",
  "sqlx",
  "tauri",
  "tauri-build",

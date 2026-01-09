@@ -4,6 +4,71 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 9 - 2025-01-09
+
+### Completed
+- **Implemented Host Key Verification** - Full known_hosts support for SSH security:
+  - Created `known_hosts` database table with migration
+  - Stores host, port, key_type, fingerprint, and full public key
+  - Per-account isolation with ownership checks
+
+- **Built Known Hosts API** (`src-tauri/src/api/known_hosts.rs`):
+  - `list_known_hosts`: Get all trusted hosts for current user
+  - `check_host_key`: Verify if host key matches stored fingerprint
+  - `trust_host_key`: Add/replace host key in known_hosts
+  - `delete_known_host`: Remove trusted host entry
+  - `lookup_known_host`: Internal helper for SSH connection flow
+
+- **Updated SSH Client with Host Key Capture**:
+  - Modified `SshClientHandler::check_server_key()` to capture key info
+  - Uses `russh_keys` fingerprint API (SHA256 format)
+  - Stores key_type, fingerprint, and OpenSSH-format public key
+  - Supports expected fingerprint verification mode
+  - Captures host key on first connection for user review
+
+- **Updated SSH Connection Flow**:
+  - `ConnectResult` enum: `Connected` or `HostKeyVerificationNeeded`
+  - `connect_ssh` API returns `ConnectSshResponse` tagged union
+  - First connection triggers host key dialog before full connection
+  - Known hosts verified automatically on subsequent connections
+
+- **Created Frontend Types** (`src/types/known_host.ts`):
+  - `KnownHost`, `HostKeyStatus`, `TrustHostKeyRequest` interfaces
+  - Updated `ConnectSshResponse` to handle verification flow
+
+- **Added Known Hosts API Functions** (`src/lib/api.ts`):
+  - listKnownHosts, checkHostKey, trustHostKey, deleteKnownHost
+
+- **Built HostKeyDialog Component**:
+  - Modal dialog for first-time host key verification
+  - Warning mode for changed host keys (potential MITM)
+  - Displays key type and SHA256 fingerprint
+  - "Trust & Connect" / "Accept New Key" actions
+  - Glassmorphism design with Tokyo Night theme
+
+- **Updated Dashboard**:
+  - Added `hostKeyVerification` state
+  - `handleConnect` handles `HostKeyVerification` response
+  - `handleHostKeyAccept` trusts key and retries connection
+  - `handleHostKeyReject` cancels with error message
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Session hibernation** - Save and restore SSH sessions
+2. **SFTP file management** - File browser and transfers
+3. **Folder drag-and-drop** - Reorder folders and move entries
+4. **Known hosts management UI** - View/delete trusted hosts in settings
+
+### Tech Notes
+- Host key fingerprint format: `SHA256:base64hash`
+- Key types supported: ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp256/384/521
+- First connection captures key, disconnects, prompts user, then reconnects
+- Changed keys show old vs new fingerprint comparison
+- Host uniqueness: account_id + host + port
+
+---
+
 ## Session 8 - 2025-01-09
 
 ### Completed

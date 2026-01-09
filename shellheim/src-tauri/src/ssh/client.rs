@@ -9,7 +9,16 @@ use russh_keys::key::PrivateKeyWithHashAlg;
 use std::sync::Arc;
 use tauri::AppHandle;
 use tauri::Emitter;
+use tokio::sync::Mutex;
 use tracing::{debug, error, info, warn};
+
+/// Host key information captured during connection
+#[derive(Debug, Clone)]
+pub struct HostKeyInfo {
+    pub key_type: String,
+    pub fingerprint: String,
+    pub public_key_base64: String,
+}
 
 /// SSH client handler for russh callbacks
 pub struct SshClientHandler {
@@ -17,6 +26,10 @@ pub struct SshClientHandler {
     pub session_id: String,
     /// Tauri app handle for emitting events
     pub app_handle: AppHandle,
+    /// Expected fingerprint for host key verification (None = capture mode)
+    pub expected_fingerprint: Option<String>,
+    /// Captured host key info (for first-time connections)
+    pub captured_host_key: Arc<Mutex<Option<HostKeyInfo>>>,
 }
 
 #[async_trait]
@@ -118,15 +131,54 @@ impl Handler for SshClientHandler {
     /// Check the server's public key (host key verification)
     async fn check_server_key(
         &mut self,
-        _server_public_key: &russh_keys::PublicKey,
+        server_public_key: &russh_keys::PublicKey,
     ) -> Result<bool, Self::Error> {
-        // TODO: Implement proper host key verification
-        // For now, accept all keys (not safe for production!)
-        warn!(
-            "SSH[{}] accepting server key without verification (TODO: implement known_hosts)",
-            self.session_id
+        // Get key type from algorithm
+        let key_type = server_public_key.algorithm().as_str().to_string();
+
+        // Get SHA256 fingerprint (russh_keys uses SHA256 by default)
+        let fingerprint = server_public_key.fingerprint(russh_keys::HashAlg::Sha256).to_string();
+
+        // Get base64-encoded public key
+        let public_key_base64 = server_public_key.to_openssh().unwrap_or_default();
+
+        info!(
+            "SSH[{}] server key: {} {}",
+            self.session_id, key_type, fingerprint
         );
-        Ok(true)
+
+        // Store the captured host key info
+        {
+            let mut captured = self.captured_host_key.lock().await;
+            *captured = Some(HostKeyInfo {
+                key_type: key_type.clone(),
+                fingerprint: fingerprint.clone(),
+                public_key_base64,
+            });
+        }
+
+        // If we have an expected fingerprint, verify it matches
+        if let Some(ref expected) = self.expected_fingerprint {
+            if expected == &fingerprint {
+                info!("SSH[{}] host key verified successfully", self.session_id);
+                Ok(true)
+            } else {
+                error!(
+                    "SSH[{}] HOST KEY MISMATCH! Expected: {}, Got: {}",
+                    self.session_id, expected, fingerprint
+                );
+                // Reject the connection - key has changed!
+                Ok(false)
+            }
+        } else {
+            // No expected fingerprint - this is a first-time connection
+            // We accept to capture the key, but the caller should handle Unknown status
+            info!(
+                "SSH[{}] no expected fingerprint, accepting key for capture",
+                self.session_id
+            );
+            Ok(true)
+        }
     }
 }
 
@@ -187,6 +239,14 @@ impl ActiveConnection {
     }
 }
 
+/// Result of SSH connection attempt
+pub enum ConnectResult {
+    /// Connection successful
+    Connected(ActiveConnection),
+    /// Host key needs verification (first connection or changed)
+    HostKeyVerificationNeeded(HostKeyInfo),
+}
+
 /// Connect to an SSH server and open a PTY session
 pub async fn connect(
     session_id: String,
@@ -198,8 +258,9 @@ pub async fn connect(
     passphrase: Option<&str>,
     cols: u32,
     rows: u32,
+    expected_fingerprint: Option<String>,
     app_handle: AppHandle,
-) -> Result<ActiveConnection, String> {
+) -> Result<ConnectResult, String> {
     info!(
         "SSH[{}] connecting to {}@{}:{}",
         session_id, username, host, port
@@ -209,10 +270,15 @@ pub async fn connect(
     let config = Config::default();
     let config = Arc::new(config);
 
+    // Shared state for capturing host key
+    let captured_host_key = Arc::new(Mutex::new(None));
+
     // Create handler
     let handler = SshClientHandler {
         session_id: session_id.clone(),
         app_handle,
+        expected_fingerprint: expected_fingerprint.clone(),
+        captured_host_key: captured_host_key.clone(),
     };
 
     // Connect to server
@@ -221,6 +287,23 @@ pub async fn connect(
         .map_err(|e| format!("Failed to connect to {}:{}: {}", host, port, e))?;
 
     info!("SSH[{}] connected, authenticating...", session_id);
+
+    // If no expected fingerprint was provided, check what we captured
+    if expected_fingerprint.is_none() {
+        let captured = captured_host_key.lock().await;
+        if let Some(host_key) = captured.clone() {
+            // Return for user verification
+            info!(
+                "SSH[{}] host key captured, needs verification: {}",
+                session_id, host_key.fingerprint
+            );
+            // Disconnect since we need user confirmation first
+            let _ = session
+                .disconnect(Disconnect::ByApplication, "Host key verification needed", "en")
+                .await;
+            return Ok(ConnectResult::HostKeyVerificationNeeded(host_key));
+        }
+    }
 
     // Authenticate
     let auth_success = if let Some(key_str) = ssh_key {
@@ -274,12 +357,12 @@ pub async fn connect(
 
     info!("SSH[{}] shell started", session_id);
 
-    Ok(ActiveConnection {
+    Ok(ConnectResult::Connected(ActiveConnection {
         handle: session,
         channel,
         cols,
         rows,
-    })
+    }))
 }
 
 /// Authenticate using SSH key

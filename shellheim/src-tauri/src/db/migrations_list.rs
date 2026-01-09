@@ -182,5 +182,27 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 11,
+            description: "create_known_hosts_table",
+            sql: r#"
+                CREATE TABLE IF NOT EXISTS known_hosts (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL,
+                    host TEXT NOT NULL,
+                    port INTEGER NOT NULL DEFAULT 22,
+                    key_type TEXT NOT NULL,
+                    fingerprint TEXT NOT NULL,
+                    public_key_base64 TEXT NOT NULL,
+                    added_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    last_seen_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+                    UNIQUE (account_id, host, port)
+                );
+                CREATE INDEX IF NOT EXISTS idx_known_hosts_account ON known_hosts(account_id);
+                CREATE INDEX IF NOT EXISTS idx_known_hosts_lookup ON known_hosts(account_id, host, port);
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

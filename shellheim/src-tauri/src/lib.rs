@@ -85,6 +85,12 @@ pub fn run() {
             api::folders::update_folder,
             api::folders::delete_folder,
             api::folders::get_folder_counts,
+            
+            // Known hosts commands
+            api::known_hosts::list_known_hosts,
+            api::known_hosts::check_host_key,
+            api::known_hosts::trust_host_key,
+            api::known_hosts::delete_known_host,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -3,6 +3,7 @@ import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo } from "../types/ssh";
 import type { Folder, CreateFolderRequest } from "../types/folder";
+import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
 import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts } from "../lib/api";
 import { ServerList } from "./ServerList";
@@ -10,6 +11,7 @@ import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
 import { IdentitiesPanel } from "./IdentitiesPanel";
 import { FolderTree } from "./FolderTree";
+import { HostKeyDialog } from "./HostKeyDialog";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import "./Dashboard.css";
@@ -35,6 +37,14 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showServerPanel, setShowServerPanel] = useState(false);
+  
+  // Host key verification state
+  const [hostKeyVerification, setHostKeyVerification] = useState<{
+    entry: Entry;
+    host: string;
+    port: number;
+    status: HostKeyStatus;
+  } | null>(null);
 
   // Build folder tree from flat list
   const folderTree = useMemo(() => buildFolderTree(folders, folderCounts), [folders, folderCounts]);
@@ -105,16 +115,33 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     setError("");
     
     try {
-      const session = await connectSsh({
+      const response = await connectSsh({
         entry_id: entry.id,
         cols: 120,
         rows: 30,
       });
       
-      // Add to sessions list and make active
-      setSessions((prev) => [...prev, session]);
-      setActiveSessionId(session.session_id);
-      setShowServerPanel(false);
+      if (response.type === "Connected") {
+        // Successfully connected - add to sessions
+        const session: SshSessionInfo = {
+          session_id: response.session_id,
+          entry_id: response.entry_id,
+          host: response.host,
+          port: response.port,
+          connected_at: response.connected_at,
+        };
+        setSessions((prev) => [...prev, session]);
+        setActiveSessionId(session.session_id);
+        setShowServerPanel(false);
+      } else if (response.type === "HostKeyVerification") {
+        // Need to verify host key first
+        setHostKeyVerification({
+          entry,
+          host: response.host,
+          port: response.port,
+          status: response.status,
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to connect";
       setError(`Connection failed: ${message}`);
@@ -122,6 +149,22 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  const handleHostKeyAccept = async () => {
+    if (!hostKeyVerification) return;
+    
+    // Close the dialog and retry connection
+    const entry = hostKeyVerification.entry;
+    setHostKeyVerification(null);
+    
+    // Retry connection (now the host key should be trusted)
+    await handleConnect(entry);
+  };
+
+  const handleHostKeyReject = () => {
+    setHostKeyVerification(null);
+    setError("Connection cancelled: Host key not trusted");
   };
 
   const handleEdit = (entry: Entry) => {
@@ -285,6 +328,16 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           isOpen={showIdentities}
           onClose={() => setShowIdentities(false)}
         />
+
+        {hostKeyVerification && (
+          <HostKeyDialog
+            host={hostKeyVerification.host}
+            port={hostKeyVerification.port}
+            status={hostKeyVerification.status}
+            onAccept={handleHostKeyAccept}
+            onReject={handleHostKeyReject}
+          />
+        )}
       </div>
     );
   }
@@ -425,6 +478,16 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showIdentities}
         onClose={() => setShowIdentities(false)}
       />
+
+      {hostKeyVerification && (
+        <HostKeyDialog
+          host={hostKeyVerification.host}
+          port={hostKeyVerification.port}
+          status={hostKeyVerification.status}
+          onAccept={handleHostKeyAccept}
+          onReject={handleHostKeyReject}
+        />
+      )}
     </div>
   );
 }
