@@ -24,6 +24,7 @@ import { AuditPanel } from "./AuditPanel";
 import { TagsPanel } from "./TagsPanel";
 import { MonitoringPanel } from "./MonitoringPanel";
 import { BackupPanel } from "./BackupPanel";
+import { CommandPalette } from "./CommandPalette";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -51,6 +52,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showTags, setShowTags] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [tagFilteredEntryIds, setTagFilteredEntryIds] = useState<Set<string> | null>(null);
   const [error, setError] = useState("");
@@ -155,6 +157,20 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Global keyboard shortcut for Command Palette (Ctrl+P / Cmd+P)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+P (Windows/Linux) or Cmd+P (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleAddServer = async (request: CreateEntryRequest) => {
     const newEntry = await createEntry(request);
@@ -431,6 +447,21 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
 
   // Check if active session is being recorded
   const isActiveSessionRecording = activeSessionId && recordingSessionId === activeSessionId;
+
+  // Command palette panel opener
+  const handleOpenPanel = useCallback((panel: "identities" | "snippets" | "recordings" | "tunnels" | "hosts" | "tags" | "audit" | "monitoring" | "backup") => {
+    switch (panel) {
+      case "identities": setShowIdentities(true); break;
+      case "snippets": setShowSnippets(true); break;
+      case "recordings": setShowRecordings(true); break;
+      case "tunnels": setShowTunnels(true); break;
+      case "hosts": setShowKnownHosts(true); break;
+      case "tags": setShowTags(true); break;
+      case "audit": setShowAudit(true); break;
+      case "monitoring": setShowMonitoring(true); break;
+      case "backup": setShowBackup(true); break;
+    }
+  }, []);
 
   // Update elapsed time for recording
   useEffect(() => {
@@ -998,6 +1029,17 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           onReject={handleHostKeyReject}
         />
       )}
+
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onConnectServer={handleConnect}
+        onConnectSftp={handleConnectSftp}
+        onSelectFolder={setSelectedFolderId}
+        onOpenPanel={handleOpenPanel}
+        onExecuteSnippet={handleExecuteSnippet}
+        activeSessionId={activeSessionId}
+      />
     </div>
   );
 }

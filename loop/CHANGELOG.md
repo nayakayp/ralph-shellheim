@@ -4,6 +4,53 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 30 - 2026-01-10
+
+### Completed
+- **Implemented Command Palette** - Quick navigation with fuzzy search (Ctrl+P / Cmd+P):
+  - Global keyboard shortcut to open palette from anywhere in the app
+  - Fuzzy search across servers, folders, snippets, and settings panels
+  - Keyboard navigation with arrow keys, Enter to select, Esc to close
+  - Type badges for visual categorization (Server/Folder/Snippet/Go to)
+  - Score-based result ranking (exact matches prioritized)
+
+- **Built CommandPalette Component** (`src/components/CommandPalette.tsx`):
+  - Loads all entries, folders, and snippets on open
+  - Fuzzy matching with multi-term search support
+  - Static actions for all panels (Identities, Snippets, Recordings, etc.)
+  - Result limit of 15 items for performance
+  - Smooth animations and glassmorphism design
+
+- **Added CommandPalette Styles** (`src/components/CommandPalette.css`):
+  - Tokyo Night glassmorphism overlay design
+  - Search input with icon and keyboard hint
+  - Result items with icon, title, subtitle, and type badge
+  - Footer with keyboard navigation hints
+  - Slide-down animation on open
+
+- **Integrated with Dashboard**:
+  - Global keydown listener for Ctrl+P / Cmd+P
+  - `handleOpenPanel` callback for panel navigation
+  - Connects to server on selection
+  - Navigates to folder on selection
+  - Executes snippets if in active terminal session
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Customizable Keyboard Shortcuts** - User-defined key bindings
+2. **RDP/VNC support** - Remote desktop protocols (requires native implementation)
+3. **Proxmox integration** - VM/container management
+4. **OIDC/LDAP authentication** - Enterprise SSO
+
+### Tech Notes
+- Uses simple fuzzy matching with term splitting (not Fuse.js for smaller bundle)
+- Score-based ranking: exact match (100) > starts with (90) > contains (80) > terms match (70)
+- Command palette works cross-platform (Ctrl on Windows/Linux, Cmd on Mac)
+- Results re-fetch on each open to ensure fresh data
+
+---
+
 ## Session 29 - 2026-01-10
 
 ### Completed
