@@ -954,3 +954,8 @@ export async function checkDockerAvailable(entryId: string): Promise<boolean> {
   if (!token) throw new Error("Not authenticated");
   return invoke<boolean>("check_docker_available", { token, entryId });
 }
+
+// Wake-on-LAN API
+export async function sendWol(macAddress: string, broadcastAddress?: string): Promise<void> {
+  return invoke<void>("send_wol", { macAddress, broadcastAddress });
+}

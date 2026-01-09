@@ -22,6 +22,7 @@ pub struct EntryRow {
     pub pve_node: Option<String>,
     pub pve_vmid: Option<i32>,
     pub jump_host_id: Option<String>,
+    pub mac_address: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -46,6 +47,7 @@ pub struct Entry {
     pub pve_node: Option<String>,
     pub pve_vmid: Option<i32>,
     pub jump_host_id: Option<String>,
+    pub mac_address: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     #[serde(default)]
@@ -73,6 +75,7 @@ impl EntryRow {
             pve_node: self.pve_node,
             pve_vmid: self.pve_vmid,
             jump_host_id: self.jump_host_id,
+            mac_address: self.mac_address,
             created_at: self.created_at,
             updated_at: self.updated_at,
             identity_ids,
@@ -94,6 +97,7 @@ pub struct CreateEntryRequest {
     pub identity_ids: Option<Vec<String>>,
     pub tag_ids: Option<Vec<String>>,
     pub jump_host_id: Option<String>,
+    pub mac_address: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,6 +114,7 @@ pub struct UpdateEntryRequest {
     pub identity_ids: Option<Vec<String>>,
     pub tag_ids: Option<Vec<String>>,
     pub jump_host_id: Option<String>,
+    pub mac_address: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

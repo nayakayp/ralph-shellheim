@@ -375,5 +375,14 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 18,
+            description: "add_wol_support",
+            sql: r#"
+                -- Add MAC address for Wake-on-LAN support
+                ALTER TABLE entries ADD COLUMN mac_address TEXT;
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

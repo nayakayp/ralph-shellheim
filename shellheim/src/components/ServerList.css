@@ -175,6 +175,21 @@
   color: #bb9af7;
 }
 
+.action-btn-wol:hover {
+  background: rgba(255, 158, 100, 0.15);
+  border-color: rgba(255, 158, 100, 0.35);
+  color: #ff9e64;
+}
+
+.action-btn-wol.sending {
+  animation: wol-pulse 1s ease-in-out infinite;
+}
+
+@keyframes wol-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* ---------------------------------------------------------------------------
    DRAG & DROP STATES
    --------------------------------------------------------------------------- */

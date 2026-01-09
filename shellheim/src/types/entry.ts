@@ -18,6 +18,7 @@ export interface Entry {
   pve_node?: string;
   pve_vmid?: number;
   jump_host_id?: string;
+  mac_address?: string;
   created_at: string;
   updated_at: string;
   identity_ids: string[];
@@ -36,6 +37,7 @@ export interface CreateEntryRequest {
   identity_ids?: string[];
   tag_ids?: string[];
   jump_host_id?: string;
+  mac_address?: string;
 }
 
 export interface UpdateEntryRequest {
@@ -51,6 +53,7 @@ export interface UpdateEntryRequest {
   identity_ids?: string[];
   tag_ids?: string[];
   jump_host_id?: string;
+  mac_address?: string;
 }
 
 export type Protocol = 'ssh' | 'sftp' | 'rdp' | 'vnc' | 'telnet';

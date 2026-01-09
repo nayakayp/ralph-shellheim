@@ -1,9 +1,9 @@
 import { useCallback, useState, useEffect } from "react";
-import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash, ChartLine, Package } from "@phosphor-icons/react";
+import { Terminal, File, Monitor, DotsSixVertical, FileText, PencilSimple, Trash, ChartLine, Package, Power } from "@phosphor-icons/react";
 import type { Entry } from "../types/entry";
 import type { Tag } from "../types/tag";
 import { getContrastColor } from "../types/tag";
-import { getEntryTags } from "../lib/api";
+import { getEntryTags, sendWol } from "../lib/api";
 import "./ServerList.css";
 
 interface ServerListProps {
@@ -32,6 +32,24 @@ export function ServerList({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [entryTags, setEntryTags] = useState<Map<string, Tag[]>>(new Map());
+  const [wolSending, setWolSending] = useState<string | null>(null);
+
+  const handleWakeOnLan = useCallback(async (entry: Entry) => {
+    if (!entry.mac_address) {
+      alert("No MAC address configured for this server. Edit the server to add one.");
+      return;
+    }
+    
+    setWolSending(entry.id);
+    try {
+      await sendWol(entry.mac_address);
+      alert(`Wake-on-LAN packet sent to ${entry.name}`);
+    } catch (err) {
+      alert(`Failed to send WoL: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setWolSending(null);
+    }
+  }, []);
 
   // Fetch tags for all entries
   useEffect(() => {
@@ -208,6 +226,16 @@ export function ServerList({
                 title="Open SFTP"
               >
                 <FileText size={16} weight="regular" />
+              </button>
+            )}
+            {entry.mac_address && (
+              <button 
+                className={`action-btn action-btn-wol ${wolSending === entry.id ? 'sending' : ''}`}
+                onClick={() => handleWakeOnLan(entry)}
+                title="Wake on LAN"
+                disabled={wolSending === entry.id}
+              >
+                <Power size={16} weight="regular" />
               </button>
             )}
             <button 

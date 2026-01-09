@@ -4,6 +4,49 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 39 - 2026-01-10
+
+### Completed
+- **Implemented Wake-on-LAN (WoL)** - Power on sleeping servers remotely:
+  - Send magic packets to MAC addresses over UDP broadcast
+  - Supports multiple MAC address formats (AA:BB:CC:DD:EE:FF, AA-BB-CC-DD-EE-FF, AABBCCDDEEFF)
+  - Configurable broadcast address (defaults to 255.255.255.255)
+
+- **Added Database Migration 18** (`migrations_list.rs`):
+  - Added `mac_address` column to entries table
+
+- **Built WoL Backend API** (`src-tauri/src/api/wol.rs`):
+  - `send_wol`: Parse MAC address and send UDP magic packet
+  - Creates standard 102-byte magic packet (6x 0xFF + 16x MAC)
+  - Uses port 9 (standard WoL port)
+
+- **Updated Entry Models**:
+  - Added `mac_address: Option<String>` to `EntryRow`, `Entry`, `CreateEntryRequest`, `UpdateEntryRequest`
+  - Updated entries API to persist MAC addresses
+
+- **Updated Frontend**:
+  - Added `mac_address` field to Entry types (`src/types/entry.ts`)
+  - Added `sendWol()` API function (`src/lib/api.ts`)
+  - Added WoL button (⚡ Power icon) to ServerList - only visible if MAC configured
+  - Added MAC address input field to AddServerModal and EditServerModal
+  - Orange hover styling and pulse animation when sending
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Technical Notes
+- WoL magic packet: 6 bytes of 0xFF followed by MAC address repeated 16 times
+- UDP broadcast to port 9 (can configure broadcast IP for specific subnets)
+- Server must have WoL enabled in BIOS/UEFI and network adapter
+- Only works on same LAN segment (unless router forwards broadcasts)
+
+### Next
+1. **Telnet support** - Legacy terminal connections
+2. **Session sharing** - Collaborative terminal sessions
+3. **OIDC/LDAP authentication** - Enterprise SSO
+4. **Scripts system** - Automated command execution
+
+---
+
 ## Session 38 - 2026-01-10
 
 ### Completed

@@ -230,6 +230,9 @@ pub fn run() {
             api::docker::remove_docker_container,
             api::docker::pull_docker_image,
             api::docker::check_docker_available,
+            
+            // Wake-on-LAN commands
+            api::wol::send_wol,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -25,6 +25,7 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
   const [folderId, setFolderId] = useState<string>(selectedFolderId || "");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [jumpHostId, setJumpHostId] = useState<string>("");
+  const [macAddress, setMacAddress] = useState<string>("");
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [sshEntries, setSshEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,6 +85,7 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
         folder_id: folderId || undefined,
         tag_ids: selectedTagIds.length > 0 ? selectedTagIds : undefined,
         jump_host_id: jumpHostId || undefined,
+        mac_address: macAddress.trim() || undefined,
       });
       onClose();
     } catch (err) {
@@ -232,6 +234,18 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
               selectedTagIds={selectedTagIds}
               onChange={setSelectedTagIds}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="macAddress">MAC Address (optional)</label>
+            <input
+              id="macAddress"
+              type="text"
+              value={macAddress}
+              onChange={(e) => setMacAddress(e.target.value)}
+              placeholder="AA:BB:CC:DD:EE:FF"
+            />
+            <span className="form-hint">For Wake-on-LAN to power on sleeping servers</span>
           </div>
 
           <div className="modal-actions">

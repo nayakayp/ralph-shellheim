@@ -191,9 +191,9 @@ pub async fn create_entry(token: String, request: CreateEntryRequest) -> Result<
         r#"
         INSERT INTO entries (
             id, account_id, folder_id, entry_type, name, host, port, protocol,
-            description, icon, color, sort_order, jump_host_id, created_at, updated_at
+            description, icon, color, sort_order, jump_host_id, mac_address, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#,
     )
     .bind(&id)
@@ -209,6 +209,7 @@ pub async fn create_entry(token: String, request: CreateEntryRequest) -> Result<
     .bind(&request.color)
     .bind(sort_order)
     .bind(&request.jump_host_id)
+    .bind(&request.mac_address)
     .bind(&now)
     .bind(&now)
     .execute(pool)
@@ -247,6 +248,7 @@ pub async fn create_entry(token: String, request: CreateEntryRequest) -> Result<
         pve_node: None,
         pve_vmid: None,
         jump_host_id: request.jump_host_id,
+        mac_address: request.mac_address,
         created_at: now.clone(),
         updated_at: now,
         identity_ids,
@@ -293,12 +295,17 @@ pub async fn update_entry(
     } else {
         entry.jump_host_id.clone()
     };
+    let new_mac_address = if request.mac_address.is_some() {
+        request.mac_address.clone()
+    } else {
+        entry.mac_address.clone()
+    };
     
     sqlx::query(
         r#"
         UPDATE entries SET
             folder_id = ?, name = ?, host = ?, port = ?, protocol = ?,
-            description = ?, icon = ?, color = ?, sort_order = ?, jump_host_id = ?, updated_at = ?
+            description = ?, icon = ?, color = ?, sort_order = ?, jump_host_id = ?, mac_address = ?, updated_at = ?
         WHERE id = ? AND account_id = ?
         "#,
     )
@@ -312,6 +319,7 @@ pub async fn update_entry(
     .bind(&new_color)
     .bind(new_sort_order)
     .bind(&new_jump_host_id)
+    .bind(&new_mac_address)
     .bind(&now)
     .bind(&entry_id)
     .bind(&account_id)
@@ -352,6 +360,7 @@ pub async fn update_entry(
         pve_node: entry.pve_node,
         pve_vmid: entry.pve_vmid,
         jump_host_id: new_jump_host_id,
+        mac_address: new_mac_address,
         created_at: entry.created_at,
         updated_at: now,
         identity_ids,
@@ -533,6 +542,7 @@ pub async fn move_entry(
         pve_node: entry.pve_node,
         pve_vmid: entry.pve_vmid,
         jump_host_id: entry.jump_host_id,
+        mac_address: entry.mac_address,
         created_at: entry.created_at,
         updated_at: now,
         identity_ids,
