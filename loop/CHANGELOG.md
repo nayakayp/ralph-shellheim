@@ -4,6 +4,49 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 20 - 2026-01-09
+
+### Completed
+- **Added Record Button to Terminal Toolbar** - Start/stop recording directly from terminal view:
+  - New terminal toolbar appears when SSH session is active
+  - Record button with red indicator when recording
+  - Live elapsed time display during recording (MM:SS format)
+  - Blinking red dot animation for active recording indicator
+  - Stop button to finalize recording
+
+- **Built Terminal Toolbar UI** (`src/components/Dashboard.tsx`):
+  - Toolbar sits between tab bar and terminal area
+  - Shows current host:port on left side
+  - Right side has: Record/Stop, Recordings, Snippets, Tunnels buttons
+  - Contextual display - only shows for SSH sessions (not SFTP)
+
+- **Integrated Recording State Management**:
+  - `recordingSessionId` tracks which session is being recorded
+  - `activeRecordingId` stores ID for stopping recording
+  - `recordingElapsed` updates every second for live timer
+  - Auto-detects active recordings when switching sessions via `isSessionRecording` API
+
+- **Added Terminal Toolbar Styles** (`src/components/Dashboard.css`):
+  - Glassmorphism design consistent with Tokyo Night theme
+  - `.recording-active` state with red accent colors
+  - `.recording-indicator` pulsing animation
+  - `.recording-time` monospace font for timer display
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Search files** - Search within SFTP directory tree
+2. **Monitoring service** - Server health monitoring
+3. **File editor** - Edit remote files with syntax highlighting
+
+### Tech Notes
+- Recording state persists across session switches
+- Timer starts from current time on restored recordings (exact duration stored in DB)
+- Terminal toolbar conditionally rendered only for SSH tab type
+- Uses Phosphor icons: Record (red circle), Stop (square), VideoCamera
+
+---
+
 ## Session 19 - 2026-01-09
 
 ### Completed

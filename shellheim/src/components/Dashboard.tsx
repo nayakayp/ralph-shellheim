@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -7,8 +7,9 @@ import type { SftpSessionInfo } from "../types/sftp";
 import type { Folder, CreateFolderRequest } from "../types/folder";
 import type { HostKeyStatus } from "../types/known_host";
 import { buildFolderTree } from "../types/folder";
-import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData } from "../lib/api";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh, listFolders, createFolder, deleteFolder, getFolderCounts, hibernateSession, listHibernatedSessions, resumeSession, deleteHibernatedSession, connectSftp, disconnectSftp, moveFolder, reorderFolders, moveEntry, reorderEntries, sendSshData, startRecording, stopRecording, isSessionRecording } from "../lib/api";
 import type { Snippet } from "../types/snippet";
+import { formatDuration } from "../types/recording";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
@@ -54,6 +55,12 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   
   // SFTP sessions state
   const [sftpSessions, setSftpSessions] = useState<SftpSessionInfo[]>([]);
+  
+  // Recording state
+  const [recordingSessionId, setRecordingSessionId] = useState<string | null>(null); // Which session is being recorded
+  const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null); // Recording ID for stopping
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null); // For elapsed time display
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
   
   // Terminal refs for extracting buffer during hibernation
   const terminalRefs = useRef<Map<string, { getBuffer: () => string }>>(new Map());
@@ -333,6 +340,87 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     }
   };
 
+  // Recording handlers
+  const handleStartRecording = async () => {
+    if (!activeSessionId || activeTabType !== "ssh") {
+      alert("No active SSH session. Connect to a server first.");
+      return;
+    }
+    
+    // Check if this session is already being recorded
+    if (recordingSessionId === activeSessionId) {
+      return;
+    }
+    
+    try {
+      const activeSession = sessions.find(s => s.session_id === activeSessionId);
+      const response = await startRecording({
+        session_id: activeSessionId,
+        name: activeSession ? `${activeSession.host} - ${new Date().toLocaleString()}` : undefined,
+      });
+      
+      setRecordingSessionId(activeSessionId);
+      setActiveRecordingId(response.recording_id);
+      setRecordingStartTime(Date.now());
+      setRecordingElapsed(0);
+    } catch (err) {
+      console.error("Failed to start recording:", err);
+      alert("Failed to start recording: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  };
+
+  const handleStopRecording = async () => {
+    if (!activeRecordingId) return;
+    
+    try {
+      await stopRecording({ recording_id: activeRecordingId });
+      setRecordingSessionId(null);
+      setActiveRecordingId(null);
+      setRecordingStartTime(null);
+      setRecordingElapsed(0);
+    } catch (err) {
+      console.error("Failed to stop recording:", err);
+      alert("Failed to stop recording: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
+  };
+
+  // Check if active session is being recorded
+  const isActiveSessionRecording = activeSessionId && recordingSessionId === activeSessionId;
+
+  // Update elapsed time for recording
+  useEffect(() => {
+    if (!recordingStartTime) return;
+    
+    const interval = setInterval(() => {
+      setRecordingElapsed(Math.floor((Date.now() - recordingStartTime) / 1000));
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [recordingStartTime]);
+
+  // Check for active recording on session switch
+  useEffect(() => {
+    const checkRecording = async () => {
+      if (!activeSessionId || activeTabType !== "ssh") return;
+      
+      try {
+        const recordingId = await isSessionRecording(activeSessionId);
+        if (recordingId) {
+          setRecordingSessionId(activeSessionId);
+          setActiveRecordingId(recordingId);
+          // Note: We don't know exact start time, but can show as recording
+          if (!recordingStartTime) {
+            setRecordingStartTime(Date.now());
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check recording status:", err);
+      }
+    };
+    
+    checkRecording();
+  }, [activeSessionId, activeTabType]);
+
   const handleSelectTab = (sessionId: string, tabType: "ssh" | "sftp") => {
     setActiveSessionId(sessionId);
     setActiveTabType(tabType);
@@ -448,6 +536,8 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
 
   // Terminal mode: show terminals if we have any sessions (or hibernated sessions to show in tabs)
   if (sessions.length > 0 || hibernatedSessions.length > 0 || sftpSessions.length > 0) {
+    const activeSession = sessions.find(s => s.session_id === activeSessionId);
+    
     return (
       <div className="dashboard terminal-mode">
         <TerminalTabs
@@ -464,6 +554,65 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           onDeleteHibernated={handleDeleteHibernated}
           onNewConnection={handleNewConnection}
         />
+        
+        {/* Terminal toolbar with recording controls */}
+        {activeSessionId && activeTabType === "ssh" && (
+          <div className="terminal-toolbar">
+            <div className="terminal-toolbar-left">
+              <span className="session-host">
+                {activeSession?.host}:{activeSession?.port}
+              </span>
+            </div>
+            <div className="terminal-toolbar-right">
+              {isActiveSessionRecording ? (
+                <button 
+                  className="toolbar-btn recording-active"
+                  onClick={handleStopRecording}
+                  title="Stop Recording"
+                >
+                  <span className="recording-indicator" />
+                  <Stop size={16} weight="fill" />
+                  <span className="recording-time">{formatDuration(recordingElapsed)}</span>
+                  Stop Recording
+                </button>
+              ) : (
+                <button 
+                  className="toolbar-btn"
+                  onClick={handleStartRecording}
+                  title="Start Recording"
+                >
+                  <Record size={16} weight="fill" />
+                  Record
+                </button>
+              )}
+              <button 
+                className="toolbar-btn"
+                onClick={() => setShowRecordings(true)}
+                title="View Recordings"
+              >
+                <VideoCamera size={16} />
+                Recordings
+              </button>
+              <button 
+                className="toolbar-btn"
+                onClick={() => setShowSnippets(true)}
+                title="Command Snippets"
+              >
+                <TerminalIcon size={16} />
+                Snippets
+              </button>
+              <button 
+                className="toolbar-btn"
+                onClick={() => setShowTunnels(true)}
+                title="SSH Tunnels"
+              >
+                <Stack size={16} />
+                Tunnels
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="terminal-area">
           {sessions.map((session) => (
             <Terminal
