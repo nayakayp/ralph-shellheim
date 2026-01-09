@@ -4,6 +4,77 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 31 - 2026-01-10
+
+### Completed
+- **Implemented Customizable Keyboard Shortcuts** - User-defined key bindings:
+  - All global shortcuts can be customized per user
+  - Press-to-capture or dropdown-based key binding
+  - Enable/disable individual shortcuts
+  - Conflict detection with warning display
+  - Reset to defaults functionality
+
+- **Built Keymap Backend** (`src-tauri/src/api/keymaps.rs`):
+  - CRUD operations for keymaps
+  - Auto-initialization of defaults on first access
+  - Conflict checking for duplicate bindings
+  - Reset to defaults command
+  - 12 default shortcuts: command palette, new connection, close/next/prev tab, etc.
+
+- **Created Keymap Model** (`src-tauri/src/models/keymap.rs`):
+  - `Keymap`: User shortcut with action, key, modifiers, enabled flag
+  - `DefaultKeymap`: Shipped defaults for new users
+  - `CreateKeymapRequest`, `UpdateKeymapRequest` for API
+
+- **Added Database Migration** (version 13):
+  - `keymaps` table with account_id, action, key, modifiers
+  - Unique constraint on (account_id, action)
+  - Indexes for efficient lookup
+
+- **Added Frontend Types** (`src/types/keymap.ts`):
+  - TypeScript interfaces matching Rust models
+  - `ACTION_LABELS` for human-readable action names
+  - `MODIFIER_OPTIONS` and `KEY_OPTIONS` for dropdowns
+  - `formatKeyBinding()` for display (e.g., "Ctrl + P")
+  - `matchesKeymap()` for event matching
+
+- **Built useKeymaps Hook** (`src/hooks/useKeymaps.ts`):
+  - Loads user keymaps on mount
+  - Global keyboard event listener
+  - Skips inputs/textareas (except allowed shortcuts)
+  - Refresh function for reloading after changes
+
+- **Built KeybindsPanel Component** (`src/components/KeybindsPanel.tsx`):
+  - Modal dialog with Tokyo Night glassmorphism design
+  - List of all shortcuts with action name and current binding
+  - Press-to-capture input for recording new shortcuts
+  - Dropdown selectors as alternative input method
+  - Conflict warning when binding exists
+  - Enable/disable toggle per shortcut
+  - Reset to defaults button
+
+- **Integrated with Dashboard**:
+  - Added "Keys" button to toolbar with Keyboard icon
+  - KeybindsPanel accessible from main dashboard
+  - `useKeymaps` hook replaces hardcoded Ctrl+P handler
+  - Supports: command palette, new connection, close/next/prev tab, toggle sidebar, open snippets, disconnect
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **RDP/VNC support** - Remote desktop protocols (requires native implementation)
+2. **Proxmox integration** - VM/container management
+3. **OIDC/LDAP authentication** - Enterprise SSO
+
+### Tech Notes
+- Default shortcuts auto-created on first `list_keymaps` call
+- Uses refs to avoid hook ordering issues with close handlers
+- Keymaps disabled during modals (add server, edit, command palette)
+- Mac users get ⌘ displayed instead of "Meta"
+- copy_terminal/paste_terminal handled by terminal component directly
+
+---
+
 ## Session 30 - 2026-01-10
 
 ### Completed

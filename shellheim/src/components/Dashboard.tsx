@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive } from "@phosphor-icons/react";
+import { SignOut, Stack, CheckCircle, Key, Plus, Desktop, Terminal as TerminalIcon, VideoCamera, Record, Stop, ClipboardText, Tag as TagIcon, Heartbeat, Archive, Keyboard } from "@phosphor-icons/react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { SshSessionInfo, HibernatedSession } from "../types/ssh";
@@ -25,6 +25,9 @@ import { TagsPanel } from "./TagsPanel";
 import { MonitoringPanel } from "./MonitoringPanel";
 import { BackupPanel } from "./BackupPanel";
 import { CommandPalette } from "./CommandPalette";
+import KeybindsPanel from "./KeybindsPanel";
+import { useKeymaps } from "../hooks/useKeymaps";
+import type { KeymapAction } from "../types/keymap";
 import Terminal from "./Terminal/Terminal";
 import { TerminalTabs } from "./Terminal/TerminalTabs";
 import { FileBrowser } from "./FileBrowser";
@@ -52,6 +55,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [showTags, setShowTags] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+  const [showKeybinds, setShowKeybinds] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [tagFilteredEntryIds, setTagFilteredEntryIds] = useState<Set<string> | null>(null);
@@ -158,19 +162,86 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     loadData();
   }, [loadData]);
 
-  // Global keyboard shortcut for Command Palette (Ctrl+P / Cmd+P)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+P (Windows/Linux) or Cmd+P (Mac)
-      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
-        e.preventDefault();
+  // Handler for keyboard shortcut actions
+  // Uses refs for close functions to avoid ordering issues
+  const closeTabRef = useRef<((sessionId: string) => void) | null>(null);
+  const closeSftpTabRef = useRef<((sessionId: string) => void) | null>(null);
+  
+  const handleKeymapAction = useCallback((action: KeymapAction) => {
+    switch (action) {
+      case "command_palette":
         setShowCommandPalette(true);
+        break;
+      case "new_connection":
+        setShowAddModal(true);
+        break;
+      case "close_tab":
+        if (activeSessionId) {
+          // Check if it's an SSH or SFTP session
+          const isSsh = sessions.some((s) => s.session_id === activeSessionId);
+          const isSftp = sftpSessions.some((s) => s.session_id === activeSessionId);
+          if (isSsh && closeTabRef.current) {
+            closeTabRef.current(activeSessionId);
+          } else if (isSftp && closeSftpTabRef.current) {
+            closeSftpTabRef.current(activeSessionId);
+          }
+        }
+        break;
+      case "next_tab": {
+        const allTabs = [...sessions, ...sftpSessions];
+        if (allTabs.length > 1 && activeSessionId) {
+          const currentIndex = allTabs.findIndex(
+            (t) => t.session_id === activeSessionId
+          );
+          const nextIndex = (currentIndex + 1) % allTabs.length;
+          setActiveSessionId(allTabs[nextIndex].session_id);
+        }
+        break;
       }
-    };
-    
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+      case "prev_tab": {
+        const allTabs = [...sessions, ...sftpSessions];
+        if (allTabs.length > 1 && activeSessionId) {
+          const currentIndex = allTabs.findIndex(
+            (t) => t.session_id === activeSessionId
+          );
+          const prevIndex = currentIndex === 0 ? allTabs.length - 1 : currentIndex - 1;
+          setActiveSessionId(allTabs[prevIndex].session_id);
+        }
+        break;
+      }
+      case "toggle_sidebar":
+        setShowServerPanel((prev) => !prev);
+        break;
+      case "search_servers":
+        // Open command palette with search focus
+        setShowCommandPalette(true);
+        break;
+      case "open_sftp":
+        // Note: handleConnectSftp is also defined later, so we just open command palette for now
+        setShowCommandPalette(true);
+        break;
+      case "open_snippets":
+        setShowSnippets(true);
+        break;
+      case "disconnect":
+        if (activeSessionId) {
+          const isSsh = sessions.some((s) => s.session_id === activeSessionId);
+          const isSftp = sftpSessions.some((s) => s.session_id === activeSessionId);
+          if (isSsh && closeTabRef.current) {
+            closeTabRef.current(activeSessionId);
+          } else if (isSftp && closeSftpTabRef.current) {
+            closeSftpTabRef.current(activeSessionId);
+          }
+        }
+        break;
+      default:
+        // copy_terminal and paste_terminal are handled by the terminal component
+        break;
+    }
+  }, [activeSessionId, sessions, sftpSessions]);
+
+  // Use customizable keymaps for global shortcuts
+  useKeymaps(handleKeymapAction, { enabled: !showCommandPalette && !showAddModal && !editingEntry });
 
   const handleAddServer = async (request: CreateEntryRequest) => {
     const newEntry = await createEntry(request);
@@ -449,7 +520,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const isActiveSessionRecording = activeSessionId && recordingSessionId === activeSessionId;
 
   // Command palette panel opener
-  const handleOpenPanel = useCallback((panel: "identities" | "snippets" | "recordings" | "tunnels" | "hosts" | "tags" | "audit" | "monitoring" | "backup") => {
+  const handleOpenPanel = useCallback((panel: "identities" | "snippets" | "recordings" | "tunnels" | "hosts" | "tags" | "audit" | "monitoring" | "backup" | "keybinds") => {
     switch (panel) {
       case "identities": setShowIdentities(true); break;
       case "snippets": setShowSnippets(true); break;
@@ -460,6 +531,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       case "audit": setShowAudit(true); break;
       case "monitoring": setShowMonitoring(true); break;
       case "backup": setShowBackup(true); break;
+      case "keybinds": setShowKeybinds(true); break;
     }
   }, []);
 
@@ -521,6 +593,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       return newSessions;
     });
   };
+
+  // Assign refs for keymap actions
+  closeTabRef.current = handleCloseTab;
+  closeSftpTabRef.current = handleCloseSftpTab;
 
   const handleHibernateTab = async (sessionId: string) => {
     try {
@@ -897,6 +973,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
                 <Archive size={18} />
                 Backup
               </button>
+              <button className="toolbar-btn" onClick={() => setShowKeybinds(true)} title="Keyboard Shortcuts">
+                <Keyboard size={18} />
+                Keys
+              </button>
               <button className="add-btn" onClick={() => setShowAddModal(true)}>
                 <Plus size={18} />
                 Add Server
@@ -1007,6 +1087,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         isOpen={showBackup}
         onClose={() => setShowBackup(false)}
         onImportComplete={loadData}
+      />
+
+      <KeybindsPanel
+        isOpen={showKeybinds}
+        onClose={() => setShowKeybinds(false)}
       />
 
       {showTags && (

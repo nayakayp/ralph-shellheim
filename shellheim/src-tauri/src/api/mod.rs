@@ -6,6 +6,7 @@ pub mod backup;
 pub mod entries;
 pub mod folders;
 pub mod identities;
+pub mod keymaps;
 pub mod known_hosts;
 pub mod monitoring;
 pub mod recordings;

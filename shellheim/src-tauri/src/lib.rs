@@ -177,6 +177,16 @@ pub fn run() {
             api::backup::export_config,
             api::backup::import_config,
             api::backup::get_export_stats,
+            
+            // Keymap commands
+            api::keymaps::list_keymaps,
+            api::keymaps::get_keymap,
+            api::keymaps::create_keymap,
+            api::keymaps::update_keymap,
+            api::keymaps::delete_keymap,
+            api::keymaps::reset_keymaps_to_defaults,
+            api::keymaps::check_keymap_conflict,
+            api::keymaps::get_default_keymaps,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

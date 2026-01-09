@@ -230,5 +230,27 @@ pub fn get_migrations() -> Vec<Migration> {
             "#,
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 13,
+            description: "create_keymaps_table",
+            sql: r#"
+                CREATE TABLE IF NOT EXISTS keymaps (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    account_id TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    key TEXT NOT NULL,
+                    modifiers TEXT NOT NULL DEFAULT '',
+                    description TEXT NOT NULL DEFAULT '',
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+                    UNIQUE (account_id, action)
+                );
+                CREATE INDEX IF NOT EXISTS idx_keymaps_account ON keymaps(account_id);
+                CREATE INDEX IF NOT EXISTS idx_keymaps_lookup ON keymaps(account_id, action);
+            "#,
+            kind: MigrationKind::Up,
+        },
     ]
 }

@@ -666,3 +666,61 @@ export async function getExportStats(): Promise<ExportStats> {
   if (!token) throw new Error("Not authenticated");
   return invoke<ExportStats>("get_export_stats", { token });
 }
+
+// Keymap API
+import type { Keymap, CreateKeymapRequest, UpdateKeymapRequest, DefaultKeymap } from "../types/keymap";
+
+export async function listKeymaps(): Promise<Keymap[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Keymap[]>("list_keymaps", { token });
+}
+
+export async function getKeymap(keymapId: string): Promise<Keymap> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Keymap>("get_keymap", { token, keymapId });
+}
+
+export async function createKeymap(request: CreateKeymapRequest): Promise<Keymap> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Keymap>("create_keymap", { token, request });
+}
+
+export async function updateKeymap(keymapId: string, request: UpdateKeymapRequest): Promise<Keymap> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Keymap>("update_keymap", { token, keymapId, request });
+}
+
+export async function deleteKeymap(keymapId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_keymap", { token, keymapId });
+}
+
+export async function resetKeymapsToDefaults(): Promise<Keymap[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Keymap[]>("reset_keymaps_to_defaults", { token });
+}
+
+export async function checkKeymapConflict(
+  key: string, 
+  modifiers: string, 
+  excludeId?: string
+): Promise<Keymap | null> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Keymap | null>("check_keymap_conflict", { 
+    token, 
+    key, 
+    modifiers, 
+    excludeId: excludeId ?? null 
+  });
+}
+
+export async function getDefaultKeymaps(): Promise<DefaultKeymap[]> {
+  return invoke<DefaultKeymap[]>("get_default_keymaps");
+}
