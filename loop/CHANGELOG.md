@@ -4,6 +4,59 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 41 - 2026-01-10
+
+### Completed
+- **Feature Parity Assessment** - Comprehensive review of Nexterm features vs Shellheim:
+  - ✅ All practical desktop app features have been implemented
+  - Jump host/bastion support was already implemented (Session 40 TODO was outdated)
+  - Session recording playback already exists (RecordingPlayer component)
+
+### Feature Status Summary
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| SSH/SFTP | ✅ Complete | Full terminal + file browser |
+| Telnet | ✅ Complete | Legacy protocol support |
+| Identities | ✅ Complete | Password + SSH key management |
+| Folders | ✅ Complete | Hierarchical organization |
+| Tags | ✅ Complete | Label/categorize servers |
+| Tunnels | ✅ Complete | Local + remote port forwarding |
+| Jump Hosts | ✅ Complete | Bastion/proxy SSH chains |
+| Snippets | ✅ Complete | Command templates |
+| Scripts | ✅ Complete | Automated execution with output |
+| Session Recording | ✅ Complete | Record + playback |
+| Monitoring | ✅ Complete | CPU, memory, disk, processes |
+| Docker | ✅ Complete | Container management via SSH |
+| AI Commands | ✅ Complete | LLM-powered command generation |
+| Wake-on-LAN | ✅ Complete | Remote server wake-up |
+| Audit Logging | ✅ Complete | Activity tracking |
+| Backup/Export | ✅ Complete | Configuration export/import |
+| Keybinds | ✅ Complete | Custom keyboard shortcuts |
+| Proxmox | ✅ Complete | VM/LXC management |
+| Known Hosts | ✅ Complete | SSH host key verification |
+| Integrations | ✅ Complete | External service connections |
+
+### Features Not Applicable to Desktop App
+- **OIDC/LDAP/SSO** - Enterprise auth is for multi-user web apps
+- **Session Sharing** - Real-time collaboration requires server infrastructure
+- **Organizations/Teams** - Multi-tenant features for SaaS
+- **Passkeys/WebAuthn** - Browser-based standards
+
+### Features Requiring External Dependencies (Deferred)
+- **RDP/VNC** - Requires guacd (Guacamole daemon) or native protocol implementation
+- **Proxmox VNC Console** - Requires noVNC or WebSocket VNC client
+
+### Next Steps
+The Shellheim project has achieved **functional parity** with Nexterm for all features suitable to a desktop application. Remaining work is optional enhancements:
+
+1. **VNC/RDP support** (if desired - requires significant additional work)
+2. **UI polish and UX improvements**
+3. **Performance optimization**
+4. **Documentation**
+
+---
+
 ## Session 40 - 2026-01-10
 
 ### Completed
