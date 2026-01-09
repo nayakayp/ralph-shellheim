@@ -16,7 +16,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
     echo "📍 Iteration $i of $MAX_ITERATIONS"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
-    amp -m "$(cat loop/RALPH_INSTRUCTIONS.md)" --print
+    cat loop/RALPH_INSTRUCTIONS.md | amp
     
     # Check for completion signal
     if grep -q "PROJECT COMPLETE" loop/CHANGELOG.md 2>/dev/null; then

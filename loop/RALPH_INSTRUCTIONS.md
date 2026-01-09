@@ -5,18 +5,6 @@ Rewrite [Nexterm](https://github.com/gnmyt/Nexterm) — a web-based SSH/server m
 
 ---
 
-## How to Run (Ralph Wiggum Loop)
-
-```bash
-# Basic loop
-while :; do amp -m "$(cat loop/RALPH_INSTRUCTIONS.md)" --print; done
-
-# With max iterations (recommended)
-for i in {1..10}; do amp -m "$(cat loop/RALPH_INSTRUCTIONS.md)" --print; done
-```
-
----
-
 ## Workflow (Every Iteration)
 
 ### 1. **Resume Context**
