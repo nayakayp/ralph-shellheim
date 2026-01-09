@@ -257,3 +257,46 @@
   align-items: flex-start;
   justify-content: flex-start;
 }
+
+/* Terminal mode - full screen terminal */
+.dashboard.terminal-mode {
+  padding: 0;
+}
+
+.dashboard.terminal-mode .terminal-container {
+  height: 100vh;
+  border-radius: 0;
+}
+
+/* Connecting overlay */
+.connecting-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 35, 0.9);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.connecting-modal {
+  background: rgba(30, 30, 60, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.connecting-modal p {
+  color: #a0a0c0;
+  font-size: 1rem;
+  margin: 0;
+}

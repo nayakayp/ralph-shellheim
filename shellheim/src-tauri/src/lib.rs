@@ -76,6 +76,7 @@ pub fn run() {
             api::ssh::disconnect_ssh,
             api::ssh::send_data,
             api::ssh::resize_terminal,
+            api::ssh::list_ssh_sessions,
             
             // Folder commands
             api::folders::list_folders,

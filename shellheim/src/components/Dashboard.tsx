@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Account } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
-import { listEntries, createEntry, updateEntry, deleteEntry } from "../lib/api";
+import type { SshSessionInfo } from "../types/ssh";
+import { listEntries, createEntry, updateEntry, deleteEntry, connectSsh } from "../lib/api";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
 import { EditServerModal } from "./EditServerModal";
 import { IdentitiesPanel } from "./IdentitiesPanel";
+import Terminal from "./Terminal/Terminal";
 import "./Dashboard.css";
 
 interface DashboardProps {
@@ -20,6 +22,10 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [showIdentities, setShowIdentities] = useState(false);
   const [error, setError] = useState("");
+  
+  // SSH session state
+  const [activeSession, setActiveSession] = useState<SshSessionInfo | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const loadEntries = useCallback(async () => {
     try {
@@ -48,9 +54,34 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
   };
 
-  const handleConnect = (entry: Entry) => {
-    // TODO: Implement SSH connection
-    console.log("Connect to:", entry.name);
+  const handleConnect = async (entry: Entry) => {
+    if (isConnecting) return;
+    
+    // Check if entry has an identity
+    if (!entry.identity_ids || entry.identity_ids.length === 0) {
+      alert("This server has no credentials configured. Please edit it and add an identity first.");
+      setEditingEntry(entry);
+      return;
+    }
+    
+    setIsConnecting(true);
+    setError("");
+    
+    try {
+      const session = await connectSsh({
+        entry_id: entry.id,
+        cols: 120,
+        rows: 30,
+      });
+      
+      setActiveSession(session);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to connect";
+      setError(`Connection failed: ${message}`);
+      console.error("SSH connect error:", err);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleEdit = (entry: Entry) => {
@@ -67,6 +98,23 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
       alert(err instanceof Error ? err.message : "Failed to delete server");
     }
   };
+
+  const handleTerminalClose = () => {
+    setActiveSession(null);
+  };
+
+  // If there's an active session, show the terminal full screen
+  if (activeSession) {
+    return (
+      <div className="dashboard terminal-mode">
+        <Terminal
+          sessionId={activeSession.session_id}
+          host={`${activeSession.host}:${activeSession.port}`}
+          onClose={handleTerminalClose}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard">
@@ -122,6 +170,15 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
 
       <main className="dashboard-main">
         {error && <div className="dashboard-error">{error}</div>}
+        
+        {isConnecting && (
+          <div className="connecting-overlay">
+            <div className="connecting-modal">
+              <div className="spinner" />
+              <p>Connecting...</p>
+            </div>
+          </div>
+        )}
         
         {isLoading ? (
           <div className="loading-state">

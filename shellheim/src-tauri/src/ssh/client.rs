@@ -1,0 +1,309 @@
+//! SSH Client implementation using russh
+//!
+//! Handles SSH connections, authentication, and PTY sessions.
+
+use async_trait::async_trait;
+use russh::client::{self, Config, Handle, Handler};
+use russh::{Channel, ChannelId, Disconnect};
+use russh_keys::key::PrivateKeyWithHashAlg;
+use std::sync::Arc;
+use tauri::AppHandle;
+use tauri::Emitter;
+use tracing::{debug, error, info, warn};
+
+/// SSH client handler for russh callbacks
+pub struct SshClientHandler {
+    /// The session ID this handler belongs to
+    pub session_id: String,
+    /// Tauri app handle for emitting events
+    pub app_handle: AppHandle,
+}
+
+#[async_trait]
+impl Handler for SshClientHandler {
+    type Error = russh::Error;
+
+    /// Called when the server sends data on a channel
+    async fn data(
+        &mut self,
+        channel: ChannelId,
+        data: &[u8],
+        _session: &mut client::Session,
+    ) -> Result<(), Self::Error> {
+        let text = String::from_utf8_lossy(data).to_string();
+        debug!(
+            "SSH[{}] channel {:?} received {} bytes",
+            self.session_id,
+            channel,
+            data.len()
+        );
+
+        // Emit data to frontend
+        if let Err(e) = self.app_handle.emit(
+            &format!("ssh-data-{}", self.session_id),
+            SshDataEvent {
+                session_id: self.session_id.clone(),
+                data: text,
+            },
+        ) {
+            error!("Failed to emit SSH data: {}", e);
+        }
+
+        Ok(())
+    }
+
+    /// Called when the server sends extended data (stderr)
+    async fn extended_data(
+        &mut self,
+        channel: ChannelId,
+        ext: u32,
+        data: &[u8],
+        _session: &mut client::Session,
+    ) -> Result<(), Self::Error> {
+        let text = String::from_utf8_lossy(data).to_string();
+        debug!(
+            "SSH[{}] channel {:?} extended data (ext={}): {} bytes",
+            self.session_id,
+            channel,
+            ext,
+            data.len()
+        );
+
+        // Emit extended data (stderr) to frontend
+        if let Err(e) = self.app_handle.emit(
+            &format!("ssh-data-{}", self.session_id),
+            SshDataEvent {
+                session_id: self.session_id.clone(),
+                data: text,
+            },
+        ) {
+            error!("Failed to emit SSH extended data: {}", e);
+        }
+
+        Ok(())
+    }
+
+    /// Called when the server closes the channel
+    async fn channel_close(
+        &mut self,
+        channel: ChannelId,
+        _session: &mut client::Session,
+    ) -> Result<(), Self::Error> {
+        info!("SSH[{}] channel {:?} closed", self.session_id, channel);
+
+        // Emit close event to frontend
+        if let Err(e) = self.app_handle.emit(
+            &format!("ssh-close-{}", self.session_id),
+            SshCloseEvent {
+                session_id: self.session_id.clone(),
+                reason: "Channel closed".to_string(),
+            },
+        ) {
+            error!("Failed to emit SSH close event: {}", e);
+        }
+
+        Ok(())
+    }
+
+    /// Called when the server sends EOF on a channel
+    async fn channel_eof(
+        &mut self,
+        channel: ChannelId,
+        _session: &mut client::Session,
+    ) -> Result<(), Self::Error> {
+        info!("SSH[{}] channel {:?} EOF", self.session_id, channel);
+        Ok(())
+    }
+
+    /// Check the server's public key (host key verification)
+    async fn check_server_key(
+        &mut self,
+        _server_public_key: &russh_keys::PublicKey,
+    ) -> Result<bool, Self::Error> {
+        // TODO: Implement proper host key verification
+        // For now, accept all keys (not safe for production!)
+        warn!(
+            "SSH[{}] accepting server key without verification (TODO: implement known_hosts)",
+            self.session_id
+        );
+        Ok(true)
+    }
+}
+
+/// Event payload for SSH data
+#[derive(Clone, serde::Serialize)]
+pub struct SshDataEvent {
+    pub session_id: String,
+    pub data: String,
+}
+
+/// Event payload for SSH close
+#[derive(Clone, serde::Serialize)]
+pub struct SshCloseEvent {
+    pub session_id: String,
+    pub reason: String,
+}
+
+/// Active SSH connection with handle and channel
+pub struct ActiveConnection {
+    /// The russh client handle
+    pub handle: Handle<SshClientHandler>,
+    /// The PTY channel
+    pub channel: Channel<client::Msg>,
+    /// Terminal dimensions
+    pub cols: u32,
+    pub rows: u32,
+}
+
+impl ActiveConnection {
+    /// Send data to the SSH channel
+    pub async fn send_data(&self, data: &[u8]) -> Result<(), String> {
+        self.channel
+            .data(data)
+            .await
+            .map_err(|e| format!("Failed to send data: {}", e))
+    }
+
+    /// Resize the PTY
+    pub async fn resize(&self, cols: u32, rows: u32) -> Result<(), String> {
+        self.channel
+            .window_change(cols, rows, 0, 0)
+            .await
+            .map_err(|e| format!("Failed to resize: {}", e))
+    }
+
+    /// Close the connection
+    pub async fn close(self) -> Result<(), String> {
+        // Close the channel first
+        if let Err(e) = self.channel.close().await {
+            warn!("Error closing channel: {}", e);
+        }
+
+        // Disconnect the session
+        self.handle
+            .disconnect(Disconnect::ByApplication, "User disconnected", "en")
+            .await
+            .map_err(|e| format!("Failed to disconnect: {}", e))
+    }
+}
+
+/// Connect to an SSH server and open a PTY session
+pub async fn connect(
+    session_id: String,
+    host: &str,
+    port: u16,
+    username: &str,
+    password: Option<&str>,
+    ssh_key: Option<&str>,
+    passphrase: Option<&str>,
+    cols: u32,
+    rows: u32,
+    app_handle: AppHandle,
+) -> Result<ActiveConnection, String> {
+    info!(
+        "SSH[{}] connecting to {}@{}:{}",
+        session_id, username, host, port
+    );
+
+    // Create client config
+    let config = Config::default();
+    let config = Arc::new(config);
+
+    // Create handler
+    let handler = SshClientHandler {
+        session_id: session_id.clone(),
+        app_handle,
+    };
+
+    // Connect to server
+    let mut session = client::connect(config, (host, port), handler)
+        .await
+        .map_err(|e| format!("Failed to connect to {}:{}: {}", host, port, e))?;
+
+    info!("SSH[{}] connected, authenticating...", session_id);
+
+    // Authenticate
+    let auth_success = if let Some(key_str) = ssh_key {
+        // SSH key authentication
+        authenticate_with_key(&mut session, username, key_str, passphrase).await?
+    } else if let Some(pwd) = password {
+        // Password authentication
+        session
+            .authenticate_password(username, pwd)
+            .await
+            .map_err(|e| format!("Password auth error: {}", e))?
+    } else {
+        return Err("No authentication method available (need password or SSH key)".to_string());
+    };
+
+    if !auth_success {
+        return Err("Authentication failed".to_string());
+    }
+
+    info!("SSH[{}] authenticated successfully", session_id);
+
+    // Open a session channel
+    let channel = session
+        .channel_open_session()
+        .await
+        .map_err(|e| format!("Failed to open session: {}", e))?;
+
+    info!("SSH[{}] session opened", session_id);
+
+    // Request PTY
+    channel
+        .request_pty(
+            false,
+            "xterm-256color",
+            cols,
+            rows,
+            0,
+            0,
+            &[], // No special terminal modes
+        )
+        .await
+        .map_err(|e| format!("Failed to request PTY: {}", e))?;
+
+    info!("SSH[{}] PTY requested ({}x{})", session_id, cols, rows);
+
+    // Start shell
+    channel
+        .request_shell(false)
+        .await
+        .map_err(|e| format!("Failed to start shell: {}", e))?;
+
+    info!("SSH[{}] shell started", session_id);
+
+    Ok(ActiveConnection {
+        handle: session,
+        channel,
+        cols,
+        rows,
+    })
+}
+
+/// Authenticate using SSH key
+async fn authenticate_with_key(
+    session: &mut Handle<SshClientHandler>,
+    username: &str,
+    key_str: &str,
+    passphrase: Option<&str>,
+) -> Result<bool, String> {
+    // Parse the SSH key
+    let keypair = if let Some(pass) = passphrase {
+        russh_keys::decode_secret_key(key_str, Some(pass))
+            .map_err(|e| format!("Failed to decode SSH key with passphrase: {}", e))?
+    } else {
+        russh_keys::decode_secret_key(key_str, None)
+            .map_err(|e| format!("Failed to decode SSH key: {}", e))?
+    };
+
+    // Create PrivateKeyWithHashAlg wrapper (None for hash alg = auto-detect)
+    let key_with_alg = PrivateKeyWithHashAlg::new(Arc::new(keypair), None)
+        .map_err(|e| format!("Failed to create key wrapper: {}", e))?;
+
+    session
+        .authenticate_publickey(username, key_with_alg)
+        .await
+        .map_err(|e| format!("Public key auth error: {}", e))
+}

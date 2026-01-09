@@ -1,0 +1,123 @@
+.terminal-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #1a1b26;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #24283b 0%, #1a1b26 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terminal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a9b1d6;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.terminal-icon {
+  color: #9ece6a;
+  font-size: 10px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.terminal-close-btn {
+  background: transparent;
+  border: none;
+  color: #565f89;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.terminal-close-btn:hover {
+  background: rgba(247, 118, 142, 0.2);
+  color: #f7768e;
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.terminal-body .xterm {
+  height: 100%;
+}
+
+.terminal-body .xterm-screen {
+  height: 100%;
+}
+
+.terminal-body .xterm-viewport {
+  background: transparent !important;
+}
+
+/* Terminal tabs for multiple sessions */
+.terminal-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  background: #15161e;
+  overflow-x: auto;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 6px 6px 0 0;
+  color: #565f89;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.terminal-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #a9b1d6;
+}
+
+.terminal-tab.active {
+  background: #1a1b26;
+  color: #c0caf5;
+}
+
+.terminal-tab-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.terminal-tab-close:hover {
+  opacity: 1;
+  color: #f7768e;
+}

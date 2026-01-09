@@ -4,6 +4,71 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 6 - 2025-01-09
+
+### Completed
+- **Implemented SSH Connection Backend** - Full russh integration:
+  - Created `ssh/client.rs` with `SshClientHandler` implementing russh `Handler` trait
+  - Password and SSH key (with passphrase) authentication support
+  - PTY session with configurable terminal size
+  - Tauri event emission for SSH data (`ssh-data-{session_id}`) and close events
+  - `ActiveConnection` struct manages handle + channel lifecycle
+
+- **Updated Session Manager**:
+  - Now holds actual `ActiveConnection` objects (not just metadata)
+  - Async `remove_session()` properly closes SSH connection
+  - `send_data()` and `resize_terminal()` methods for PTY interaction
+  - Session ownership validation on all operations
+
+- **Implemented SSH API Commands** (`api/ssh.rs`):
+  - `connect_ssh`: Lookup entry → decrypt identity → authenticate → open PTY
+  - `disconnect_ssh`: Close channel and session with ownership check
+  - `send_data`: Write to SSH channel
+  - `resize_terminal`: Window change for PTY resize
+  - `list_ssh_sessions`: Get all active sessions for current user
+  - Auto-updates `last_connected_at` on successful connection
+
+- **Built Terminal UI** with xterm.js:
+  - Created `Terminal` component with @xterm/xterm integration
+  - FitAddon for responsive terminal sizing
+  - WebLinksAddon for clickable URLs
+  - Tokyo Night color theme for modern aesthetic
+  - Listen to Tauri events for SSH data stream
+  - Terminal header with host info and disconnect button
+
+- **Updated Dashboard**:
+  - `handleConnect()` now calls `connectSsh()` API
+  - Validates identity exists before connection attempt
+  - Shows connecting overlay with spinner
+  - Full-screen terminal mode when session active
+  - Terminal close returns to server list
+
+- **Added SSH Types** (`types/ssh.ts`):
+  - ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest
+  - SshDataEvent, SshCloseEvent for Tauri event payloads
+
+- **Added SSH API Functions** (`lib/api.ts`):
+  - connectSsh, disconnectSsh, sendSshData, resizeSshTerminal, listSshSessions
+
+- **Installed xterm.js Dependencies**:
+  - @xterm/xterm, @xterm/addon-fit, @xterm/addon-web-links
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Add multiple terminal tabs** - Support multiple simultaneous SSH sessions
+2. **Implement Folder management** - Organize servers into folders
+3. **Add host key verification** - Known hosts support for security
+4. **Session hibernation** - Save and restore SSH sessions
+
+### Tech Notes
+- SSH data flows: russh → Handler::data() → Tauri emit → Terminal listener → xterm.write()
+- Using russh 0.49 API: PrivateKeyWithHashAlg for key auth, bool return for auth result
+- Host key verification currently accepts all (TODO: implement known_hosts)
+- Terminal dimensions sent to backend on connect and resize
+
+---
+
 ## Session 5 - 2025-01-09
 
 ### Completed
@@ -272,11 +337,12 @@ shellheim/
 - [x] Basic React UI shell
 
 ### Phase 2: SSH Core (Target: Session 6-15)
-- [ ] SSH terminal connections via russh
-- [ ] Terminal UI with xterm.js
+- [x] SSH terminal connections via russh
+- [x] Terminal UI with xterm.js
 - [ ] SFTP file management
 - [ ] Session management (hibernate, resume)
 - [ ] Port forwarding
+- [ ] Multiple terminal tabs
 
 ### Phase 3: Advanced Features (Future)
 - [ ] Snippets and scripts

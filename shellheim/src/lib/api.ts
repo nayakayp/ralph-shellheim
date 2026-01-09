@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
 import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
+import type { ConnectRequest, SshSessionInfo, SendDataRequest, ResizeRequest } from "../types/ssh";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -126,4 +127,35 @@ export async function deleteIdentity(identityId: string): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<void>("delete_identity", { token, identityId });
+}
+
+// SSH API
+export async function connectSsh(request: ConnectRequest): Promise<SshSessionInfo> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<SshSessionInfo>("connect_ssh", { token, request });
+}
+
+export async function disconnectSsh(sessionId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("disconnect_ssh", { token, sessionId });
+}
+
+export async function sendSshData(request: SendDataRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("send_data", { token, request });
+}
+
+export async function resizeSshTerminal(request: ResizeRequest): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("resize_terminal", { token, request });
+}
+
+export async function listSshSessions(): Promise<SshSessionInfo[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<SshSessionInfo[]>("list_ssh_sessions", { token });
 }
