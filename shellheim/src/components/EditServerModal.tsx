@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
-import type { CreateEntryRequest, Protocol } from "../types/entry";
+import type { Entry, UpdateEntryRequest, Protocol } from "../types/entry";
 import type { Identity } from "../types/identity";
 import { PROTOCOL_DEFAULTS } from "../types/entry";
 import { listIdentities } from "../lib/api";
-import "./AddServerModal.css";
+import "./AddServerModal.css"; // Reuse same modal styles
 
-interface AddServerModalProps {
+interface EditServerModalProps {
+  entry: Entry;
   onClose: () => void;
-  onSubmit: (request: CreateEntryRequest) => Promise<void>;
+  onSubmit: (request: UpdateEntryRequest) => Promise<void>;
 }
 
-export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
-  const [name, setName] = useState("");
-  const [host, setHost] = useState("");
-  const [port, setPort] = useState(22);
-  const [protocol, setProtocol] = useState<Protocol>("ssh");
-  const [description, setDescription] = useState("");
-  const [selectedIdentityId, setSelectedIdentityId] = useState<string>("");
+export function EditServerModal({ entry, onClose, onSubmit }: EditServerModalProps) {
+  const [name, setName] = useState(entry.name);
+  const [host, setHost] = useState(entry.host || "");
+  const [port, setPort] = useState(entry.port || 22);
+  const [protocol, setProtocol] = useState<Protocol>((entry.protocol as Protocol) || "ssh");
+  const [description, setDescription] = useState(entry.description || "");
+  const [selectedIdentityId, setSelectedIdentityId] = useState<string>(
+    entry.identity_ids?.[0] || ""
+  );
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,7 +33,11 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
 
   const handleProtocolChange = (newProtocol: Protocol) => {
     setProtocol(newProtocol);
-    setPort(PROTOCOL_DEFAULTS[newProtocol]);
+    // Only update port if it matches the old protocol's default
+    const oldDefault = PROTOCOL_DEFAULTS[(entry.protocol as Protocol) || "ssh"];
+    if (port === oldDefault) {
+      setPort(PROTOCOL_DEFAULTS[newProtocol]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,12 +61,11 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
         port,
         protocol,
         description: description.trim() || undefined,
-        entry_type: "server",
-        identity_ids: selectedIdentityId ? [selectedIdentityId] : undefined,
+        identity_ids: selectedIdentityId ? [selectedIdentityId] : [],
       });
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create server");
+      setError(err instanceof Error ? err.message : "Failed to update server");
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +75,7 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add Server</h2>
+          <h2>Edit Server</h2>
           <button className="modal-close" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -132,7 +138,7 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="identity">Credentials (optional)</label>
+            <label htmlFor="identity">Credentials</label>
             <select
               id="identity"
               value={selectedIdentityId}
@@ -146,9 +152,6 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
                 </option>
               ))}
             </select>
-            {identities.length === 0 && (
-              <span className="form-hint">No identities yet. Create one in the Identities panel.</span>
-            )}
           </div>
 
           <div className="form-group">
@@ -167,7 +170,7 @@ export function AddServerModal({ onClose, onSubmit }: AddServerModalProps) {
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Add Server"}
+              {isLoading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

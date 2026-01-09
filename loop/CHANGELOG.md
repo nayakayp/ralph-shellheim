@@ -4,6 +4,50 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 5 - 2025-01-09
+
+### Completed
+- **Linked Identities to Entries** - Full backend/frontend integration:
+  - Updated `EntryRow`/`Entry` models with identity_ids field
+  - Added `entry_identities` junction table handling in entries API
+  - New helper functions: `get_identity_ids_for_entry()`, `sync_entry_identities()`
+  - `create_entry` and `update_entry` now handle identity linking
+  - New command `get_entry_identities` for SSH connection use
+
+- **Updated AddServerModal**:
+  - Added identity selector dropdown
+  - Loads identities on mount via `listIdentities()`
+  - Shows username in dropdown options
+  - Empty state hint when no identities exist
+
+- **Built EditServerModal component**:
+  - Pre-populates form with existing entry data
+  - Identity selector with current credential pre-selected
+  - Smart port handling (only updates if using default)
+  - Reuses AddServerModal CSS for consistent styling
+
+- **Updated Dashboard**:
+  - Integrated EditServerModal with entry state management
+  - Added `handleUpdateServer` function
+  - Clicking edit button now opens EditServerModal
+
+- **Updated frontend Entry type** to include `identity_ids: string[]`
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Implement SSH connection** - Use russh + identities for actual terminal connections
+2. **Build Terminal UI** - xterm.js integration for SSH sessions
+3. **Add Folder management** - Organize servers into folders
+
+### Tech Notes
+- Entry-Identity relationship is many-to-many via `entry_identities` junction table
+- Priority field in junction table maintains order of credentials to try
+- Identity linking syncs on create/update (delete old links, insert new)
+- Frontend currently supports single identity per entry (UI limitation)
+
+---
+
 ## Session 4 - 2025-01-09
 
 ### Completed
@@ -223,6 +267,7 @@ shellheim/
 - [x] Account management (create, login, logout, 2FA)
 - [x] Entry/server CRUD
 - [x] Identity management with encryption
+- [x] Identity-Entry linking
 - [ ] Folder organization
 - [x] Basic React UI shell
 

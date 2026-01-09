@@ -62,6 +62,7 @@ pub fn run() {
             api::entries::create_entry,
             api::entries::update_entry,
             api::entries::delete_entry,
+            api::entries::get_entry_identities,
             
             // Identity commands
             api::identities::list_identities,

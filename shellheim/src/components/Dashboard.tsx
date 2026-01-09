@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Account } from "../types/auth";
-import type { Entry, CreateEntryRequest } from "../types/entry";
-import { listEntries, createEntry, deleteEntry } from "../lib/api";
+import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
+import { listEntries, createEntry, updateEntry, deleteEntry } from "../lib/api";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
+import { EditServerModal } from "./EditServerModal";
 import { IdentitiesPanel } from "./IdentitiesPanel";
 import "./Dashboard.css";
 
@@ -16,6 +17,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [showIdentities, setShowIdentities] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,14 +42,19 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
     setEntries((prev) => [...prev, newEntry]);
   };
 
+  const handleUpdateServer = async (request: UpdateEntryRequest) => {
+    if (!editingEntry) return;
+    const updated = await updateEntry(editingEntry.id, request);
+    setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+  };
+
   const handleConnect = (entry: Entry) => {
     // TODO: Implement SSH connection
     console.log("Connect to:", entry.name);
   };
 
   const handleEdit = (entry: Entry) => {
-    // TODO: Implement edit modal
-    console.log("Edit:", entry.name);
+    setEditingEntry(entry);
   };
 
   const handleDelete = async (entry: Entry) => {
@@ -154,6 +161,14 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
         <AddServerModal
           onClose={() => setShowAddModal(false)}
           onSubmit={handleAddServer}
+        />
+      )}
+
+      {editingEntry && (
+        <EditServerModal
+          entry={editingEntry}
+          onClose={() => setEditingEntry(null)}
+          onSubmit={handleUpdateServer}
         />
       )}
 

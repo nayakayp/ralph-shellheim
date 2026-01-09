@@ -1,7 +1,7 @@
 //! Entries (servers/connections) API handlers
 
 use crate::db;
-use crate::models::{CreateEntryRequest, Entry, UpdateEntryRequest};
+use crate::models::{CreateEntryRequest, Entry, EntryRow, UpdateEntryRequest};
 use sqlx::Row;
 use tauri::command;
 use tracing::info;
@@ -27,6 +27,48 @@ async fn get_account_id_from_token(token: &str) -> Result<String, String> {
     Ok(row.get("account_id"))
 }
 
+/// Helper to fetch identity_ids for an entry
+async fn get_identity_ids_for_entry(entry_id: &str) -> Result<Vec<String>, String> {
+    let pool = db::pool();
+    
+    let rows: Vec<(String,)> = sqlx::query_as(
+        "SELECT identity_id FROM entry_identities WHERE entry_id = ? ORDER BY priority ASC"
+    )
+    .bind(entry_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("Failed to fetch identities: {}", e))?;
+    
+    Ok(rows.into_iter().map(|r| r.0).collect())
+}
+
+/// Helper to sync identity_ids for an entry
+async fn sync_entry_identities(entry_id: &str, identity_ids: &[String]) -> Result<(), String> {
+    let pool = db::pool();
+    
+    // Delete existing links
+    sqlx::query("DELETE FROM entry_identities WHERE entry_id = ?")
+        .bind(entry_id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to clear identities: {}", e))?;
+    
+    // Insert new links
+    for (priority, identity_id) in identity_ids.iter().enumerate() {
+        sqlx::query(
+            "INSERT INTO entry_identities (entry_id, identity_id, priority) VALUES (?, ?, ?)"
+        )
+        .bind(entry_id)
+        .bind(identity_id)
+        .bind(priority as i32)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to link identity: {}", e))?;
+    }
+    
+    Ok(())
+}
+
 #[command]
 pub async fn list_entries(token: String, folder_id: Option<String>) -> Result<Vec<Entry>, String> {
     let account_id = get_account_id_from_token(&token).await?;
@@ -34,7 +76,7 @@ pub async fn list_entries(token: String, folder_id: Option<String>) -> Result<Ve
     
     let pool = db::pool();
     
-    let entries: Vec<Entry> = match folder_id {
+    let rows: Vec<EntryRow> = match folder_id {
         Some(fid) => {
             sqlx::query_as(
                 r#"
@@ -63,6 +105,13 @@ pub async fn list_entries(token: String, folder_id: Option<String>) -> Result<Ve
             .map_err(|e| format!("Failed to list entries: {}", e))?
         }
     };
+    
+    // Fetch identity_ids for each entry
+    let mut entries = Vec::with_capacity(rows.len());
+    for row in rows {
+        let identity_ids = get_identity_ids_for_entry(&row.id).await?;
+        entries.push(row.with_identities(identity_ids));
+    }
     
     info!("Found {} entries", entries.len());
     Ok(entries)
@@ -128,6 +177,12 @@ pub async fn create_entry(token: String, request: CreateEntryRequest) -> Result<
     .await
     .map_err(|e| format!("Failed to create entry: {}", e))?;
     
+    // Link identities if provided
+    let identity_ids = request.identity_ids.clone().unwrap_or_default();
+    if !identity_ids.is_empty() {
+        sync_entry_identities(&id, &identity_ids).await?;
+    }
+    
     info!("Entry created successfully: {}", id);
     
     Ok(Entry {
@@ -146,6 +201,7 @@ pub async fn create_entry(token: String, request: CreateEntryRequest) -> Result<
         last_connected_at: None,
         created_at: now.clone(),
         updated_at: now,
+        identity_ids,
     })
 }
 
@@ -161,7 +217,7 @@ pub async fn update_entry(
     let pool = db::pool();
     
     // Verify entry belongs to account
-    let existing: Option<Entry> = sqlx::query_as(
+    let existing: Option<EntryRow> = sqlx::query_as(
         "SELECT * FROM entries WHERE id = ? AND account_id = ?"
     )
     .bind(&entry_id)
@@ -209,6 +265,14 @@ pub async fn update_entry(
     .await
     .map_err(|e| format!("Failed to update entry: {}", e))?;
     
+    // Update identities if provided
+    let identity_ids = if let Some(ids) = request.identity_ids {
+        sync_entry_identities(&entry_id, &ids).await?;
+        ids
+    } else {
+        get_identity_ids_for_entry(&entry_id).await?
+    };
+    
     info!("Entry updated successfully: {}", entry_id);
     
     Ok(Entry {
@@ -227,6 +291,7 @@ pub async fn update_entry(
         last_connected_at: entry.last_connected_at,
         created_at: entry.created_at,
         updated_at: now,
+        identity_ids,
     })
 }
 
@@ -261,7 +326,7 @@ pub async fn get_entry(token: String, entry_id: String) -> Result<Entry, String>
     
     let pool = db::pool();
     
-    let entry: Entry = sqlx::query_as(
+    let row: EntryRow = sqlx::query_as(
         "SELECT * FROM entries WHERE id = ? AND account_id = ?"
     )
     .bind(&entry_id)
@@ -271,5 +336,31 @@ pub async fn get_entry(token: String, entry_id: String) -> Result<Entry, String>
     .map_err(|e| format!("Database error: {}", e))?
     .ok_or_else(|| "Entry not found".to_string())?;
     
-    Ok(entry)
+    let identity_ids = get_identity_ids_for_entry(&entry_id).await?;
+    
+    Ok(row.with_identities(identity_ids))
+}
+
+/// Get linked identities for an entry (returns IDs only, for connection use)
+#[command]
+pub async fn get_entry_identities(token: String, entry_id: String) -> Result<Vec<String>, String> {
+    let account_id = get_account_id_from_token(&token).await?;
+    
+    let pool = db::pool();
+    
+    // Verify entry belongs to account
+    let exists: Option<(i32,)> = sqlx::query_as(
+        "SELECT 1 FROM entries WHERE id = ? AND account_id = ?"
+    )
+    .bind(&entry_id)
+    .bind(&account_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
+    
+    if exists.is_none() {
+        return Err("Entry not found".to_string());
+    }
+    
+    get_identity_ids_for_entry(&entry_id).await
 }

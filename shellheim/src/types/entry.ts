@@ -16,6 +16,7 @@ export interface Entry {
   last_connected_at?: string;
   created_at: string;
   updated_at: string;
+  identity_ids: string[];
 }
 
 export interface CreateEntryRequest {
