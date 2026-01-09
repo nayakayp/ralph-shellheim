@@ -2,6 +2,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Account, CreateAccountRequest, LoginRequest, LoginResponse } from "../types/auth";
 import type { Entry, CreateEntryRequest, UpdateEntryRequest } from "../types/entry";
+import type { Identity, CreateIdentityRequest, UpdateIdentityRequest } from "../types/identity";
 
 // Storage key for auth token
 const TOKEN_KEY = "shellheim_token";
@@ -94,4 +95,35 @@ export async function deleteEntry(entryId: string): Promise<void> {
   const token = getStoredToken();
   if (!token) throw new Error("Not authenticated");
   return invoke<void>("delete_entry", { token, entryId });
+}
+
+// Identity/Credential API
+export async function listIdentities(): Promise<Identity[]> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Identity[]>("list_identities", { token });
+}
+
+export async function getIdentity(identityId: string): Promise<Identity> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Identity>("get_identity", { token, identityId });
+}
+
+export async function createIdentity(request: CreateIdentityRequest): Promise<Identity> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Identity>("create_identity", { token, request });
+}
+
+export async function updateIdentity(identityId: string, request: UpdateIdentityRequest): Promise<Identity> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<Identity>("update_identity", { token, identityId, request });
+}
+
+export async function deleteIdentity(identityId: string): Promise<void> {
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  return invoke<void>("delete_identity", { token, identityId });
 }

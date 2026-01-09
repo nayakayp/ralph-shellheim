@@ -4,6 +4,65 @@ Tauri-based rewrite of Nexterm - A native SSH/server management desktop app.
 
 ---
 
+## Session 4 - 2025-01-09
+
+### Completed
+- **Implemented Identity CRUD backend** (`src-tauri/src/api/identities.rs`):
+  - `list_identities`: Fetch all credentials for authenticated user
+  - `get_identity`: Retrieve single identity by ID with ownership check
+  - `create_identity`: Create credential with AES-256-GCM encryption for sensitive fields
+  - `update_identity`: Partial updates, re-encrypts only changed credentials
+  - `delete_identity`: Remove identity with ownership check
+  - `get_decrypted_identity`: Internal function for SSH connections (decrypts credentials)
+  - Encryption/decryption helper functions with base64 encoding
+
+- **Created frontend Identity types** (`src/types/identity.ts`):
+  - Identity, CreateIdentityRequest, UpdateIdentityRequest interfaces
+  - CredentialType union and helper function
+
+- **Added Identity API functions** (`src/lib/api.ts`):
+  - listIdentities, getIdentity, createIdentity, updateIdentity, deleteIdentity
+  - All functions auto-inject stored auth token
+
+- **Built IdentityModal component**:
+  - Form with name, username, password OR SSH key fields
+  - Credential type tabs (password/SSH key) with toggle
+  - SSH key file upload with FileReader API
+  - Password visibility toggle
+  - Passphrase field for encrypted keys
+  - Glassmorphism design matching other modals
+
+- **Built IdentityList component**:
+  - Identity cards with key icon and username display
+  - Hover actions: edit/delete buttons
+  - Selectable for future server connection linking
+
+- **Built IdentitiesPanel component**:
+  - Slide-in panel from right side
+  - Full CRUD integration with loading/error states
+  - Empty state with call-to-action
+  - Accessible from Dashboard toolbar
+
+- **Updated Dashboard**:
+  - Added "Identities" button to toolbar
+  - Integrated IdentitiesPanel with show/hide state
+  - New toolbar-right layout for multiple action buttons
+
+- **Verified builds**: Both `cargo check` and `npm run build` pass
+
+### Next
+1. **Link Identities to Entries** - Allow servers to reference stored credentials
+2. **Build EditServerModal** - Edit existing server entries
+3. **Implement SSH connection** - Use identities for actual SSH terminal connections
+
+### Tech Notes
+- Credentials encrypted with AES-256-GCM before storage
+- Encryption key currently hardcoded for dev (TODO: derive from user password or keychain)
+- Encrypted fields: password, ssh_key, passphrase (stored as base64)
+- Frontend never receives decrypted sensitive data (skip_serializing in model)
+
+---
+
 ## Session 3 - 2025-01-09
 
 ### Completed
@@ -163,7 +222,7 @@ shellheim/
 ### Phase 1: Foundation (Target: Session 2-5)
 - [x] Account management (create, login, logout, 2FA)
 - [x] Entry/server CRUD
-- [ ] Identity management with encryption
+- [x] Identity management with encryption
 - [ ] Folder organization
 - [x] Basic React UI shell
 

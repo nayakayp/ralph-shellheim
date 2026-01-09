@@ -4,6 +4,7 @@ import type { Entry, CreateEntryRequest } from "../types/entry";
 import { listEntries, createEntry, deleteEntry } from "../lib/api";
 import { ServerList } from "./ServerList";
 import { AddServerModal } from "./AddServerModal";
+import { IdentitiesPanel } from "./IdentitiesPanel";
 import "./Dashboard.css";
 
 interface DashboardProps {
@@ -15,6 +16,7 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showIdentities, setShowIdentities] = useState(false);
   const [error, setError] = useState("");
 
   const loadEntries = useCallback(async () => {
@@ -94,13 +96,21 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           <h1>Servers</h1>
           <span className="server-count">{entries.length}</span>
         </div>
-        <button className="add-btn" onClick={() => setShowAddModal(true)}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Add Server
-        </button>
+        <div className="toolbar-right">
+          <button className="toolbar-btn" onClick={() => setShowIdentities(true)} title="Manage Identities">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+            Identities
+          </button>
+          <button className="add-btn" onClick={() => setShowAddModal(true)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Server
+          </button>
+        </div>
       </div>
 
       <main className="dashboard-main">
@@ -146,6 +156,11 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
           onSubmit={handleAddServer}
         />
       )}
+
+      <IdentitiesPanel
+        isOpen={showIdentities}
+        onClose={() => setShowIdentities(false)}
+      />
     </div>
   );
 }

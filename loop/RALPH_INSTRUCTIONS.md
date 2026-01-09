@@ -24,7 +24,7 @@ Rewrite [Nexterm](https://github.com/gnmyt/Nexterm) — a web-based SSH/server m
 ### 4. **Log & Commit**
    - Update `loop/CHANGELOG.md`:
      ```markdown
-     ## Session [N] - [DATE]
+     ## Session [N] - [DATE]/[TIME]
      ### Completed
      - What was finished
      

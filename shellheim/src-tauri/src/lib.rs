@@ -65,6 +65,7 @@ pub fn run() {
             
             // Identity commands
             api::identities::list_identities,
+            api::identities::get_identity,
             api::identities::create_identity,
             api::identities::update_identity,
             api::identities::delete_identity,
