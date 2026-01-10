@@ -159,12 +159,11 @@
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
+  gap: var(--space-1);
+  padding: var(--space-1);
   background: var(--bg-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-default);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* Visual divider between groups */
