@@ -109,7 +109,7 @@
 
 .color-picker-btn:hover {
   border-color: var(--border-strong);
-  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--accent-muted);
 }
 
 .add-tag-btn {
@@ -162,7 +162,7 @@
 }
 
 .color-option:hover {
-  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--border-strong);
 }
 
 .color-option.selected {
