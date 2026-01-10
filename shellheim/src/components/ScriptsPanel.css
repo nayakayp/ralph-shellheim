@@ -180,7 +180,7 @@
 }
 
 .empty-state p {
-  font-size: 15px;
+  font-size: var(--text-lg);
   color: #a9b1d6;
   margin-bottom: 4px;
 }
@@ -350,7 +350,7 @@
 
 .modal-header span {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: #c0caf5;
 }

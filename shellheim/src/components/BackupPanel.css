@@ -128,7 +128,7 @@
 
 .backup-section h3 {
   margin: 0 0 8px 0;
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: #f8f8f2;
 }
