@@ -9,8 +9,8 @@ function App() {
   if (state.status === "loading") {
     return (
       <div className="loading-container">
-        <div className="loading-spinner" />
-        <span>Loading...</span>
+        <div className="spinner spinner--lg" />
+        <span>Initializing...</span>
       </div>
     );
   }

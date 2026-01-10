@@ -8,6 +8,7 @@
 
 /* ---------------------------------------------------------------------------
    LOADING CONTAINER
+   Full-screen centered loading state with subtle fade-in animation
    --------------------------------------------------------------------------- */
 .loading-container {
   min-height: 100vh;
@@ -15,12 +16,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4);
-  color: var(--fg-muted);
+  gap: var(--space-3);
+  background: var(--bg-base);
+  animation: fadeIn 200ms ease-out;
 }
 
-.loading-container .spinner {
-  width: 32px;
-  height: 32px;
-  border-width: 3px;
+.loading-container span {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--fg-muted);
+  letter-spacing: var(--tracking-wide);
 }
