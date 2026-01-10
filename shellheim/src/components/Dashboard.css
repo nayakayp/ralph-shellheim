@@ -159,8 +159,8 @@
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1);
+  gap: 2px;
+  padding: 2px;
   background: var(--bg-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
@@ -171,7 +171,7 @@
   width: 1px;
   height: 16px;
   background: var(--border-subtle);
-  margin: 0 var(--space-2);
+  margin: 0 var(--space-1);
 }
 
 .toolbar-btn {
@@ -179,7 +179,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 6px;
+  padding: var(--space-2);
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -189,7 +189,8 @@
   cursor: pointer;
   transition: 
     background var(--transition-fast),
-    color var(--transition-fast);
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .toolbar-btn svg {
@@ -199,6 +200,7 @@
 .toolbar-btn:hover {
   background: var(--bg-surface-raised);
   color: var(--fg-primary);
+  transform: scale(1.05);
 }
 
 .toolbar-btn:hover svg {
@@ -207,6 +209,7 @@
 
 .toolbar-btn:active {
   background: var(--bg-surface);
+  transform: scale(0.98);
 }
 
 .toolbar-btn:focus-visible {
