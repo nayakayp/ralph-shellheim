@@ -183,7 +183,17 @@
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: 
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.toolbar-btn svg {
+  transition: 
+    color var(--transition-fast),
+    transform var(--transition-base);
 }
 
 .toolbar-btn:hover {
@@ -194,11 +204,25 @@
 
 .toolbar-btn:hover svg {
   color: var(--accent);
+  transform: scale(1.08);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.96);
+}
+
+.toolbar-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .toolbar-btn.active {
   background: var(--accent-subtle);
   border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toolbar-btn.active svg {
   color: var(--accent);
 }
 
@@ -230,11 +254,32 @@
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: 
+    background var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.add-btn svg {
+  transition: transform var(--transition-base);
 }
 
 .add-btn:hover {
   background: var(--accent-hover);
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25);
+}
+
+.add-btn:hover svg {
+  transform: rotate(90deg);
+}
+
+.add-btn:active {
+  transform: scale(0.97);
+}
+
+.add-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------------------------------------------------------------------------
