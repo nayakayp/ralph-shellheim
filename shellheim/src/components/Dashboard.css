@@ -304,7 +304,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
-  animation: fadeIn 300ms ease-out;
+  animation: fadeIn var(--transition-slow);
 }
 
 .empty-icon {
@@ -313,7 +313,7 @@
   justify-content: center;
   width: 88px;
   height: 88px;
-  background: linear-gradient(135deg, var(--accent-subtle) 0%, transparent 100%);
+  background: var(--accent-subtle);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   margin-bottom: var(--space-5);
