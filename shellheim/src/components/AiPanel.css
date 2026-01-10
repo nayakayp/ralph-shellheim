@@ -198,7 +198,7 @@
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
-  background: white;
+  background: var(--bg-primary);
   transform: translateX(22px);
 }
 
@@ -254,7 +254,7 @@
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid var(--bg-surface);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
 }
 
@@ -269,7 +269,7 @@
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid var(--bg-surface);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---------------------------------------------------------------------------
@@ -323,14 +323,14 @@
 }
 
 .test-result.success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--success-muted);
+  border: 1px solid var(--success-border);
   color: var(--success-fg);
 }
 
 .test-result.error {
   background: var(--error-muted);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--error-border);
   color: var(--error-fg);
 }
 
@@ -373,8 +373,8 @@
    --------------------------------------------------------------------------- */
 .panel-success {
   padding: var(--space-3) var(--space-4);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--success-muted);
+  border: 1px solid var(--success-border);
   border-radius: var(--radius-md);
   color: var(--success-fg);
   font-size: var(--text-sm);

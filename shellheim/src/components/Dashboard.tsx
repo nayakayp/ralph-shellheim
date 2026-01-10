@@ -1073,56 +1073,70 @@ export function Dashboard({ account, onLogout }: DashboardProps) {
               <span className="server-count">{filteredEntries.length}</span>
             </div>
             <div className="toolbar-right">
-              <button className="toolbar-btn" onClick={() => setShowRecordings(true)} title="View Session Recordings">
-                <VideoCamera size={18} />
-                Recordings
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowSnippets(true)} title="Manage Command Snippets">
-                <TerminalIcon size={18} />
-                Snippets
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowTunnels(true)} title="Manage SSH Tunnels">
-                <Stack size={18} />
-                Tunnels
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowKnownHosts(true)} title="Manage Known Hosts">
-                <CheckCircle size={18} />
-                Hosts
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowIdentities(true)} title="Manage Identities">
-                <Key size={18} />
-                Identities
-              </button>
-              <button className={`toolbar-btn ${filterTagIds.length > 0 ? 'active' : ''}`} onClick={() => setShowTags(true)} title="Filter by Tags">
-                <TagIcon size={18} />
-                Tags{filterTagIds.length > 0 && ` (${filterTagIds.length})`}
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowAudit(true)} title="View Audit Log">
-                <ClipboardText size={18} />
-                Audit
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowMonitoring(true)} title="Server Monitoring">
-                <Heartbeat size={18} />
-                Monitor
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowBackup(true)} title="Backup & Restore">
-                <Archive size={18} />
-                Backup
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowIntegrations(true)} title="Proxmox & Integrations">
-                <Link size={18} />
-                Integrations
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowKeybinds(true)} title="Keyboard Shortcuts">
-                <Keyboard size={18} />
-                Keys
-              </button>
-              <button className="toolbar-btn" onClick={() => setShowAiPanel(true)} title="AI Settings">
-                <Brain size={18} />
-                AI
-              </button>
+              {/* Session Tools */}
+              <div className="toolbar-group">
+                <button className="toolbar-btn" onClick={() => setShowRecordings(true)} title="View Session Recordings">
+                  <VideoCamera size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowSnippets(true)} title="Manage Command Snippets">
+                  <TerminalIcon size={16} />
+                </button>
+              </div>
+              
+              <div className="toolbar-divider" />
+              
+              {/* Network & Security */}
+              <div className="toolbar-group">
+                <button className="toolbar-btn" onClick={() => setShowTunnels(true)} title="Manage SSH Tunnels">
+                  <Stack size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowKnownHosts(true)} title="Manage Known Hosts">
+                  <CheckCircle size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowIdentities(true)} title="Manage Identities">
+                  <Key size={16} />
+                </button>
+              </div>
+              
+              <div className="toolbar-divider" />
+              
+              {/* Organization */}
+              <div className="toolbar-group">
+                <button className={`toolbar-btn ${filterTagIds.length > 0 ? 'active' : ''}`} onClick={() => setShowTags(true)} title="Filter by Tags">
+                  <TagIcon size={16} />
+                  {filterTagIds.length > 0 && <span className="toolbar-badge">{filterTagIds.length}</span>}
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowAudit(true)} title="View Audit Log">
+                  <ClipboardText size={16} />
+                </button>
+              </div>
+              
+              <div className="toolbar-divider" />
+              
+              {/* System */}
+              <div className="toolbar-group">
+                <button className="toolbar-btn" onClick={() => setShowMonitoring(true)} title="Server Monitoring">
+                  <Heartbeat size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowBackup(true)} title="Backup & Restore">
+                  <Archive size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowIntegrations(true)} title="Proxmox & Integrations">
+                  <Link size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowKeybinds(true)} title="Keyboard Shortcuts">
+                  <Keyboard size={16} />
+                </button>
+                <button className="toolbar-btn" onClick={() => setShowAiPanel(true)} title="AI Settings">
+                  <Brain size={16} />
+                </button>
+              </div>
+              
+              <div className="toolbar-divider" />
+              
+              {/* Primary Action */}
               <button className="add-btn" onClick={() => setShowAddModal(true)}>
-                <Plus size={18} />
+                <Plus size={16} />
                 Add Server
               </button>
             </div>
