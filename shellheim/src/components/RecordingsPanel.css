@@ -10,7 +10,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 450px;
+  width: var(--panel-width-md);
   height: 100vh;
   background: var(--bg-surface);
   backdrop-filter: blur(20px);

@@ -2,15 +2,15 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 500px;
+  width: var(--panel-width-lg);
   height: 100vh;
-  background: rgba(30, 30, 46, 0.98);
+  background: var(--bg-surface);
   backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(139, 92, 246, 0.3);
+  border-left: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
-  z-index: 1000;
-  animation: slideIn 0.25s ease-out;
+  z-index: var(--z-modal);
+  animation: slideIn var(--transition-slow);
 }
 
 @keyframes slideIn {

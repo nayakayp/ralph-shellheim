@@ -21,7 +21,7 @@
    PANEL
    --------------------------------------------------------------------------- */
 .identities-panel {
-  width: 400px;
+  width: var(--panel-width-md);
   max-width: 100%;
   height: 100%;
   background: var(--bg-surface);
