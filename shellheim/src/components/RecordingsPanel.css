@@ -1,16 +1,24 @@
+/* =============================================================================
+   RECORDINGS PANEL
+   Session recordings list and playback controls
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   PANEL
+   --------------------------------------------------------------------------- */
 .recordings-panel {
   position: fixed;
   top: 0;
   right: 0;
   width: 450px;
   height: 100vh;
-  background: rgba(30, 30, 46, 0.98);
+  background: var(--bg-surface);
   backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(139, 92, 246, 0.3);
+  border-left: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
-  z-index: 1000;
-  animation: slideIn 0.25s ease-out;
+  z-index: var(--z-modal);
+  animation: slideIn 200ms ease-out;
 }
 
 @keyframes slideIn {
@@ -24,30 +32,37 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   RECORDINGS LIST
+   --------------------------------------------------------------------------- */
 .recordings-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
+/* ---------------------------------------------------------------------------
+   RECORDING CARD
+   --------------------------------------------------------------------------- */
 .recording-card {
-  background: rgba(45, 45, 62, 0.6);
-  border-radius: 10px;
-  padding: 14px;
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  transition: all 0.2s ease;
+  background: var(--bg-surface-raised);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
 }
 
 .recording-card:hover {
-  border-color: rgba(139, 92, 246, 0.35);
-  background: rgba(50, 50, 68, 0.7);
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
 }
 
+/* Header */
 .recording-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .recording-info {
@@ -56,23 +71,23 @@
 }
 
 .recording-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin: 0 0 4px 0;
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--fg-primary);
+  margin: 0 0 var(--space-1) 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .edit-name-btn {
   background: none;
   border: none;
   padding: 2px;
-  color: #64748b;
+  color: var(--fg-faint);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .recording-name:hover .edit-name-btn {
@@ -80,61 +95,78 @@
 }
 
 .edit-name-btn:hover {
-  color: #a78bfa;
+  color: var(--accent);
 }
 
+/* Edit name form */
 .recording-edit-name {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .recording-edit-name input {
   flex: 1;
-  padding: 4px 8px;
-  background: rgba(30, 30, 46, 0.8);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 4px;
-  color: #e2e8f0;
-  font-size: 13px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-base);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--fg-primary);
+  font-size: var(--text-base);
+}
+
+.recording-edit-name input:focus {
+  outline: none;
 }
 
 .recording-edit-name button {
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .recording-edit-name button:first-of-type {
-  background: rgba(139, 92, 246, 0.8);
+  background: var(--accent);
   color: white;
 }
 
-.recording-edit-name button:last-of-type {
-  background: rgba(100, 116, 139, 0.5);
-  color: #e2e8f0;
+.recording-edit-name button:first-of-type:hover {
+  background: var(--accent-hover);
 }
 
+.recording-edit-name button:last-of-type {
+  background: var(--bg-surface);
+  color: var(--fg-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.recording-edit-name button:last-of-type:hover {
+  background: var(--bg-surface-raised);
+  color: var(--fg-primary);
+}
+
+/* Meta info */
 .recording-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .recording-date {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
 }
 
 .recording-status {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
 }
 
 .recording-status.recording {
-  color: #f87171;
+  color: var(--error-fg);
   animation: pulse 1.5s infinite;
 }
 
@@ -143,29 +175,33 @@
   50% { opacity: 0.5; }
 }
 
+/* ---------------------------------------------------------------------------
+   RECORDING ACTIONS
+   --------------------------------------------------------------------------- */
 .recording-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .recording-action-btn {
-  padding: 6px;
+  padding: var(--space-2);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .recording-action-btn.play {
-  background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
+  background: var(--success-muted);
+  color: var(--success);
 }
 
 .recording-action-btn.play:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.3);
+  background: var(--success-muted);
+  border: 1px solid var(--success-border);
 }
 
 .recording-action-btn.play:disabled {
@@ -174,34 +210,41 @@
 }
 
 .recording-action-btn.delete {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  background: var(--error-muted);
+  color: var(--error-fg);
 }
 
 .recording-action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.3);
+  border: 1px solid var(--error-border);
 }
 
+/* ---------------------------------------------------------------------------
+   RECORDING STATS
+   --------------------------------------------------------------------------- */
 .recording-stats {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .stat {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #94a3b8;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
 }
 
+/* ---------------------------------------------------------------------------
+   RECORDING DESCRIPTION
+   --------------------------------------------------------------------------- */
 .recording-description {
-  margin: 10px 0 0;
-  font-size: 13px;
-  color: #94a3b8;
-  line-height: 1.5;
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--fg-secondary);
+  line-height: var(--leading-relaxed);
 }
