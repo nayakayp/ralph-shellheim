@@ -160,21 +160,24 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 2px;
+  padding: 3px;
   background: var(--bg-surface);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* Visual divider between groups */
 .toolbar-divider {
   width: 1px;
-  height: 16px;
-  background: var(--border-subtle);
-  margin: 0 var(--space-1);
+  height: 20px;
+  background: var(--border-default);
+  margin: 0 var(--space-2);
+  opacity: 0.6;
 }
 
 .toolbar-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -188,12 +191,15 @@
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: 
-    background var(--transition-fast),
-    color var(--transition-fast);
+    background var(--transition-base),
+    color var(--transition-base),
+    transform var(--transition-fast);
 }
 
 .toolbar-btn svg {
-  transition: color var(--transition-fast);
+  transition: 
+    color var(--transition-base),
+    transform var(--transition-fast);
 }
 
 .toolbar-btn:hover {
@@ -203,15 +209,23 @@
 
 .toolbar-btn:hover svg {
   color: var(--accent);
+  transform: scale(1.05);
 }
 
 .toolbar-btn:active {
   background: var(--bg-surface);
+  transform: scale(0.96);
+}
+
+.toolbar-btn:active svg {
+  transform: scale(0.95);
 }
 
 .toolbar-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 
+    0 0 0 2px var(--bg-base),
+    0 0 0 4px var(--accent);
 }
 
 .toolbar-btn.active {
