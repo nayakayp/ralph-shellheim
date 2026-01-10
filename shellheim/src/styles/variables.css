@@ -34,6 +34,7 @@
   /* Accent - Cyan Blue (future tech) */
   --accent: #0ea5e9;
   --accent-hover: #38bdf8;
+  --accent-pressed: #0891b2;
   --accent-muted: rgba(14, 165, 233, 0.15);
   --accent-subtle: rgba(14, 165, 233, 0.08);
   

@@ -52,7 +52,7 @@
 }
 
 .btn--primary:active:not(:disabled) {
-  background: #5558e3;
+  background: var(--accent-pressed);
 }
 
 /* Secondary button */
