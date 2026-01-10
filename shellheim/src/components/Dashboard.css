@@ -179,30 +179,35 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  background: transparent;
-  border: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  color: var(--fg-faint);
+  color: var(--fg-muted);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: 
     background var(--transition-fast),
-    color var(--transition-fast);
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .toolbar-btn svg {
   width: 16px;
   height: 16px;
+  flex-shrink: 0;
 }
 
 .toolbar-btn:hover {
-  background: var(--bg-surface);
-  color: var(--fg-secondary);
+  background: var(--bg-surface-raised);
+  border-color: var(--border-default);
+  color: var(--fg-primary);
 }
 
 .toolbar-btn:active {
-  background: var(--bg-surface-raised);
+  background: var(--bg-surface);
+  transform: scale(0.96);
 }
 
 .toolbar-btn:focus-visible {
@@ -212,6 +217,7 @@
 
 .toolbar-btn.active {
   background: var(--accent-subtle);
+  border-color: var(--accent);
   color: var(--accent);
 }
 
