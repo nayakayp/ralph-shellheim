@@ -165,14 +165,16 @@
   background: var(--bg-surface-raised);
   color: var(--fg-primary);
   border-color: var(--border-strong);
+  transform: translateY(-1px);
 }
 
 .action-btn:hover svg {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .action-btn:active {
   background: var(--bg-surface);
+  transform: translateY(0);
 }
 
 .action-btn:focus-visible {
