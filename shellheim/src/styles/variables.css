@@ -16,6 +16,8 @@
   --bg-surface: #16181d;
   --bg-surface-raised: #1c1e24;
   --bg-overlay: rgba(0, 0, 0, 0.75);
+  --bg-input: #0f1014;
+  --bg-deep: #08090b;
   
   /* Foreground hierarchy */
   --fg-primary: #e8eaed;
@@ -128,6 +130,7 @@
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
+  --radius-full: 9999px;
   
   /* ---------------------------------------------------------------------------
      SHADOWS (Minimal - Borders preferred for depth)
