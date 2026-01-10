@@ -249,10 +249,10 @@ export function AddServerModal({ folders, selectedFolderId, onClose, onSubmit }:
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn btn--secondary" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={isLoading}>
+            <button type="submit" className="btn btn--primary" disabled={isLoading}>
               {isLoading ? "Creating..." : "Add Server"}
             </button>
           </div>

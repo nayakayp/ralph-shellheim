@@ -216,10 +216,10 @@ export function IntegrationPanel({ onClose, onSync }: IntegrationPanelProps) {
               </div>
               
               <div className="form-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
+                <button type="button" className="btn btn--secondary" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+                <button type="submit" className="btn btn--primary" disabled={submitting}>
                   {submitting ? 'Connecting...' : 'Add Integration'}
                 </button>
               </div>

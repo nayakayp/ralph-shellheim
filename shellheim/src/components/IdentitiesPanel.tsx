@@ -108,7 +108,7 @@ export function IdentitiesPanel({ isOpen, onClose }: IdentitiesPanelProps) {
               <Key size={48} weight="light" />
               <h3>No identities yet</h3>
               <p>Add SSH keys or passwords to connect to your servers</p>
-              <button className="btn-primary" onClick={handleAdd}>
+              <button className="btn btn--primary" onClick={handleAdd}>
                 Add Your First Identity
               </button>
             </div>

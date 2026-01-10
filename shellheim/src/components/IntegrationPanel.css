@@ -218,43 +218,7 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-.integration-panel .btn-secondary {
-  padding: var(--space-3) var(--space-5);
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  color: var(--fg-secondary);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  transition: all var(--transition-fast);
-}
-
-.integration-panel .btn-secondary:hover {
-  background: var(--bg-surface-raised);
-  color: var(--fg-primary);
-}
-
-.integration-panel .btn-primary {
-  padding: var(--space-3) var(--space-5);
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  transition: all var(--transition-fast);
-}
-
-.integration-panel .btn-primary:hover {
-  background: var(--accent-hover);
-}
-
-.integration-panel .btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+/* Uses standardized .btn classes from components.css */
 
 /* ---------------------------------------------------------------------------
    INTEGRATION LIST

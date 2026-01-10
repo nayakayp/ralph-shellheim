@@ -200,24 +200,7 @@
   color: var(--fg-muted);
 }
 
-.panel-empty .btn-primary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.panel-empty .btn-primary:hover {
-  background: var(--accent-hover);
-}
+/* Uses standardized .btn classes from components.css */
 
 /* ---------------------------------------------------------------------------
    ANIMATIONS

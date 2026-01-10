@@ -188,7 +188,7 @@ export function SnippetsPanel({ isOpen, onClose, onExecute }: SnippetsPanelProps
                   : "Save your commonly used commands for quick access"}
               </p>
               {!searchQuery && (
-                <button className="btn-primary" onClick={handleAdd}>
+                <button className="btn btn--primary" onClick={handleAdd}>
                   Add Your First Snippet
                 </button>
               )}

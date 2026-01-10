@@ -251,10 +251,10 @@ export function EditServerModal({ entry, folders, onClose, onSubmit }: EditServe
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn btn--secondary" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={isLoading}>
+            <button type="submit" className="btn btn--primary" disabled={isLoading}>
               {isLoading ? "Saving..." : "Save Changes"}
             </button>
           </div>
