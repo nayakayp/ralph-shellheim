@@ -1,127 +1,133 @@
-/* KeybindsPanel - Keyboard Shortcuts Configuration */
+/* =============================================================================
+   KEYBINDS PANEL
+   Keyboard shortcuts configuration modal
+   ============================================================================= */
 
+/* ---------------------------------------------------------------------------
+   OVERLAY
+   --------------------------------------------------------------------------- */
 .keybinds-panel-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(10, 10, 20, 0.8);
-  backdrop-filter: blur(8px);
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
-  animation: fadeIn 0.15s ease-out;
+  z-index: var(--z-modal);
+  animation: fadeIn 150ms ease-out;
 }
 
+/* ---------------------------------------------------------------------------
+   PANEL
+   --------------------------------------------------------------------------- */
 .keybinds-panel {
-  background: linear-gradient(
-    135deg,
-    rgba(36, 40, 59, 0.98) 0%,
-    rgba(26, 29, 42, 0.98) 100%
-  );
-  border: 1px solid rgba(122, 162, 247, 0.2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   width: min(640px, 90vw);
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 80px rgba(122, 162, 247, 0.1);
-  animation: slideUp 0.2s ease-out;
+  box-shadow: var(--shadow-overlay);
+  animation: slideUp 200ms ease-out;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* ---------------------------------------------------------------------------
+   HEADER
+   --------------------------------------------------------------------------- */
 .keybinds-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(122, 162, 247, 0.15);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .keybinds-header h2 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #c0caf5;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--fg-primary);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
-.keybinds-header h2::before {
-  content: "⌨️";
+.keybinds-header h2 svg {
+  color: var(--accent);
 }
 
 .keybinds-header .close-btn {
-  background: none;
-  border: none;
-  color: #565f89;
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-muted);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .keybinds-header .close-btn:hover {
-  background: rgba(247, 118, 142, 0.2);
-  color: #f7768e;
+  background: var(--error-muted);
+  border-color: var(--error-border);
+  color: var(--error-fg);
 }
 
+/* ---------------------------------------------------------------------------
+   ERROR STATE
+   --------------------------------------------------------------------------- */
 .keybinds-error {
-  background: rgba(247, 118, 142, 0.15);
-  border: 1px solid rgba(247, 118, 142, 0.3);
-  color: #f7768e;
-  padding: 12px 24px;
-  font-size: 0.875rem;
+  background: var(--error-muted);
+  border: 1px solid var(--error-border);
+  color: var(--error-fg);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
 }
 
+/* ---------------------------------------------------------------------------
+   CONTENT
+   --------------------------------------------------------------------------- */
 .keybinds-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 24px;
+  padding: var(--space-4) var(--space-5);
 }
 
 .keybinds-loading {
   text-align: center;
-  color: #565f89;
-  padding: 40px;
+  color: var(--fg-muted);
+  padding: var(--space-8);
 }
 
+/* ---------------------------------------------------------------------------
+   KEYBINDS LIST
+   --------------------------------------------------------------------------- */
 .keybinds-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .keybind-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 16px;
-  background: rgba(26, 27, 38, 0.5);
-  border: 1px solid rgba(122, 162, 247, 0.1);
-  border-radius: 10px;
-  transition: all 0.15s ease;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
 }
 
 .keybind-item:hover {
-  background: rgba(36, 40, 59, 0.7);
-  border-color: rgba(122, 162, 247, 0.2);
+  background: var(--bg-surface);
+  border-color: var(--border-default);
 }
 
 .keybind-item.disabled {
@@ -129,12 +135,15 @@
 }
 
 .keybind-item.editing {
-  background: rgba(122, 162, 247, 0.1);
-  border-color: rgba(122, 162, 247, 0.3);
+  background: var(--accent-subtle);
+  border-color: var(--accent);
   flex-direction: column;
   align-items: stretch;
 }
 
+/* ---------------------------------------------------------------------------
+   KEYBIND INFO
+   --------------------------------------------------------------------------- */
 .keybind-info {
   display: flex;
   flex-direction: column;
@@ -143,122 +152,132 @@
 }
 
 .keybind-action {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: #c0caf5;
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+  color: var(--fg-primary);
 }
 
 .keybind-description {
-  font-size: 0.75rem;
-  color: #565f89;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* ---------------------------------------------------------------------------
+   KEYBIND CONTROLS
+   --------------------------------------------------------------------------- */
 .keybind-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 
 .keybind-keys {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background: rgba(45, 48, 66, 0.8);
-  border: 1px solid rgba(122, 162, 247, 0.2);
-  border-radius: 6px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.8125rem;
-  color: #7aa2f7;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--stats);
   white-space: nowrap;
 }
 
 .keybind-edit-btn,
 .keybind-toggle-btn {
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
   border: none;
-  padding: 6px 8px;
+  padding: 0;
   cursor: pointer;
-  font-size: 0.875rem;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  opacity: 0.6;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  color: var(--fg-faint);
 }
 
 .keybind-edit-btn:hover,
 .keybind-toggle-btn:hover {
-  opacity: 1;
-  background: rgba(122, 162, 247, 0.15);
+  color: var(--fg-secondary);
+  background: var(--bg-surface);
 }
 
 .keybind-toggle-btn.enabled {
-  color: #9ece6a;
+  color: var(--success);
 }
 
 .keybind-toggle-btn:not(.enabled) {
-  color: #565f89;
+  color: var(--fg-faint);
 }
 
-/* Edit Mode */
+/* ---------------------------------------------------------------------------
+   EDIT MODE
+   --------------------------------------------------------------------------- */
 .keybind-edit {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 
 .keybind-capture-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
 .keybind-capture {
   flex: 1;
   min-width: 140px;
-  padding: 10px 14px;
-  background: rgba(26, 27, 38, 0.8);
-  border: 1px solid rgba(122, 162, 247, 0.3);
-  border-radius: 8px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.9375rem;
-  color: #7aa2f7;
+  padding: var(--space-3);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  color: var(--stats);
   text-align: center;
   cursor: pointer;
 }
 
 .keybind-capture:focus {
   outline: none;
-  border-color: #7aa2f7;
-  box-shadow: 0 0 0 2px rgba(122, 162, 247, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-muted);
 }
 
 .keybind-or {
-  color: #565f89;
-  font-size: 0.75rem;
+  color: var(--fg-faint);
+  font-size: var(--text-xs);
   text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
 }
 
 .keybind-modifier-select,
 .keybind-key-select {
-  padding: 8px 12px;
-  background: rgba(26, 27, 38, 0.8);
-  border: 1px solid rgba(122, 162, 247, 0.2);
-  border-radius: 6px;
-  color: #c0caf5;
-  font-size: 0.875rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-primary);
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 
 .keybind-modifier-select:focus,
 .keybind-key-select:focus {
   outline: none;
-  border-color: #7aa2f7;
+  border-color: var(--accent);
 }
 
 .keybind-key-select {
@@ -266,39 +285,38 @@
 }
 
 .keybind-conflict {
-  padding: 8px 12px;
-  background: rgba(247, 118, 142, 0.15);
-  border: 1px solid rgba(247, 118, 142, 0.3);
-  border-radius: 6px;
-  color: #f7768e;
-  font-size: 0.8125rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--error-muted);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-md);
+  color: var(--error-fg);
+  font-size: var(--text-sm);
 }
 
 .keybind-edit-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--space-3);
   justify-content: flex-end;
 }
 
 .keybind-save-btn,
 .keybind-cancel-btn {
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .keybind-save-btn {
-  background: linear-gradient(135deg, #7aa2f7, #5a7de8);
+  background: var(--accent);
   color: white;
 }
 
 .keybind-save-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #8ab4f8, #6a8ef0);
-  transform: translateY(-1px);
+  background: var(--accent-hover);
 }
 
 .keybind-save-btn:disabled {
@@ -307,45 +325,68 @@
 }
 
 .keybind-cancel-btn {
-  background: rgba(86, 95, 137, 0.3);
-  color: #a9b1d6;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--fg-secondary);
 }
 
 .keybind-cancel-btn:hover {
-  background: rgba(86, 95, 137, 0.5);
+  background: var(--bg-surface-raised);
+  color: var(--fg-primary);
 }
 
-/* Footer */
+/* ---------------------------------------------------------------------------
+   FOOTER
+   --------------------------------------------------------------------------- */
 .keybinds-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(122, 162, 247, 0.1);
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .keybinds-reset-btn {
-  padding: 10px 16px;
-  background: rgba(247, 118, 142, 0.15);
-  border: 1px solid rgba(247, 118, 142, 0.3);
-  border-radius: 8px;
-  color: #f7768e;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-md);
+  color: var(--error-fg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .keybinds-reset-btn:hover {
-  background: rgba(247, 118, 142, 0.25);
+  background: var(--error-muted);
 }
 
 .keybinds-hint {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: #565f89;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   ANIMATIONS
+   --------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

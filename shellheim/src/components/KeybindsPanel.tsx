@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Keyboard, X } from "@phosphor-icons/react";
 import {
   Keymap,
   formatKeyBinding,
@@ -165,9 +166,9 @@ export default function KeybindsPanel({ isOpen, onClose }: KeybindsPanelProps) {
     <div className="keybinds-panel-overlay" onClick={onClose}>
       <div className="keybinds-panel" onClick={(e) => e.stopPropagation()}>
         <div className="keybinds-header">
-          <h2>Keyboard Shortcuts</h2>
+          <h2><Keyboard size={20} />Keyboard Shortcuts</h2>
           <button className="close-btn" onClick={onClose}>
-            ×
+            <X size={16} />
           </button>
         </div>
 
