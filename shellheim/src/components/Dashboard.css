@@ -206,15 +206,10 @@
 
 .toolbar-btn:hover svg {
   color: var(--accent);
-  transform: translateY(-1px) scale(1.05);
 }
 
 .toolbar-btn:active {
-  transform: scale(0.92);
-}
-
-.toolbar-btn:active svg {
-  transform: scale(0.95);
+  background: var(--bg-surface);
 }
 
 .toolbar-btn:focus-visible {

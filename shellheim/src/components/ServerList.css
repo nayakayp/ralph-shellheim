@@ -159,12 +159,8 @@
   border-color: var(--border-strong);
 }
 
-.action-btn:hover svg {
-  transform: scale(1.1);
-}
-
 .action-btn:active {
-  transform: scale(0.94);
+  background: var(--bg-surface);
 }
 
 .action-btn:focus-visible {
