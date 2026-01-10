@@ -194,13 +194,7 @@
   }
 }
 
-/* ---------------------------------------------------------------------------
-   ANIMATIONS
-   --------------------------------------------------------------------------- */
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
+/* slideIn animation is centralized in components.css */
 
 @keyframes spin {
   to { transform: rotate(360deg); }

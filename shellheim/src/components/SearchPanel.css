@@ -10,18 +10,7 @@
   display: flex;
   flex-direction: column;
   z-index: var(--z-dropdown);
-  animation: slideIn var(--transition-slow) cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  animation: slideIn var(--transition-slow);
 }
 
 .search-panel-header {
