@@ -253,7 +253,7 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   background: var(--accent);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
   color: white;
   font-size: var(--text-sm);
@@ -261,6 +261,7 @@
   cursor: pointer;
   transition: 
     background var(--transition-fast),
+    border-color var(--transition-fast),
     transform var(--transition-fast),
     box-shadow var(--transition-fast);
 }
@@ -271,15 +272,17 @@
 
 .add-btn:hover {
   background: var(--accent-hover);
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-sm), 0 0 12px var(--accent-muted);
 }
 
 .add-btn:hover svg {
-  transform: rotate(90deg);
+  transform: translateY(-1px);
 }
 
 .add-btn:active {
   transform: scale(0.97);
+  box-shadow: none;
 }
 
 .add-btn:focus-visible {
