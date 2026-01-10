@@ -8,7 +8,7 @@
   flex-direction: column;
   width: 220px;
   min-width: 220px;
-  background: var(--bg-elevated);
+  background: var(--bg-base);
   border-right: 1px solid var(--border-default);
   height: 100%;
   overflow-y: auto;
