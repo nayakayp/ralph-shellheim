@@ -159,8 +159,8 @@
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px;
+  gap: var(--space-1);
+  padding: var(--space-1);
   background: var(--bg-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
