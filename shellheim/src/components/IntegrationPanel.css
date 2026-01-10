@@ -18,7 +18,7 @@
 .integration-panel {
   background: linear-gradient(135deg, rgba(36, 40, 59, 0.95), rgba(26, 27, 38, 0.98));
   border: 1px solid rgba(86, 95, 137, 0.3);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   width: 90%;
   max-width: 800px;
   max-height: 85vh;

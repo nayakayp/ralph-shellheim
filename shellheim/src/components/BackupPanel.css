@@ -23,7 +23,7 @@
 .backup-panel {
   background: linear-gradient(135deg, rgba(30, 30, 46, 0.98), rgba(24, 24, 37, 0.98));
   border: 1px solid rgba(139, 233, 253, 0.15);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   width: 100%;
   max-width: 520px;
   max-height: 85vh;

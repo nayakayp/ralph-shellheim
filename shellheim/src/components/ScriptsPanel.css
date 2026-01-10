@@ -127,7 +127,7 @@
 .category-tab {
   background: rgba(30, 31, 45, 0.6);
   border: 1px solid rgba(122, 162, 247, 0.15);
-  border-radius: 16px;
+  border-radius: var(--radius-full);
   padding: 6px 14px;
   color: #a9b1d6;
   font-size: 12px;

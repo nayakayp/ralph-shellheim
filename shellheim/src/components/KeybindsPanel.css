@@ -22,7 +22,7 @@
     rgba(26, 29, 42, 0.98) 100%
   );
   border: 1px solid rgba(122, 162, 247, 0.2);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   width: min(640px, 90vw);
   max-height: 80vh;
   display: flex;
