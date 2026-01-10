@@ -189,8 +189,7 @@
   cursor: pointer;
   transition: 
     background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
+    color var(--transition-fast);
 }
 
 .toolbar-btn svg {
@@ -200,7 +199,6 @@
 .toolbar-btn:hover {
   background: var(--bg-surface-raised);
   color: var(--fg-primary);
-  transform: scale(1.05);
 }
 
 .toolbar-btn:hover svg {
@@ -209,7 +207,6 @@
 
 .toolbar-btn:active {
   background: var(--bg-surface);
-  transform: scale(0.98);
 }
 
 .toolbar-btn:focus-visible {
