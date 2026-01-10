@@ -152,27 +152,22 @@
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
-/* Toolbar button groups */
+/* Toolbar button groups - minimal, flat design */
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-default);
+  gap: 2px;
 }
 
-/* Visual divider between groups */
+/* Visual divider between groups - subtle spacing only */
 .toolbar-divider {
   width: 1px;
-  height: 20px;
-  background: var(--border-default);
-  margin: 0 var(--space-2);
-  opacity: 0.6;
+  height: 16px;
+  background: var(--border-subtle);
+  margin: 0 var(--space-3);
 }
 
 .toolbar-btn {
@@ -181,58 +176,42 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-2);
+  width: 32px;
+  height: 32px;
+  padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  color: var(--fg-muted);
+  border-radius: var(--radius-md);
+  color: var(--fg-faint);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   cursor: pointer;
   transition: 
-    background var(--transition-base),
-    color var(--transition-base),
-    transform var(--transition-fast);
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .toolbar-btn svg {
-  transition: 
-    color var(--transition-base),
-    transform var(--transition-fast);
+  width: 18px;
+  height: 18px;
 }
 
 .toolbar-btn:hover {
-  background: var(--bg-surface-raised);
-  color: var(--fg-primary);
-}
-
-.toolbar-btn:hover svg {
-  color: var(--accent);
-  transform: scale(1.05);
+  background: var(--bg-surface);
+  color: var(--fg-secondary);
 }
 
 .toolbar-btn:active {
-  background: var(--bg-surface);
-  transform: scale(0.96);
-}
-
-.toolbar-btn:active svg {
-  transform: scale(0.95);
+  background: var(--bg-surface-raised);
 }
 
 .toolbar-btn:focus-visible {
-  outline: none;
-  box-shadow: 
-    0 0 0 2px var(--bg-base),
-    0 0 0 4px var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .toolbar-btn.active {
   background: var(--accent-subtle);
-  color: var(--accent);
-}
-
-.toolbar-btn.active svg {
   color: var(--accent);
 }
 
@@ -256,37 +235,29 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  height: 32px;
+  padding: 0 var(--space-3);
   background: var(--accent);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   border-radius: var(--radius-md);
   color: white;
   font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition: 
-    background var(--transition-fast),
-    border-color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+  transition: background var(--transition-fast);
 }
 
 .add-btn svg {
-  transition: transform var(--transition-base);
+  width: 14px;
+  height: 14px;
 }
 
 .add-btn:hover {
   background: var(--accent-hover);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: var(--shadow-sm), 0 0 12px var(--accent-muted);
-}
-
-.add-btn:hover svg {
-  transform: translateY(-1px);
 }
 
 .add-btn:active {
-  box-shadow: none;
+  background: var(--accent-pressed);
 }
 
 .add-btn:focus-visible {
