@@ -189,30 +189,24 @@
   cursor: pointer;
   transition: 
     background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
+    color var(--transition-fast);
 }
 
 .toolbar-btn svg {
-  transition: 
-    color var(--transition-fast),
-    transform var(--transition-base);
+  transition: color var(--transition-fast);
 }
 
 .toolbar-btn:hover {
   background: var(--bg-surface-raised);
   color: var(--fg-primary);
-  transform: translateY(-1px);
 }
 
 .toolbar-btn:hover svg {
   color: var(--accent);
-  transform: scale(1.05);
 }
 
 .toolbar-btn:active {
   background: var(--bg-surface);
-  transform: translateY(0);
 }
 
 .toolbar-btn:focus-visible {
