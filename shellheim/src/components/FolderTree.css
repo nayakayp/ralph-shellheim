@@ -9,7 +9,7 @@
   width: 220px;
   min-width: 220px;
   background: var(--bg-base);
-  border-right: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-subtle);
   height: 100%;
   overflow-y: auto;
 }
@@ -71,25 +71,20 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  padding-left: calc(var(--space-3) + (var(--folder-depth) * var(--space-4)));
-  margin: 0 var(--space-2);
-  border-radius: var(--radius-sm);
+  padding-left: calc(var(--space-4) + (var(--folder-depth) * var(--space-4)));
+  margin: 1px 0;
+  border-radius: 0;
   cursor: pointer;
   color: var(--fg-secondary);
   transition: 
     background var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast);
+    color var(--transition-fast);
   position: relative;
 }
 
 .folder-item:hover {
   background: var(--bg-surface-raised);
   color: var(--fg-primary);
-}
-
-.folder-item:active {
-  transform: scale(0.99);
 }
 
 .folder-item.selected {
@@ -100,7 +95,7 @@
 .folder-item.selected::before {
   content: "";
   position: absolute;
-  left: calc(var(--space-2) * -1);
+  left: 0;
   top: var(--space-1);
   bottom: var(--space-1);
   width: 2px;
@@ -112,7 +107,6 @@
   padding-bottom: var(--space-2);
   margin-bottom: var(--space-2);
   border-bottom: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 /* Expand button */
