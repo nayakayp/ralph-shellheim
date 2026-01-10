@@ -180,7 +180,7 @@ export function FolderTree({
       <div key={node.id} className="folder-item-container">
         <div
           className={`folder-item ${isSelected ? "selected" : ""} ${isDragging ? "dragging" : ""} ${isDropTarget ? "drop-target" : ""}`}
-          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          style={{ "--folder-depth": depth } as React.CSSProperties}
           onClick={() => onSelectFolder(node.id)}
           draggable
           onDragStart={(e) => handleDragStart(e, node.id, node.parent_id)}
